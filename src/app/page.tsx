@@ -44,12 +44,14 @@ async function getData() {
         .from("businesses")
         .select("id, name, slug, phone, tier, category_id, neighborhood, view_count")
         .eq("status", "approved")
+        .eq("is_active", true)
         .order("tier", { ascending: false })
         .order("created_at", { ascending: false }),
       supabase
         .from("businesses")
         .select("*")
         .eq("status", "approved")
+        .eq("is_active", true)
         .eq("tier", "premium")
         .order("created_at", { ascending: false })
         .limit(6),
@@ -57,11 +59,12 @@ async function getData() {
         .from("businesses")
         .select("*")
         .eq("status", "approved")
+        .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(4),
       supabase
         .from("business_tags")
-        .select("tag:tags(id, name, slug), business:businesses(status)"),
+        .select("tag:tags(id, name, slug), business:businesses(status, is_active)"),
     ]);
 
   const categories = allCategories ?? [];
@@ -98,8 +101,8 @@ async function getData() {
   const tagCounts = new Map<string, { name: string; slug: string; count: number }>();
   (tagLinks ?? []).forEach((row) => {
     const tag = row.tag as unknown as { id: string; name: string; slug: string } | null;
-    const business = row.business as unknown as { status: string } | null;
-    if (!tag || business?.status !== "approved") return;
+    const business = row.business as unknown as { status: string; is_active: boolean } | null;
+    if (!tag || business?.status !== "approved" || !business?.is_active) return;
     const existing = tagCounts.get(tag.id);
     if (existing) {
       existing.count += 1;
@@ -126,6 +129,7 @@ async function getData() {
       .from("businesses")
       .select("id, name, slug, phone, whatsapp, cover_image_url, neighborhood, tier, opening_hours")
       .eq("status", "approved")
+      .eq("is_active", true)
       .in("category_id", foodCategoryIds);
 
     openNowRestaurants = (foodBusinesses ?? [])
@@ -214,7 +218,7 @@ export default async function HomePage() {
               <ShieldCheck className="h-4 w-4 text-white/60" /> Doğrulanmış kayıtlar
             </span>
             <span className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-white/60" /> Şu an ücretsiz
+              <Sparkles className="h-4 w-4 text-white/60" /> İlk ay ücretsiz
             </span>
           </div>
         </div>
@@ -446,10 +450,10 @@ export default async function HomePage() {
         {/* İşletme daveti */}
         <section className="rounded-2xl bg-bordo px-8 py-12 text-center text-white">
           <h2 className="font-display text-2xl font-bold sm:text-3xl">
-            İşletmen Gölbaşı&apos;nda mı? Ücretsiz listelen.
+            İşletmen Gölbaşı&apos;nda mı? İlk ay ücretsiz listelen.
           </h2>
           <p className="mx-auto mt-3 max-w-md text-white/80">
-            Şu an tüm kayıtlar ücretsiz. Hemen başvur, kısa süre içinde yayında ol.
+            Hemen başvur, kısa süre içinde yayında ol. İlk ayın tamamen ücretsiz.
           </p>
           <Link
             href="/isletme-ekle"

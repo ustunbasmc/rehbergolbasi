@@ -6,7 +6,7 @@ const BASE_URL = "https://rehbergolbasi.com";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [{ data: categories }, { data: businesses }] = await Promise.all([
     supabase.from("categories").select("slug"),
-    supabase.from("businesses").select("slug, created_at").eq("status", "approved"),
+    supabase.from("businesses").select("slug, created_at").eq("status", "approved").eq("is_active", true),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [

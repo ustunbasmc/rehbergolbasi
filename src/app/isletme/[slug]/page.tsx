@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -96,6 +96,7 @@ async function getData(slug: string) {
       .from("businesses")
       .select("*")
       .eq("status", "approved")
+      .eq("is_active", true)
       .eq("category_id", business.category_id)
       .neq("id", business.id)
       .order("tier", { ascending: false })
@@ -160,6 +161,11 @@ export default async function BusinessPage({
   const data = await getData(slug);
   if (!data) notFound();
   const { business, photos, similar, features, tags, menuItems, faqs } = data;
+
+  if (business.is_active === false) {
+    redirect(business.category ? `/isletmeler/${business.category.slug}` : "/isletmeler");
+  }
+
   const isPremium = business.tier === "premium";
   const mapsUrl =
     business.lat && business.lng

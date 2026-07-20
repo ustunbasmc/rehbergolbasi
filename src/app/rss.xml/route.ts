@@ -16,6 +16,7 @@ export async function GET() {
     .from("businesses")
     .select("name, slug, description, created_at, category:categories(name)")
     .eq("status", "approved")
+    .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(30);
 

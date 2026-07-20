@@ -13,6 +13,7 @@ async function getData(query?: string) {
     .from("businesses")
     .select("*")
     .eq("status", "approved")
+    .eq("is_active", true)
     .order("tier", { ascending: false })
     .order("created_at", { ascending: false });
 
