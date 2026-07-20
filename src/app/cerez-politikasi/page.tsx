@@ -30,41 +30,51 @@ export default function CerezPolitikasiPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">2. Şu An Hangi Çerezleri Kullanıyoruz?</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">
+            2. Hangi Çerezleri Kullanıyoruz?
+          </h2>
+          <p className="mb-3">
+            RehberGölbaşı&apos;nda iki tür çerez bulunur:
+          </p>
+          <ul className="ml-5 list-disc space-y-2">
+            <li>
+              <span className="font-semibold text-navy">Zorunlu teknik çerezler:</span> sitenin
+              temel işlevlerinin (örn. çerez tercihi hatırlama, admin oturumu) çalışması
+              için gereklidir, onay gerektirmez.
+            </li>
+            <li>
+              <span className="font-semibold text-navy">Google Analytics çerezleri:</span> siteyi
+              kaç kişinin ziyaret ettiği, hangi sayfaların ilgi gördüğü gibi anonim
+              istatistikleri ölçmek için kullanılır. Bu çerezler{" "}
+              <span className="font-semibold text-navy">yalnızca &quot;Kabul Et&quot; dediğinde</span>{" "}
+              yüklenir; &quot;Reddet&quot; dersen veya bir seçim yapmazsan hiç çalışmaz. IP
+              adresin anonimleştirilerek işlenir. Bu veriler Google tarafından, Google&apos;ın
+              kendi{" "}
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-bordo hover:underline"
+              >
+                Gizlilik Politikası
+              </a>{" "}
+              kapsamında işlenir.
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">3. Tercihini Değiştirmek</h2>
           <p>
-            RehberGölbaşı, bu politikanın yayınlandığı tarih itibarıyla{" "}
-            <span className="font-semibold text-navy">
-              takip amaçlı veya reklam amaçlı üçüncü taraf çerezleri kullanmamaktadır.
-            </span>{" "}
-            Sitenin temel işlevlerinin (örneğin oturum durumu, admin girişi) çalışması
-            için gerekli olan zorunlu teknik çerezler dışında herhangi bir çerez
-            saklanmaz.
+            Onay tercihini istediğin zaman değiştirebilirsin: tarayıcı geçmişini/site
+            verilerini temizleyerek onay bildirimini tekrar tetikleyebilir, ya da
+            tarayıcı ayarlarından çerezleri tamamen engelleyebilirsin. Reddetmen,
+            sitenin temel işlevlerini kullanmanı engellemez.
           </p>
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">3. İleride Neler Değişebilir?</h2>
-          <p>
-            Ziyaretçi sayısı ve site performansı gibi anonim istatistikleri ölçmek
-            için ileride Google Analytics gibi analiz araçları ekleyebiliriz. Bu
-            durumda bu sayfayı güncelleyip, kullanılan çerez türlerini ve amaçlarını
-            burada açıkça listeleyeceğiz; gerekiyorsa tarayıcında bir onay
-            (rıza) seçeneği sunacağız.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">4. Çerezleri Nasıl Kontrol Edebilirsin?</h2>
-          <p>
-            Çoğu tarayıcı, çerezleri otomatik olarak kabul edecek şekilde
-            ayarlanmıştır. Tarayıcı ayarlarından mevcut çerezleri silebilir veya
-            yeni çerezlerin kaydedilmesini engelleyebilirsin; ancak bu, bazı site
-            özelliklerinin beklendiği gibi çalışmamasına yol açabilir.
-          </p>
-        </section>
-
-        <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">5. Daha Fazla Bilgi</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">4. Daha Fazla Bilgi</h2>
           <p>
             Kişisel verilerinin nasıl işlendiği hakkında daha fazla bilgi için{" "}
             <a href="/gizlilik-politikasi" className="font-semibold text-bordo hover:underline">

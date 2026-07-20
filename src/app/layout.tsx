@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bitter, Work_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import SiteChrome from "@/components/SiteChrome";
+import CookieConsent from "@/components/CookieConsent";
 
 const bitter = Bitter({
   variable: "--font-display",
@@ -91,6 +92,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <SiteChrome>{children}</SiteChrome>
+        <CookieConsent />
       </body>
     </html>
   );
