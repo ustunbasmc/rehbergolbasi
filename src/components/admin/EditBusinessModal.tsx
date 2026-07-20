@@ -121,6 +121,7 @@ export default function EditBusinessModal({
 
   async function handleExtendPayment() {
     setExtending(true);
+    setError(null);
     const now = new Date();
     const currentExpiry = paidUntil ? new Date(paidUntil) : null;
     const base = currentExpiry && currentExpiry > now ? currentExpiry : now;
@@ -132,19 +133,31 @@ export default function EditBusinessModal({
       .update({ paid_until: newPaidUntil.toISOString(), is_active: true })
       .eq("id", business.id);
 
-    if (!updateError) {
-      await supabase.from("payments").insert({
-        business_id: business.id,
-        amount: paymentAmount ? Number(paymentAmount) : null,
-        note: paymentNote.trim() || null,
-        paid_at: now.toISOString(),
-      });
-      setPaidUntil(newPaidUntil.toISOString());
-      setIsActive(true);
+    if (updateError) {
+      setError("Süre güncellenemedi: " + updateError.message);
+      setExtending(false);
+      return;
+    }
+
+    const { error: paymentError } = await supabase.from("payments").insert({
+      business_id: business.id,
+      amount: paymentAmount ? Number(paymentAmount) : 0,
+      period_start: base.toISOString().slice(0, 10),
+      period_end: newPaidUntil.toISOString().slice(0, 10),
+      status: "paid",
+      paid_at: now.toISOString(),
+      notes: paymentNote.trim() || null,
+    });
+
+    if (paymentError) {
+      setError("Süre uzatıldı ama ödeme kaydı oluşturulamadı: " + paymentError.message);
+    } else {
       setPaymentAmount("");
       setPaymentNote("");
     }
 
+    setPaidUntil(newPaidUntil.toISOString());
+    setIsActive(true);
     setExtending(false);
   }
 
