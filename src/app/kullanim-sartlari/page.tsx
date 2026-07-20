@@ -33,7 +33,7 @@ export default function KullanimSartlariPage() {
           <h2 className="mb-2 font-display text-lg font-bold text-navy">2. Hizmetin Tanımı</h2>
           <p>
             RehberGölbaşı, Gölbaşı, Ankara&apos;daki işletmelerin listelendiği
-            ücretsiz bir dijital rehber hizmetidir. Platform, işletmeler ile
+            bir dijital rehber hizmetidir. Platform, işletmeler ile
             ziyaretçileri buluşturan bir aracıdır; işletmelerin sunduğu ürün ve
             hizmetlerin sağlayıcısı değildir.
           </p>
@@ -60,7 +60,47 @@ export default function KullanimSartlariPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">4. İçerik Sorumluluğu</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">4. Ücretlendirme</h2>
+          <ul className="ml-5 list-disc space-y-1.5">
+            <li>
+              Bir işletme onaylandığı andan itibaren <span className="font-semibold text-navy">ilk bir ay boyunca ücretsiz</span> olarak
+              listelenir.
+            </li>
+            <li>
+              Ücretsiz sürenin bitiminden sonra listelenmenin devam edebilmesi için,
+              o tarihte geçerli olan aylık ücretin ödenmesi gerekir. Güncel ücret
+              hakkında bilgi almak için{" "}
+              <a href="/iletisim" className="font-semibold text-bordo hover:underline">
+                bize ulaşabilirsin
+              </a>
+              .
+            </li>
+            <li>
+              Ödemeler manuel banka havalesi/EFT ile alınır. Süre dolmadan önce
+              WhatsApp üzerinden hatırlatma mesajları (10 gün, 3 gün ve son gün
+              kala) gönderilir.
+            </li>
+            <li>
+              Süresi dolduktan sonra ödeme yapılmazsa, işletmeye{" "}
+              <span className="font-semibold text-navy">7 günlük bir ek süre</span> tanınır.
+              Bu süre içinde de ödeme yapılmazsa işletme sayfası geçici olarak
+              pasife alınır; sayfaya giren ziyaretçiler ilgili kategori sayfasına
+              yönlendirilir.
+            </li>
+            <li>
+              Pasife alınan bir işletme, ödeme yapıldığı anda tekrar aktif hale
+              getirilir. Sayfa adresi (URL) değişmez, silinmez.
+            </li>
+            <li>
+              Platform, ücretlendirme koşullarını (ücretsiz süre, ücret tutarı,
+              ödeme yöntemleri dahil) önceden bildirmeksizin değiştirme hakkını
+              saklı tutar; güncel şartlar her zaman bu sayfada yayınlanır.
+            </li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">5. İçerik Sorumluluğu</h2>
           <p>
             İşletme sayfalarındaki açıklama, fotoğraf, menü, fiyat ve diğer
             içeriklerin doğruluğundan ilgili işletme sahibi sorumludur. Platform,
@@ -69,7 +109,7 @@ export default function KullanimSartlariPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">5. Yasak Kullanımlar</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">6. Yasak Kullanımlar</h2>
           <p>Platformu kullanırken şunları yapmamayı kabul edersin:</p>
           <ul className="ml-5 mt-2 list-disc space-y-1.5">
             <li>Yanlış veya yanıltıcı bilgi girmek</li>
@@ -81,7 +121,7 @@ export default function KullanimSartlariPage() {
 
         <section>
           <h2 className="mb-2 font-display text-lg font-bold text-navy">
-            6. Sorumluluğun Sınırlandırılması
+            7. Sorumluluğun Sınırlandırılması
           </h2>
           <p>
             Platform, işletmelerle ziyaretçiler arasında gerçekleşen alışverişlere,
@@ -92,7 +132,7 @@ export default function KullanimSartlariPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">7. Fikri Mülkiyet</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">8. Fikri Mülkiyet</h2>
           <p>
             Platformun tasarımı, logosu ve yazılımı RehberGölbaşı&apos;na aittir.
             İşletmeler tarafından yüklenen fotoğraf ve içeriklerin telif hakkı
@@ -102,7 +142,7 @@ export default function KullanimSartlariPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">8. Değişiklikler</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">9. Değişiklikler</h2>
           <p>
             Bu şartları zaman zaman güncelleyebiliriz. Güncel şartlar her zaman bu
             sayfada yayınlanır.
@@ -110,7 +150,7 @@ export default function KullanimSartlariPage() {
         </section>
 
         <section>
-          <h2 className="mb-2 font-display text-lg font-bold text-navy">9. Uygulanacak Hukuk</h2>
+          <h2 className="mb-2 font-display text-lg font-bold text-navy">10. Uygulanacak Hukuk</h2>
           <p>
             Bu şartlar Türkiye Cumhuriyeti kanunlarına tabidir; doğabilecek
             uyuşmazlıklarda Ankara mahkemeleri ve icra daireleri yetkilidir.

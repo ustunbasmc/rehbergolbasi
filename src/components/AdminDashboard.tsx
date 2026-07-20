@@ -12,6 +12,7 @@ import FeatureManager from "@/components/admin/FeatureManager";
 import ContactRequestsList from "@/components/admin/ContactRequestsList";
 import TagManager from "@/components/admin/TagManager";
 import ExpiryAlertsList from "@/components/admin/ExpiryAlertsList";
+import PaymentsList from "@/components/admin/PaymentsList";
 import Overview from "@/components/admin/Overview";
 import {
   Clock,
@@ -27,6 +28,7 @@ import {
   PhoneCall,
   Hash,
   AlertTriangle,
+  Wallet,
 } from "lucide-react";
 
 type Tab =
@@ -39,7 +41,8 @@ type Tab =
   | "features"
   | "requests"
   | "tags"
-  | "expiry";
+  | "expiry"
+  | "payments";
 
 interface Stats {
   total: number;
@@ -127,6 +130,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       title: "Yönetim",
       items: [
         { key: "expiry", label: "Süre Uyarıları", icon: AlertTriangle, badge: stats.expiryAlerts },
+        { key: "payments", label: "Ödemeler", icon: Wallet },
         { key: "categories", label: "Kategoriler", icon: LayoutGrid },
         { key: "tags", label: "Etiketler", icon: Hash },
         { key: "features", label: "Özellikler", icon: TagsIcon },
@@ -239,6 +243,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "approved" && <ApprovedList categories={categories} />}
           {tab === "rejected" && <RejectedList />}
           {tab === "expiry" && <ExpiryAlertsList />}
+          {tab === "payments" && <PaymentsList />}
           {tab === "categories" && <CategoryManager />}
           {tab === "tags" && <TagManager />}
           {tab === "features" && <FeatureManager />}

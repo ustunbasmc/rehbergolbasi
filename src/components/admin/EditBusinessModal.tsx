@@ -73,6 +73,8 @@ export default function EditBusinessModal({
   const [isActive, setIsActive] = useState(business.is_active);
   const [extending, setExtending] = useState(false);
   const [reactivating, setReactivating] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentNote, setPaymentNote] = useState("");
 
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -130,12 +132,20 @@ export default function EditBusinessModal({
       .update({ paid_until: newPaidUntil.toISOString(), is_active: true })
       .eq("id", business.id);
 
-    setExtending(false);
-
     if (!updateError) {
+      await supabase.from("payments").insert({
+        business_id: business.id,
+        amount: paymentAmount ? Number(paymentAmount) : null,
+        note: paymentNote.trim() || null,
+        paid_at: now.toISOString(),
+      });
       setPaidUntil(newPaidUntil.toISOString());
       setIsActive(true);
+      setPaymentAmount("");
+      setPaymentNote("");
     }
+
+    setExtending(false);
   }
 
   async function handleReactivate() {
@@ -263,6 +273,23 @@ export default function EditBusinessModal({
               <p>Ücretsiz süre bitişi: {formatDate(freeUntil)}</p>
               <p>Ödemeli süre bitişi: {formatDate(paidUntil)}</p>
             </div>
+
+            <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <input
+                type="number"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                placeholder="Tutar (₺, isteğe bağlı)"
+                className="w-full rounded-lg border border-line bg-white px-3 py-1.5 text-xs outline-none focus:border-bordo"
+              />
+              <input
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="Not (isteğe bağlı)"
+                className="w-full rounded-lg border border-line bg-white px-3 py-1.5 text-xs outline-none focus:border-bordo"
+              />
+            </div>
+
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
