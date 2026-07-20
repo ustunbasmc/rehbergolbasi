@@ -10,6 +10,7 @@ import GalleryManager from "@/components/admin/GalleryManager";
 import OpeningHoursEditor from "@/components/OpeningHoursEditor";
 import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
+import WhatsAppNotifier from "@/components/admin/WhatsAppNotifier";
 
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
   ssr: false,
@@ -285,6 +286,13 @@ export default function EditBusinessModal({
               )}
             </div>
           </div>
+
+          <WhatsAppNotifier
+            businessName={business.name}
+            whatsapp={business.whatsapp}
+            freeUntil={freeUntil}
+            paidUntil={paidUntil}
+          />
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-navy">İşletme adı</label>
