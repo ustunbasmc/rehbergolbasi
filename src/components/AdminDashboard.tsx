@@ -11,6 +11,7 @@ import ReportsList from "@/components/admin/ReportsList";
 import FeatureManager from "@/components/admin/FeatureManager";
 import ContactRequestsList from "@/components/admin/ContactRequestsList";
 import TagManager from "@/components/admin/TagManager";
+import ExpiryAlertsList from "@/components/admin/ExpiryAlertsList";
 import Overview from "@/components/admin/Overview";
 import {
   Clock,
@@ -25,6 +26,7 @@ import {
   Tags as TagsIcon,
   PhoneCall,
   Hash,
+  AlertTriangle,
 } from "lucide-react";
 
 type Tab =
@@ -36,7 +38,8 @@ type Tab =
   | "reports"
   | "features"
   | "requests"
-  | "tags";
+  | "tags"
+  | "expiry";
 
 interface Stats {
   total: number;
@@ -45,6 +48,7 @@ interface Stats {
   rejected: number;
   reports: number;
   requests: number;
+  expiryAlerts: number;
 }
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
@@ -57,6 +61,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     rejected: 0,
     reports: 0,
     requests: 0,
+    expiryAlerts: 0,
   });
 
   const loadCategories = useCallback(async () => {
@@ -68,13 +73,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   const loadStats = useCallback(async () => {
-    const [total, pending, approved, rejected, reports, requests] = await Promise.all([
+    const [total, pending, approved, rejected, reports, requests, expiryAlerts] = await Promise.all([
       supabase.from("businesses").select("id", { count: "exact", head: true }),
       supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "pending"),
       supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "approved"),
       supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "rejected"),
       supabase.from("listing_reports").select("id", { count: "exact", head: true }),
       supabase.from("contact_requests").select("id", { count: "exact", head: true }),
+      supabase.from("expiry_alerts").select("id", { count: "exact", head: true }),
     ]);
     setStats({
       total: total.count ?? 0,
@@ -83,6 +89,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       rejected: rejected.count ?? 0,
       reports: reports.count ?? 0,
       requests: requests.count ?? 0,
+      expiryAlerts: expiryAlerts.count ?? 0,
     });
   }, []);
 
@@ -119,6 +126,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     {
       title: "Yönetim",
       items: [
+        { key: "expiry", label: "Süre Uyarıları", icon: AlertTriangle, badge: stats.expiryAlerts },
         { key: "categories", label: "Kategoriler", icon: LayoutGrid },
         { key: "tags", label: "Etiketler", icon: Hash },
         { key: "features", label: "Özellikler", icon: TagsIcon },
@@ -230,6 +238,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "pending" && <PendingList />}
           {tab === "approved" && <ApprovedList categories={categories} />}
           {tab === "rejected" && <RejectedList />}
+          {tab === "expiry" && <ExpiryAlertsList />}
           {tab === "categories" && <CategoryManager />}
           {tab === "tags" && <TagManager />}
           {tab === "features" && <FeatureManager />}

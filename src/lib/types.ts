@@ -72,6 +72,7 @@ export interface Business {
   opening_hours: OpeningHours | null;
   created_at: string;
   category?: Category;
+  is_active: boolean;
 }
 
 export interface BusinessPhoto {

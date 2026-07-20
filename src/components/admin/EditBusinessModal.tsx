@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import type { Business, Category, OpeningHours } from "@/lib/types";
 import { DEFAULT_OPENING_HOURS } from "@/lib/types";
-import { X, Star, Trash2, ShieldCheck } from "lucide-react";
+import { X, Star, Trash2, ShieldCheck, CreditCard, RotateCcw } from "lucide-react";
 import GalleryManager from "@/components/admin/GalleryManager";
 import OpeningHoursEditor from "@/components/OpeningHoursEditor";
 import FeaturesSelector from "@/components/FeaturesSelector";
@@ -19,6 +19,11 @@ const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
     </div>
   ),
 });
+
+function formatDate(iso: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("tr-TR", { year: "numeric", month: "long", day: "numeric" });
+}
 
 export default function EditBusinessModal({
   business,
@@ -62,6 +67,12 @@ export default function EditBusinessModal({
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerLoaded, setOwnerLoaded] = useState(false);
 
+  const [freeUntil, setFreeUntil] = useState(business.free_until);
+  const [paidUntil, setPaidUntil] = useState(business.paid_until);
+  const [isActive, setIsActive] = useState(business.is_active);
+  const [extending, setExtending] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +114,37 @@ export default function EditBusinessModal({
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleExtendPayment() {
+    setExtending(true);
+    const now = new Date();
+    const currentExpiry = paidUntil ? new Date(paidUntil) : null;
+    const base = currentExpiry && currentExpiry > now ? currentExpiry : now;
+    const newPaidUntil = new Date(base);
+    newPaidUntil.setMonth(newPaidUntil.getMonth() + 1);
+
+    const { error: updateError } = await supabase
+      .from("businesses")
+      .update({ paid_until: newPaidUntil.toISOString(), is_active: true })
+      .eq("id", business.id);
+
+    setExtending(false);
+
+    if (!updateError) {
+      setPaidUntil(newPaidUntil.toISOString());
+      setIsActive(true);
+    }
+  }
+
+  async function handleReactivate() {
+    setReactivating(true);
+    const { error: updateError } = await supabase
+      .from("businesses")
+      .update({ is_active: true })
+      .eq("id", business.id);
+    setReactivating(false);
+    if (!updateError) setIsActive(true);
   }
 
   async function handleSave() {
@@ -205,6 +247,45 @@ export default function EditBusinessModal({
         </div>
 
         <div className="flex flex-col gap-4">
+          <div
+            className={`rounded-lg border p-3 ${
+              isActive ? "border-line bg-offwhite" : "border-bordo bg-bordo/5"
+            }`}
+          >
+            <div className="mb-2 flex items-center gap-1.5">
+              <CreditCard className="h-3.5 w-3.5 text-navy" />
+              <p className="text-xs font-bold uppercase tracking-wide text-navy">
+                Ödeme & Süre {!isActive && <span className="text-bordo">(Pasif)</span>}
+              </p>
+            </div>
+            <div className="mb-2 flex flex-col gap-1 text-xs text-ink/60">
+              <p>Ücretsiz süre bitişi: {formatDate(freeUntil)}</p>
+              <p>Ödemeli süre bitişi: {formatDate(paidUntil)}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleExtendPayment}
+                disabled={extending}
+                className="flex items-center gap-1.5 rounded-lg bg-navy px-3 py-2 text-xs font-bold text-white hover:bg-navy-dark disabled:opacity-60"
+              >
+                <CreditCard className="h-3.5 w-3.5" />
+                {extending ? "Ekleniyor..." : "Ödeme Alındı, +1 Ay Ekle"}
+              </button>
+              {!isActive && (
+                <button
+                  type="button"
+                  onClick={handleReactivate}
+                  disabled={reactivating}
+                  className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-bold text-navy hover:bg-white disabled:opacity-60"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  {reactivating ? "..." : "Yeniden Aktif Et"}
+                </button>
+              )}
+            </div>
+          </div>
+
           <div>
             <label className="mb-1 block text-sm font-semibold text-navy">İşletme adı</label>
             <input
