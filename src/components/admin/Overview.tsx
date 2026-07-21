@@ -181,7 +181,7 @@ export default function Overview() {
           <BarChart data={revenueData} margin={{ left: -10 }}>
             <XAxis dataKey="label" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip formatter={(value: number) => formatCurrency(value)} />
+            <Tooltip formatter={(value) => formatCurrency(Number(value) || 0)} />
             <Bar dataKey="total" fill="#14213D" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
