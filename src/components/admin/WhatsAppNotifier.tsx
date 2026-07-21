@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { MessageCircle, Send, User, Building2 } from "lucide-react";
 
 function formatDate(iso: string | null) {
   if (!iso) return "belirtilmemiş";
@@ -11,12 +11,22 @@ function formatDate(iso: string | null) {
 interface Props {
   businessName: string;
   whatsapp: string | null;
+  ownerPhone: string | null;
   freeUntil: string | null;
   paidUntil: string | null;
 }
 
-export default function WhatsAppNotifier({ businessName, whatsapp, freeUntil, paidUntil }: Props) {
+export default function WhatsAppNotifier({
+  businessName,
+  whatsapp,
+  ownerPhone,
+  freeUntil,
+  paidUntil,
+}: Props) {
   const expiryDate = paidUntil ?? freeUntil;
+
+  const targetNumber = ownerPhone || whatsapp;
+  const usingOwnerPhone = !!ownerPhone;
 
   const templates: Record<string, string> = {
     hosgeldin: `Merhaba ${businessName} ekibi! 🎉\n\nİşletmeniz RehberGölbaşı'nda onaylandı ve yayına alındı. İlk ayınız tamamen ücretsiz.\n\nSayfanızı kontrol etmek ister misiniz? Herhangi bir düzeltme/ekleme talebiniz olursa bize yazmanız yeterli.`,
@@ -35,8 +45,8 @@ export default function WhatsAppNotifier({ businessName, whatsapp, freeUntil, pa
     setMessage(templates[key]);
   }
 
-  const waLink = whatsapp
-    ? `https://wa.me/${whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`
+  const waLink = targetNumber
+    ? `https://wa.me/${targetNumber.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`
     : null;
 
   return (
@@ -48,12 +58,26 @@ export default function WhatsAppNotifier({ businessName, whatsapp, freeUntil, pa
         </p>
       </div>
 
-      {!whatsapp ? (
+      {!targetNumber ? (
         <p className="text-xs text-ink/50">
-          Bu işletme için WhatsApp numarası kayıtlı değil.
+          Bu işletme için ne sahiplik telefonu ne de WhatsApp numarası kayıtlı.
         </p>
       ) : (
         <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs text-ink/60">
+            {usingOwnerPhone ? (
+              <>
+                <User className="h-3.5 w-3.5 text-bordo" />
+                Sahiplik telefonuna gönderilecek: <span className="font-semibold text-navy">{targetNumber}</span>
+              </>
+            ) : (
+              <>
+                <Building2 className="h-3.5 w-3.5 text-navy" />
+                İşletme WhatsApp hattına gönderilecek: <span className="font-semibold text-navy">{targetNumber}</span>
+              </>
+            )}
+          </div>
+
           <select
             value={templateKey}
             onChange={(e) => handleTemplateChange(e.target.value)}
