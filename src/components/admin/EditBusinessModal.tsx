@@ -39,9 +39,20 @@ export default function EditBusinessModal({
   onSaved: () => void;
   onDeleted: () => void;
 }) {
+  // Kategori: önce ana kategori seçilir, sonra (varsa) alt kategori
+  const mainCategories = categories.filter((c) => !c.parent_id);
+  const initialCategory = categories.find((c) => c.id === business.category_id);
+  const initialMainId = initialCategory?.parent_id ?? initialCategory?.id ?? "";
+  const initialSubId = initialCategory?.parent_id ? initialCategory.id : "";
+
+  const [mainCategoryId, setMainCategoryId] = useState(initialMainId);
+  const [subCategoryId, setSubCategoryId] = useState(initialSubId);
+
+  const subCategories = categories.filter((c) => c.parent_id === mainCategoryId);
+  const effectiveCategoryId = subCategoryId || mainCategoryId;
+
   const [form, setForm] = useState({
     name: business.name,
-    category_id: business.category_id,
     description: business.description ?? "",
     phone: business.phone ?? "",
     whatsapp: business.whatsapp ?? "",
@@ -119,6 +130,11 @@ export default function EditBusinessModal({
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
+  function handleMainCategoryChange(newMainId: string) {
+    setMainCategoryId(newMainId);
+    setSubCategoryId("");
+  }
+
   async function handleExtendPayment() {
     setExtending(true);
     setError(null);
@@ -172,6 +188,11 @@ export default function EditBusinessModal({
   }
 
   async function handleSave() {
+    if (!effectiveCategoryId) {
+      setError("Lütfen bir kategori seç.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
 
@@ -179,7 +200,7 @@ export default function EditBusinessModal({
       .from("businesses")
       .update({
         name: form.name,
-        category_id: form.category_id,
+        category_id: effectiveCategoryId,
         description: form.description || null,
         phone: form.phone || null,
         whatsapp: form.whatsapp || null,
@@ -345,19 +366,38 @@ export default function EditBusinessModal({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-navy">Kategori</label>
+            <label className="mb-1 block text-sm font-semibold text-navy">Ana kategori</label>
             <select
-              value={form.category_id}
-              onChange={(e) => update("category_id", e.target.value)}
+              value={mainCategoryId}
+              onChange={(e) => handleMainCategoryChange(e.target.value)}
               className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-bordo"
             >
-              {categories.map((c) => (
+              <option value="">Seçiniz</option>
+              {mainCategories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
             </select>
           </div>
+
+          {subCategories.length > 0 && (
+            <div>
+              <label className="mb-1 block text-sm font-semibold text-navy">Alt kategori</label>
+              <select
+                value={subCategoryId}
+                onChange={(e) => setSubCategoryId(e.target.value)}
+                className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-bordo"
+              >
+                <option value="">Genel (alt kategori yok)</option>
+                {subCategories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-navy">Açıklama</label>
