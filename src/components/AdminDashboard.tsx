@@ -154,46 +154,49 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const currentLabel = navSections.flatMap((s) => s.items).find((n) => n.key === tab)?.label;
 
   return (
-    <div className="flex min-h-screen flex-col bg-offwhite sm:flex-row">
-      <aside className="flex shrink-0 flex-row items-center justify-between bg-navy px-4 py-3 sm:w-56 sm:flex-col sm:items-stretch sm:justify-start sm:px-4 sm:py-6">
-        <div className="mb-0 flex items-center gap-2 sm:mb-8">
-          <ListChecks className="h-5 w-5 text-gold" />
-          <span className="font-display text-sm font-bold text-white">RehberGölbaşı</span>
+    <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-offwhite sm:flex-row">
+      <aside className="flex w-full shrink-0 flex-col gap-2 bg-navy px-4 py-3 sm:min-h-screen sm:w-56 sm:px-4 sm:py-6">
+        <div className="flex items-center justify-between sm:mb-8 sm:justify-start">
+          <div className="flex items-center gap-2">
+            <ListChecks className="h-5 w-5 text-gold" />
+            <span className="font-display text-sm font-bold text-white">RehberGölbaşı</span>
+          </div>
+          <button onClick={handleLogout} className="text-xs font-semibold text-white/60 sm:hidden">
+            Çıkış
+          </button>
         </div>
 
-        <nav className="flex flex-1 flex-row gap-1 sm:flex-col sm:gap-4">
+        <nav className="-mx-4 flex flex-row gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-col sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0">
           {navSections.map((section) => (
-            <div key={section.title || "root"} className="sm:flex sm:flex-col sm:gap-1">
+            <div key={section.title || "root"} className="flex shrink-0 flex-row gap-1 sm:flex-col">
               {section.title && (
                 <p className="hidden px-3 text-[10px] font-bold uppercase tracking-wider text-white/30 sm:block">
                   {section.title}
                 </p>
               )}
-              <div className="flex flex-row gap-1 sm:flex-col">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = tab === item.key;
-                  return (
-                    <button
-                      key={item.key}
-                      onClick={() => setTab(item.key)}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
-                        active
-                          ? "bg-white/10 text-white"
-                          : "text-white/60 hover:bg-white/5 hover:text-white"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="hidden sm:inline">{item.label}</span>
-                      {!!item.badge && (
-                        <span className="ml-auto hidden rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold text-gold-dark sm:inline">
-                          {item.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = tab === item.key;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => setTab(item.key)}
+                    className={`relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
+                      active
+                        ? "bg-white/10 text-white"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">{item.label}</span>
+                    {!!item.badge && (
+                      <span className="absolute -right-0.5 -top-0.5 rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-gold-dark sm:static sm:ml-auto sm:px-2 sm:text-[10px]">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           ))}
         </nav>
@@ -204,12 +207,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         >
           <LogOut className="h-4 w-4" /> Çıkış yap
         </button>
-        <button onClick={handleLogout} className="text-xs font-semibold text-white/60 sm:hidden">
-          Çıkış
-        </button>
       </aside>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <header className="card-shadow flex items-center justify-between border-b border-line bg-white px-5 py-4 sm:px-8">
           <div>
             <h1 className="font-display text-xl font-bold text-navy">{currentLabel}</h1>
@@ -217,7 +217,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </div>
         </header>
 
-        <main className="px-5 py-8 sm:px-8">
+        <main className="min-w-0 px-4 py-6 sm:px-8 sm:py-8">
           {tab === "overview" && (
             <>
               <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
