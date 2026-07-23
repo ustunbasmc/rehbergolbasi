@@ -15,6 +15,7 @@ import ExpiryAlertsList from "@/components/admin/ExpiryAlertsList";
 import PaymentsList from "@/components/admin/PaymentsList";
 import ProspectsList from "@/components/admin/ProspectsList";
 import Overview from "@/components/admin/Overview";
+import BusinessAnalytics from "@/components/admin/BusinessAnalytics";
 import {
   Clock,
   CheckCircle2,
@@ -31,6 +32,7 @@ import {
   AlertTriangle,
   Wallet,
   UserPlus,
+  BarChart2,
 } from "lucide-react";
 
 type Tab =
@@ -45,7 +47,8 @@ type Tab =
   | "tags"
   | "expiry"
   | "payments"
-  | "prospects";
+  | "prospects"
+  | "analytics";
 
 interface Stats {
   total: number;
@@ -140,6 +143,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "features", label: "Özellikler", icon: TagsIcon },
         { key: "requests", label: "Talepler", icon: PhoneCall, badge: stats.requests },
         { key: "reports", label: "Bildirimler", icon: Flag, badge: stats.reports },
+        { key: "analytics", label: "Raporlar", icon: BarChart2 },
       ],
     },
   ];
@@ -254,6 +258,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "features" && <FeatureManager />}
           {tab === "requests" && <ContactRequestsList />}
           {tab === "reports" && <ReportsList />}
+          {tab === "analytics" && <BusinessAnalytics />}
         </main>
       </div>
     </div>
