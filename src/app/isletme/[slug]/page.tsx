@@ -284,6 +284,7 @@ export default async function BusinessPage({
           whatsapp={business.whatsapp}
           mapsUrl={mapsUrl}
           businessName={business.name}
+          businessId={business.id}
         />
 
         <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-start">
