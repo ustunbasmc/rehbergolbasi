@@ -14,8 +14,6 @@ export default function ViewCounter({ businessId }: { businessId: string }) {
       event_type: "profile_view",
       referrer: document.referrer || null,
       device: isMobile ? "mobile" : "desktop",
-    }).then(({ data, error }) => {
-      console.log("business_events insert result:", data, error);
     });
   }, [businessId]);
 
