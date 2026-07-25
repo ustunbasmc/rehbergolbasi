@@ -279,7 +279,7 @@ export default async function BusinessPage({
             </div>
           }
         />
-        <PhotoGrid photos={photos} businessName={business.name} />
+        
         <QuickActions
           phone={business.phone}
           whatsapp={business.whatsapp}
@@ -287,7 +287,7 @@ export default async function BusinessPage({
           businessName={business.name}
           businessId={business.id}
         />
-
+        <PhotoGrid photos={photos} businessName={business.name} />
         <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-start">
           <div className="flex flex-col gap-5 lg:flex-1">
             <div className="card-shadow rounded-2xl border border-line bg-white p-6">
