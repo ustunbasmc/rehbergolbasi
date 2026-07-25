@@ -277,12 +277,12 @@ export default async function HomePage() {
         </div>
       </section>
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
-        {(openNowRestaurants.length > 0 || nobetciEczaneler.length > 0) && (
-          <div className="mb-20 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            <OpenRestaurantsWidget restaurants={openNowRestaurants} />
+        <div className="mb-20 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <OpenRestaurantsWidget restaurants={openNowRestaurants} />
+          {nobetciEczaneler.length > 0 && (
             <NobetciEczaneWidget eczaneler={nobetciEczaneler} />
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Öne çıkanlar */}
         {featured.length > 0 && (
