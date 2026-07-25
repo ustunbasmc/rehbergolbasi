@@ -73,13 +73,19 @@ async function getData() {
   const businesses = allBusinesses ?? [];
 
   const topLevel = categories.filter((c) => !c.parent_id);
+  const resmiKurumlarTop = topLevel.find((c) => c.slug === "resmi-kurumlar");
 
   const topIdFor = (categoryId: string): string => {
     const cat = categories.find((c) => c.id === categoryId);
     if (!cat) return categoryId;
     return cat.parent_id ?? cat.id;
   };
+  const isResmiKurum = (categoryId: string) =>
+  resmiKurumlarTop ? topIdFor(categoryId) === resmiKurumlarTop.id : false;
 
+const commercialBusinesses = businesses.filter((b) => !isResmiKurum(b.category_id));
+const commercialFeatured = (featured ?? []).filter((b) => !isResmiKurum(b.category_id));
+const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_id));
   const categoriesWithBusinesses: CategoryWithBusinesses[] = topLevel.map((cat) => {
     const inThisCategory = businesses.filter((b) => topIdFor(b.category_id) === cat.id);
     return {
@@ -141,19 +147,19 @@ async function getData() {
   }
 
   return {
-    categories: categoriesWithBusinesses,
-    featured: featured ?? [],
-    recent: recent ?? [],
-    neighborhoods,
-    popularTags,
-    openNowRestaurants,
-    stats: {
-      businessCount: businesses.length,
-      categoryCount: topLevel.length,
-      neighborhoodCount: neighborhoodCounts.size,
-      totalViews,
-    },
-  };
+  categories: categoriesWithBusinesses,
+  featured: commercialFeatured,
+  recent: commercialRecent,
+  neighborhoods,
+  popularTags,
+  openNowRestaurants,
+  stats: {
+    businessCount: commercialBusinesses.length,
+    categoryCount: topLevel.length - (resmiKurumlarTop ? 1 : 0),
+    neighborhoodCount: neighborhoodCounts.size,
+    totalViews,
+  },
+};
 }
 async function getNobetciEczaneler() {
   try {

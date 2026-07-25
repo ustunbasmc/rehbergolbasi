@@ -5,9 +5,27 @@ import BusinessCard from "@/components/BusinessCard";
 export const revalidate = 60;
 
 async function getData(query?: string) {
-  const [{ data: categories }] = await Promise.all([
-    supabase.from("categories").select("*").order("display_order", { ascending: true })
-  ]);
+  const { data: allCategories } = await supabase
+    .from("categories")
+    .select("*")
+    .order("display_order", { ascending: true });
+
+  const categories = allCategories ?? [];
+  const resmiKurumlar = categories.find(
+    (c) => c.slug === "resmi-kurumlar" && !c.parent_id
+  );
+
+  const excludedCategoryIds = new Set<string>();
+  if (resmiKurumlar) {
+    excludedCategoryIds.add(resmiKurumlar.id);
+    categories
+      .filter((c) => c.parent_id === resmiKurumlar.id)
+      .forEach((c) => excludedCategoryIds.add(c.id));
+  }
+
+  const displayCategories = categories.filter(
+  (c) => !c.parent_id && !excludedCategoryIds.has(c.id)
+);
 
   let businessQuery = supabase
     .from("businesses")
@@ -23,13 +41,16 @@ async function getData(query?: string) {
     );
   }
 
-  const { data: businesses } = await businessQuery;
+  const { data: allBusinesses } = await businessQuery;
+  const businesses = (allBusinesses ?? []).filter(
+    (b) => !excludedCategoryIds.has(b.category_id)
+  );
 
-  return { categories: categories ?? [], businesses: businesses ?? [] };
+  return { categories: displayCategories, businesses };
 }
 
 export default async function BusinessesPage({
-  searchParams
+  searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
