@@ -73,15 +73,13 @@ export default function QuickActions({
         </button>
       )}
       {mapsUrl && (
-        
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={() => window.open(mapsUrl, "_blank")}
           className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-offwhite py-2.5 text-navy transition hover:bg-navy/10"
         >
           <Navigation className="h-[18px] w-[18px]" />
           <span className="text-[11px] font-semibold">Yol Tarifi</span>
-        </a>
+        </button>
       )}
       <button
         onClick={handleShare}
