@@ -30,24 +30,31 @@ export default function PhotoGrid({
 
   return (
     <>
-      <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+      {/* Yatay scroll — Instagram hikaye tarzı */}
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
         {photos.map((photo, i) => (
           <button
             key={photo.id}
             onClick={() => setOpenIndex(i)}
-            className="relative aspect-square overflow-hidden rounded-xl bg-offwhite"
+            className="relative h-36 w-24 shrink-0 overflow-hidden rounded-2xl bg-offwhite ring-2 ring-bordo/30 hover:ring-bordo transition"
           >
             <Image
               src={photo.url}
               alt={`${businessName} fotoğraf ${i + 1}`}
               fill
-              sizes="(max-width: 640px) 33vw, 25vw"
+              sizes="96px"
               className="object-cover transition duration-300 hover:scale-105"
             />
+            {/* Hikaye tarzı gradient */}
+            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
+            <span className="absolute bottom-1.5 left-0 right-0 text-center text-[10px] font-semibold text-white">
+              {i + 1} / {photos.length}
+            </span>
           </button>
         ))}
       </div>
 
+      {/* Lightbox */}
       {openIndex !== null && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-navy-dark/80 px-4"
