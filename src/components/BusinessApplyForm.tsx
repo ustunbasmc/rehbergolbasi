@@ -139,12 +139,9 @@ export default function BusinessApplyForm({ categories }: { categories: Category
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (step !== 3) {
-      goNext();
-      return;
-    }
+  if (step !== 3) return;
 
     if (honeypot.trim() !== "") {
       return;
