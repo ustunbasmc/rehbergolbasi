@@ -31,7 +31,14 @@ async function getPharmacies(): Promise<Pharmacy[]> {
       }
     );
     const data = await res.json();
-    return data?.data?.pharmacies ?? [];
+    
+    // API dün/bugün/yarın gruplu array döndürüyor
+    // Sadece bugünün eczanelerini filtrele
+    const today = new Date().toISOString().slice(0, 10);
+    const todayGroup = (data?.data ?? []).find(
+      (g: { date: string; pharmacies: Pharmacy[] }) => g.date === today
+    );
+    return todayGroup?.pharmacies ?? [];
   } catch {
     return [];
   }
