@@ -11,6 +11,7 @@ import OpeningHoursEditor from "@/components/OpeningHoursEditor";
 import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
 import WhatsAppNotifier from "@/components/admin/WhatsAppNotifier";
+import FaqManager from "@/components/admin/FaqManager";
 
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
   ssr: false,
@@ -512,6 +513,7 @@ export default function EditBusinessModal({
           </div>
 
           <GalleryManager businessId={business.id} />
+          <FaqManager businessId={business.id} />
 
           <div className="rounded-lg border border-line bg-offwhite p-3">
             <div className="mb-2 flex items-center gap-1.5">
