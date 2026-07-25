@@ -51,27 +51,33 @@ export default function QuickActions({
   return (
     <div className="relative z-10 -mt-6 flex gap-2 rounded-2xl border border-line bg-white p-2 shadow-[0_4px_20px_rgba(20,33,61,0.12)]">
       {phone && (
-        <a
-          href={`tel:${phone}`}
-          onClick={() => trackClick(businessId, "phone_click")}
-          className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-bordo py-2.5 text-white transition hover:bg-bordo-dark"
-        >
-          <Phone className="h-[18px] w-[18px]" />
-          <span className="text-[11px] font-semibold">Ara</span>
-        </a>
-      )}
+  <button
+    onClick={() => {
+      trackClick(businessId, "phone_click");
+      setTimeout(() => {
+        window.location.href = "tel:" + phone;
+      }, 300);
+    }}
+    className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-bordo py-2.5 text-white transition hover:bg-bordo-dark"
+  >
+    <Phone className="h-[18px] w-[18px]" />
+    <span className="text-[11px] font-semibold">Ara</span>
+  </button>
+)}
       {whatsapp && (
-        <a
-          href={`https://wa.me/${whatsapp.replace(/\D/g, "")}`}
-          onClick={() => trackClick(businessId, "whatsapp_click")} 
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-navy py-2.5 text-white transition hover:bg-navy-dark"
-        >
-          <MessageCircle className="h-[18px] w-[18px]" />
-          <span className="text-[11px] font-semibold">WhatsApp</span>
-        </a>
-      )}
+  <button
+    onClick={() => {
+      trackClick(businessId, "whatsapp_click");
+      setTimeout(() => {
+        window.open("https://wa.me/" + whatsapp.replace(/\D/g, ""), "_blank");
+      }, 300);
+    }}
+    className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-navy py-2.5 text-white transition hover:bg-navy-dark"
+  >
+    <MessageCircle className="h-[18px] w-[18px]" />
+    <span className="text-[11px] font-semibold">WhatsApp</span>
+  </button>
+)}
       {mapsUrl && (
         <a
           href={mapsUrl}
