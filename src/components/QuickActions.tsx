@@ -1,21 +1,21 @@
 "use client";
-
 import { useState } from "react";
 import { Phone, MessageCircle, Navigation, Share2, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-function trackClick(
+async function trackClick(
   businessId: string,
   eventType: "phone_click" | "whatsapp_click"
 ) {
   const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
-  supabase.from("business_events").insert({
+  await supabase.from("business_events").insert({
     business_id: businessId,
     event_type: eventType,
     referrer: document.referrer || null,
     device: isMobile ? "mobile" : "desktop",
   });
 }
+
 export default function QuickActions({
   phone,
   whatsapp,
@@ -27,7 +27,7 @@ export default function QuickActions({
   whatsapp: string | null;
   mapsUrl: string | null;
   businessName: string;
-  businessId: string; 
+  businessId: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -49,34 +49,31 @@ export default function QuickActions({
   return (
     <div className="relative z-10 -mt-6 flex gap-2 rounded-2xl border border-line bg-white p-2 shadow-[0_4px_20px_rgba(20,33,61,0.12)]">
       {phone && (
-  <button
-    onClick={() => {
-      trackClick(businessId, "phone_click");
-      window.location.href = "tel:" + phone;
-    }}
-    className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-bordo py-2.5 text-white transition hover:bg-bordo-dark"
-  >
-    <Phone className="h-[18px] w-[18px]" />
-    <span className="text-[11px] font-semibold">Ara</span>
-  </button>
-)}
+        <button
+          onClick={async () => {
+            await trackClick(businessId, "phone_click");
+            window.location.href = "tel:" + phone;
+          }}
+          className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-bordo py-2.5 text-white transition hover:bg-bordo-dark"
+        >
+          <Phone className="h-[18px] w-[18px]" />
+          <span className="text-[11px] font-semibold">Ara</span>
+        </button>
+      )}
       {whatsapp && (
-  <button
-    onClick={() => {
-      const win = window.open("https://wa.me/" + whatsapp.replace(/\D/g, ""), "_blank");
-      trackClick(businessId, "whatsapp_click");
-      if (!win) {
-        window.location.href = "https://wa.me/" + whatsapp.replace(/\D/g, "");
-      }
-    }}
-    className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-navy py-2.5 text-white transition hover:bg-navy-dark"
-  >
-    <MessageCircle className="h-[18px] w-[18px]" />
-    <span className="text-[11px] font-semibold">WhatsApp</span>
-  </button>
-)}
+        <button
+          onClick={async () => {
+            await trackClick(businessId, "whatsapp_click");
+            window.open("https://wa.me/" + whatsapp.replace(/\D/g, ""), "_blank");
+          }}
+          className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-navy py-2.5 text-white transition hover:bg-navy-dark"
+        >
+          <MessageCircle className="h-[18px] w-[18px]" />
+          <span className="text-[11px] font-semibold">WhatsApp</span>
+        </button>
+      )}
       {mapsUrl && (
-        <a
+        
           href={mapsUrl}
           target="_blank"
           rel="noopener noreferrer"
@@ -90,8 +87,14 @@ export default function QuickActions({
         onClick={handleShare}
         className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-offwhite py-2.5 text-navy transition hover:bg-navy/10"
       >
-        {copied ? <Check className="h-[18px] w-[18px]" /> : <Share2 className="h-[18px] w-[18px]" />}
-        <span className="text-[11px] font-semibold">{copied ? "Kopyalandı" : "Paylaş"}</span>
+        {copied ? (
+          <Check className="h-[18px] w-[18px]" />
+        ) : (
+          <Share2 className="h-[18px] w-[18px]" />
+        )}
+        <span className="text-[11px] font-semibold">
+          {copied ? "Kopyalandı" : "Paylaş"}
+        </span>
       </button>
     </div>
   );
