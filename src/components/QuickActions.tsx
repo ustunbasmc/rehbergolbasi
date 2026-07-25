@@ -4,13 +4,18 @@ import { useState } from "react";
 import { Phone, MessageCircle, Navigation, Share2, Check } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
-function trackClick(businessId: string, eventType: "phone_click" | "whatsapp_click") {
+function trackClick(
+  businessId: string,
+  eventType: "phone_click" | "whatsapp_click"
+) {
   const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
   supabase.from("business_events").insert({
     business_id: businessId,
     event_type: eventType,
     referrer: document.referrer || null,
     device: isMobile ? "mobile" : "desktop",
+  }).then(({ data, error }) => {
+    console.log("trackClick result:", eventType, data, error);
   });
 }
 export default function QuickActions({
