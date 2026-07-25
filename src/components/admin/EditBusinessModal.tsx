@@ -12,6 +12,7 @@ import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
 import WhatsAppNotifier from "@/components/admin/WhatsAppNotifier";
 import FaqManager from "@/components/admin/FaqManager";
+import CoverImageManager from "@/components/admin/CoverImageManager";
 
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
   ssr: false,
@@ -91,7 +92,7 @@ export default function EditBusinessModal({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const [coverUrl, setCoverUrl] = useState<string | null>(business.cover_image_url ?? null);
   useEffect(() => {
     supabase
       .from("business_features")
@@ -511,7 +512,11 @@ export default function EditBusinessModal({
               className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-bordo"
             />
           </div>
-
+          <CoverImageManager
+              businessId={business.id}
+              currentUrl={coverUrl}
+              onUpdated={(url) => setCoverUrl(url)}
+          />
           <GalleryManager businessId={business.id} />
           <FaqManager businessId={business.id} />
 
