@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import NobetciEczaneWidget from "@/components/NobetciEczaneWidget";
 import {
   Search,
   MapPin,
@@ -153,8 +154,28 @@ async function getData() {
     },
   };
 }
+async function getNobetciEczaneler() {
+  try {
+    const res = await fetch(
+      "https://eczaneapi.com/api/v1/pharmacies/on-duty?city=ankara&district=golbasi",
+      {
+        headers: { "X-API-Key": process.env.ECZANE_API_KEY! },
+        next: { revalidate: 3600 },
+      }
+    );
+    const data = await res.json();
+    const today = new Date().toISOString().slice(0, 10);
+    const todayGroup = (data?.data ?? []).find(
+      (g: { date: string; pharmacies: unknown[] }) => g.date === today
+    );
+    return todayGroup?.pharmacies ?? [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function HomePage() {
+  const nobetciEczaneler = await getNobetciEczaneler();
   const { categories, featured, recent, neighborhoods, popularTags, openNowRestaurants, stats } =
     await getData();
 
@@ -248,7 +269,7 @@ export default async function HomePage() {
           })}
         </div>
       </section>
-
+<NobetciEczaneWidget eczaneler={nobetciEczaneler} />
       <div className="mx-auto max-w-6xl px-5 py-16">
         {/* Karnın mı acıktı? */}
         {openNowRestaurants.length > 0 && (
@@ -429,27 +450,6 @@ export default async function HomePage() {
             </div>
           </section>
         )}
-        {/* Nöbetçi Eczane Widget */}
-          <section className="mb-20">
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-red-100 bg-red-50 px-6 py-5">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-bordo text-white text-xl">
-                  💊
-                </div>
-              <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-bordo">Gölbaşı</p>
-        <h3 className="font-display text-lg font-bold text-navy">Nöbetçi Eczane</h3>
-        <p className="text-sm text-ink/60">Bugün açık eczaneleri gör, yol tarifi al</p>
-      </div>
-    </div>
-    <Link
-      href="/nobetci-eczane"
-      className="shrink-0 rounded-full bg-bordo px-5 py-2.5 text-sm font-bold text-white hover:bg-bordo-dark"
-    >
-      Eczaneleri Gör →
-    </Link>
-  </div>
-</section>
         {/* Nasıl çalışır */}
         <section className="mb-20 grid gap-6 sm:grid-cols-3">
           {[
