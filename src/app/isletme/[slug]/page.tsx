@@ -27,6 +27,7 @@ import CopyButton from "@/components/CopyButton";
 import MenuSection from "@/components/MenuSection";
 import FaqAccordion from "@/components/FaqAccordion";
 import type { OpeningHours } from "@/lib/types";
+import PhotoGrid from "@/components/PhotoGrid";
 
 export const revalidate = 60;
 
@@ -278,7 +279,7 @@ export default async function BusinessPage({
             </div>
           }
         />
-
+        <PhotoGrid photos={photos} businessName={business.name} />
         <QuickActions
           phone={business.phone}
           whatsapp={business.whatsapp}
