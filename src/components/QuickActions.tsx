@@ -14,8 +14,6 @@ function trackClick(
     event_type: eventType,
     referrer: document.referrer || null,
     device: isMobile ? "mobile" : "desktop",
-  }).then(({ data, error }) => {
-    console.log("trackClick result:", eventType, data, error);
   });
 }
 export default function QuickActions({
