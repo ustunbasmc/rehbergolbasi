@@ -37,13 +37,22 @@ export default function OtobusSaatleriPage() {
         Gölbaşı'ndan Ankara merkeze giden EGO otobüs hatları.
       </p>
 
-      <div className="mb-8 rounded-2xl border border-line bg-white p-5">
-        <h2 className="mb-3 text-sm font-bold text-navy">Canlı Otobüs Takibi (Test)</h2>
-        <iframe
-          src="https://www.ego.gov.tr/otobusnerede"
-          className="h-[500px] w-full rounded-lg border border-line"
-          title="EGO Otobüs Nerede"
-        />
+      <div className="mb-8 rounded-2xl border border-line bg-bordo p-6 text-center">
+        <Bus className="mx-auto mb-3 h-8 w-8 text-white" />
+        <h2 className="mb-2 font-display text-lg font-bold text-white">
+          Otobüsünüz Nerede?
+        </h2>
+        <p className="mb-4 text-sm text-white/80">
+          Hat veya durak numaranızı girerek otobüsünüzün anlık konumunu EGO'nun resmi sisteminden takip edin.
+        </p>
+        <Link
+          href="https://www.ego.gov.tr/otobusnerede"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-bordo hover:bg-white/90"
+        >
+          <ExternalLink className="h-4 w-4" /> Canlı Takip Et
+        </Link>
       </div>
 
       <div className="flex flex-col gap-3">
