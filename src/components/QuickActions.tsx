@@ -52,9 +52,7 @@ export default function QuickActions({
   <button
     onClick={() => {
       trackClick(businessId, "phone_click");
-      setTimeout(() => {
-        window.location.href = "tel:" + phone;
-      }, 300);
+      window.location.href = "tel:" + phone;
     }}
     className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-bordo py-2.5 text-white transition hover:bg-bordo-dark"
   >
@@ -65,10 +63,11 @@ export default function QuickActions({
       {whatsapp && (
   <button
     onClick={() => {
+      const win = window.open("https://wa.me/" + whatsapp.replace(/\D/g, ""), "_blank");
       trackClick(businessId, "whatsapp_click");
-      setTimeout(() => {
-        window.open("https://wa.me/" + whatsapp.replace(/\D/g, ""), "_blank");
-      }, 300);
+      if (!win) {
+        window.location.href = "https://wa.me/" + whatsapp.replace(/\D/g, "");
+      }
     }}
     className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-navy py-2.5 text-white transition hover:bg-navy-dark"
   >
