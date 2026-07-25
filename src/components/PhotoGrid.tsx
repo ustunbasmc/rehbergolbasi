@@ -36,14 +36,14 @@ export default function PhotoGrid({
           <button
             key={photo.id}
             onClick={() => setOpenIndex(i)}
-            className="relative h-36 w-24 shrink-0 overflow-hidden rounded-2xl bg-offwhite ring-2 ring-bordo/30 hover:ring-bordo transition"
+            className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-offwhite ring-2 ring-bordo/30 hover:ring-bordo transition"
           >
             <Image
               src={photo.url}
               alt={`${businessName} fotoğraf ${i + 1}`}
               fill
               sizes="96px"
-              className="object-cover transition duration-300 hover:scale-105"
+              className="object-cover"
             />
             {/* Hikaye tarzı gradient */}
             <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
