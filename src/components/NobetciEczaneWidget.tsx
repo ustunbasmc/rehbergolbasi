@@ -15,7 +15,7 @@ export default function NobetciEczaneWidget({ eczaneler }: { eczaneler: Eczane[]
   if (eczaneler.length === 0) return null;
 
   return (
-    <section className="mb-20 overflow-hidden rounded-3xl bg-bordo px-6 py-10 sm:px-10">
+    <section className="overflow-hidden rounded-3xl bg-bordo px-6 py-10 sm:px-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="mb-1 flex items-center gap-1.5">

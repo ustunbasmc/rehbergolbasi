@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import NobetciEczaneWidget from "@/components/NobetciEczaneWidget";
+import OpenRestaurantsWidget from "@/components/OpenRestaurantsWidget";
 import {
   Search,
   MapPin,
@@ -269,87 +270,12 @@ export default async function HomePage() {
           })}
         </div>
       </section>
-<NobetciEczaneWidget eczaneler={nobetciEczaneler} />
-      <div className="mx-auto max-w-6xl px-5 py-16">
-        {/* Karnın mı acıktı? */}
-        {openNowRestaurants.length > 0 && (
-          <section className="mb-20 overflow-hidden rounded-3xl bg-navy px-6 py-10 sm:px-10">
-            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <div className="mb-1 flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-green-400" />
-                  <span className="text-xs font-bold uppercase tracking-wide text-green-300">
-                    Şu an açık
-                  </span>
-                </div>
-                <h2 className="flex items-center gap-2 font-display text-2xl font-bold text-white">
-                  <UtensilsCrossed className="h-5 w-5 text-gold" /> Karnın mı Acıktı?
-                </h2>
-                <p className="text-sm text-white/60">
-                  Şu an açık olan restoranlar — tek tuşla ara, paketini söyle.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {openNowRestaurants.map((b) => (
-                <div
-                  key={b.id}
-                  className={`flex items-center gap-3 rounded-2xl bg-white p-3 ${
-                    b.tier === "premium" ? "ring-2 ring-gold" : ""
-                  }`}
-                >
-                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-offwhite">
-                    {b.cover_image_url ? (
-                      <Image
-                        src={b.cover_image_url}
-                        alt={b.name}
-                        fill
-                        sizes="56px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center font-display text-lg font-bold text-navy/20">
-                        {b.name.charAt(0)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Link
-                      href={`/isletme/${b.slug}`}
-                      className="flex items-center gap-1 truncate text-sm font-bold text-navy hover:text-bordo"
-                    >
-                      {b.tier === "premium" && <Star className="h-3 w-3 shrink-0 fill-gold text-gold" />}
-                      <span className="truncate">{b.name}</span>
-                    </Link>
-                    {b.neighborhood && <p className="truncate text-xs text-ink/50">{b.neighborhood}</p>}
-                  </div>
-                  <div className="flex shrink-0 gap-1.5">
-                    {b.phone && (
-                      <a
-                        href={`tel:${b.phone}`}
-                        aria-label={`${b.name} işletmesini ara`}
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-bordo text-white transition-colors hover:bg-bordo-dark"
-                      >
-                        <Phone className="h-4 w-4" />
-                      </a>
-                    )}
-                    {b.whatsapp && (
-                      <a
-                        href={`https://wa.me/${b.whatsapp.replace(/\D/g, "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label={`${b.name} işletmesine WhatsApp'tan yaz`}
-                        className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/10 text-navy transition-colors hover:bg-navy hover:text-white"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
+    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
+        {(openNowRestaurants.length > 0 || nobetciEczaneler.length > 0) && (
+          <div className="mb-20 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <OpenRestaurantsWidget restaurants={openNowRestaurants} />
+            <NobetciEczaneWidget eczaneler={nobetciEczaneler} />
+          </div>
         )}
 
         {/* Öne çıkanlar */}
