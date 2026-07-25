@@ -4,7 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Plus, Search } from "lucide-react";
+import { Menu, X, Plus, Search, ChevronDown } from "lucide-react";
+
+const FAYDALI_BILGILER = [
+  { href: "/nobetci-eczane", label: "Nöbetçi Eczane" },
+  { href: "/isletmeler/resmi-kurumlar", label: "Resmi Kurumlar" },
+  { href: "/otobus-saatleri", label: "Otobüs Saatleri" },
+];
 
 export default function Header() {
   const router = useRouter();
@@ -12,7 +18,10 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileFaydaliOpen, setMobileFaydaliOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function onScroll() {
@@ -25,6 +34,16 @@ export default function Header() {
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,8 +59,8 @@ export default function Header() {
         scrolled ? "shadow-[0_6px_20px_rgba(20,33,61,0.10)]" : ""
       }`}
     >
-      <div className="mx-auto grid max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-3 px-5 py-2.5 sm:py-3">
-        {/* Sol: menü */}
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-2.5 sm:py-3">
+        {/* Sol: mobil menü + logo + nav */}
         <div className="flex items-center gap-6">
           <button
             onClick={() => setOpen(!open)}
@@ -50,8 +69,20 @@ export default function Header() {
           >
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
+
+          <Link href="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
+            <Image
+              src="/logo.png"
+              alt="RehberGölbaşı"
+              width={220}
+              height={62}
+              priority
+              className="h-10 w-auto sm:h-12"
+            />
+          </Link>
+
           <nav className="hidden items-center gap-6 font-body text-sm font-semibold text-ink sm:flex">
-            <Link href="https://www.rehbergolbasi.com" className="group relative py-1 transition-colors hover:text-bordo">
+            <Link href="/" className="group relative py-1 transition-colors hover:text-bordo">
               Anasayfa
               <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
             </Link>
@@ -59,35 +90,40 @@ export default function Header() {
               İşletmeler
               <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
             </Link>
+
+            <div ref={dropdownRef} className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-1 py-1 transition-colors hover:text-bordo"
+              >
+                Faydalı Bilgiler
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+              {dropdownOpen && (
+                <div className="absolute left-0 top-full mt-2 flex w-56 flex-col overflow-hidden rounded-xl border border-line bg-white py-1.5 shadow-lg">
+                  {FAYDALI_BILGILER.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setDropdownOpen(false)}
+                      className="px-4 py-2.5 text-sm font-semibold text-ink hover:bg-offwhite hover:text-bordo"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <Link href="/hakkimizda" className="group relative py-1 transition-colors hover:text-bordo">
               Hakkımızda
-              <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
-            </Link>
-            <Link href="/isletmeler/resmi-kurumlar" className="group relative py-1 transition-colors hover:text-bordo">
-  Resmi Kurumlar
-  <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
-</Link>
-            <Link href="/nobetci-eczane" className="group relative py-1 transition-colors hover:text-bordo">
-              Nöbetçi Eczane
               <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
             </Link>
           </nav>
         </div>
 
-        {/* Orta: logo */}
-        <Link href="/" className="flex items-center justify-center" onClick={() => setOpen(false)}>
-          <Image
-            src="/logo.png"
-            alt="RehberGölbaşı"
-            width={220}
-            height={62}
-            priority
-            className="h-10 w-auto sm:h-12"
-          />
-        </Link>
-
         {/* Sağ: arama + CTA */}
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex shrink-0 items-center justify-end gap-2">
           {searchOpen ? (
             <form onSubmit={handleSearchSubmit} className="flex items-center">
               <input
@@ -127,26 +163,35 @@ export default function Header() {
           >
             İşletmeler
           </Link>
+
+          <button
+            onClick={() => setMobileFaydaliOpen(!mobileFaydaliOpen)}
+            className="flex items-center justify-between rounded-lg px-3 py-3 text-left font-semibold text-ink hover:bg-offwhite"
+          >
+            Faydalı Bilgiler
+            <ChevronDown className={`h-4 w-4 transition-transform ${mobileFaydaliOpen ? "rotate-180" : ""}`} />
+          </button>
+          {mobileFaydaliOpen && (
+            <div className="ml-3 flex flex-col gap-1 border-l-2 border-line pl-3">
+              {FAYDALI_BILGILER.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-2.5 text-sm font-semibold text-ink/70 hover:bg-offwhite"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          )}
+
           <Link
             href="/hakkimizda"
             onClick={() => setOpen(false)}
             className="rounded-lg px-3 py-3 font-semibold text-ink hover:bg-offwhite"
           >
             Hakkımızda
-          </Link>
-          <Link
-            href="/nobetci-eczane"
-            onClick={() => setOpen(false)}
-            className="rounded-lg px-3 py-3 font-semibold text-ink hover:bg-offwhite"
-          >
-            <Link
-  href="/isletmeler/resmi-kurumlar"
-  onClick={() => setOpen(false)}
-  className="rounded-lg px-3 py-3 font-semibold text-ink hover:bg-offwhite"
->
-  Resmi Kurumlar
-</Link>
-            Nöbetçi Eczane
           </Link>
           <Link
             href="/isletme-ekle"
