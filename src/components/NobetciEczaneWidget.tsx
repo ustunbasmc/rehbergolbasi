@@ -39,13 +39,13 @@ export default function NobetciEczaneWidget({ eczaneler }: { eczaneler: Eczane[]
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-3">
         {eczaneler.map((eczane) => (
           <div
             key={eczane.id}
-            className="flex items-center gap-3 rounded-2xl bg-white p-3"
+            className="flex min-w-0 items-center gap-3 rounded-2xl bg-white p-3"
           >
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-bordo/10 text-2xl">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-bordo/10 text-xl">
               💊
             </div>
             <div className="min-w-0 flex-1">
@@ -66,7 +66,11 @@ export default function NobetciEczaneWidget({ eczaneler }: { eczaneler: Eczane[]
               )}
               {eczane.location && (
                 <button
-                  onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${eczane.location!.latitude},${eczane.location!.longitude}`, "_blank")}
+                  onClick={() => window.open(
+                    "https://www.google.com/maps/dir/?api=1&destination=" +
+                    eczane.location!.latitude + "," + eczane.location!.longitude,
+                    "_blank"
+                  )}
                   aria-label={`${eczane.name} eczanesine yol tarifi`}
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/10 text-navy transition-colors hover:bg-navy hover:text-white"
                 >
