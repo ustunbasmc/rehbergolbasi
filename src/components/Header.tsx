@@ -63,6 +63,10 @@ export default function Header() {
               Hakkımızda
               <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
             </Link>
+            <Link href="/nobetci-eczane" className="group relative py-1 transition-colors hover:text-bordo">
+              Nöbetçi Eczane
+              <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
+            </Link>
           </nav>
         </div>
 
@@ -125,6 +129,13 @@ export default function Header() {
             className="rounded-lg px-3 py-3 font-semibold text-ink hover:bg-offwhite"
           >
             Hakkımızda
+          </Link>
+          <Link
+            href="/nobetci-eczane"
+            onClick={() => setOpen(false)}
+            className="rounded-lg px-3 py-3 font-semibold text-ink hover:bg-offwhite"
+          >
+            Nöbetçi Eczane
           </Link>
           <Link
             href="/isletme-ekle"
