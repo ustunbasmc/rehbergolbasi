@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import Image from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -30,34 +29,33 @@ export default function PhotoGrid({
 
   return (
     <>
-      {/* Yatay scroll — Instagram hikaye tarzı */}
-      <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
         {photos.map((photo, i) => (
           <button
             key={photo.id}
             onClick={() => setOpenIndex(i)}
-            className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-offwhite ring-2 ring-bordo/30 hover:ring-bordo transition"
+            className="shrink-0 p-[2px] rounded-full"
+            style={{
+              background: "linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)",
+            }}
           >
-            <Image
-              src={photo.url}
-              alt={`${businessName} fotoğraf ${i + 1}`}
-              fill
-              sizes="96px"
-              className="object-cover"
-            />
-            {/* Hikaye tarzı gradient */}
-            <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/40 to-transparent" />
-            <span className="absolute bottom-1.5 left-0 right-0 text-center text-[10px] font-semibold text-white">
-              {i + 1} / {photos.length}
-            </span>
+            <div className="relative h-20 w-20 overflow-hidden rounded-full ring-2 ring-white bg-white">
+              <Image
+                src={photo.url}
+                alt={`${businessName} fotoğraf ${i + 1}`}
+                fill
+                sizes="80px"
+                className="object-cover"
+                quality={90}
+              />
+            </div>
           </button>
         ))}
       </div>
 
-      {/* Lightbox */}
       {openIndex !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-navy-dark/80 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4"
           onClick={() => setOpenIndex(null)}
           role="dialog"
           aria-modal="true"
@@ -79,15 +77,16 @@ export default function PhotoGrid({
           )}
 
           <div
-            className="relative h-[70vh] w-full max-w-3xl"
+            className="relative h-[80vh] w-full max-w-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <Image
               src={photos[openIndex].url}
               alt={`${businessName} fotoğraf ${openIndex + 1}`}
               fill
-              sizes="(max-width: 640px) 100vw, 768px"
+              sizes="(max-width: 640px) 100vw, 672px"
               className="object-contain"
+              quality={95}
             />
           </div>
 
@@ -100,8 +99,16 @@ export default function PhotoGrid({
             </button>
           )}
 
-          <div className="absolute bottom-5 text-xs font-semibold text-white/60">
-            {openIndex + 1} / {photos.length}
+          <div className="absolute bottom-5 flex gap-1.5">
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); setOpenIndex(i); }}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === openIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"
+                }`}
+              />
+            ))}
           </div>
         </div>
       )}
