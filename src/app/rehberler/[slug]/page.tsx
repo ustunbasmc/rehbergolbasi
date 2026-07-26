@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Clock, ArrowLeft, BookOpen } from "lucide-react";
+import GuideTableOfContents from "@/components/GuideTableOfContents";
 
 export const revalidate = 60;
 
@@ -247,26 +248,7 @@ export default async function GuideDetailPage({
         )}
 
         {/* İçindekiler */}
-        {headings.length > 2 && (
-          <div className="mb-10 rounded-2xl border border-line bg-offwhite p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <BookOpen className="h-4 w-4 text-bordo" />
-              <p className="text-sm font-bold text-navy">İçindekiler</p>
-            </div>
-            <ul className="flex flex-col gap-2">
-              {headings.map((h) => (
-                <li key={h.id} className={h.level === 3 ? "ml-5" : ""}>
-                  <Link
-                    href={`#${h.id}`}
-                    className={`text-sm hover:underline ${h.level === 2 ? "font-semibold text-navy" : "text-bordo"}`}
-                  >
-                    {h.level === 2 ? "→ " : "· "}{h.text}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+<GuideTableOfContents headings={headings} />
 
         {/* İçerik */}
         <article
