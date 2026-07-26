@@ -102,29 +102,33 @@ function parseTable(block: string): string {
   const headers = parseRow(lines[0]);
   const rows = lines.slice(2).map(parseRow);
 
-  const headerHtml = headers.map((h) => `<th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-ink/50 bg-offwhite border-b border-line">${h}</th>`).join("");
-  const rowsHtml = rows.map((row) =>
-    `<tr class="border-b border-line hover:bg-offwhite/50 transition">${row.map((cell) => `<td class="px-4 py-3 text-sm text-ink/80">${cell}</td>`).join("")}</tr>`
-  ).join("");
+  const headerHtml = headers
+    .map((h) => `<th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-wide text-ink/50 bg-offwhite border-b border-line">${h}</th>`)
+    .join("");
+  const rowsHtml = rows
+    .map((row) => `<tr class="border-b border-line hover:bg-offwhite/50 transition">${row.map((cell) => `<td class="px-4 py-3 text-sm text-ink/80">${cell}</td>`).join("")}</tr>`)
+    .join("");
 
   return `<div class="my-6 overflow-x-auto rounded-xl border border-line shadow-sm"><table class="w-full text-sm"><thead><tr>${headerHtml}</tr></thead><tbody>${rowsHtml}</tbody></table></div>`;
 }
 
 function markdownToHtml(content: string): string {
-  // Önce tablo bloklarını bul ve dönüştür
   const tableBlockRegex = /(\|.+\|\n\|[-|\s]+\|\n(?:\|.+\|\n?)*)/g;
   let result = content.replace(tableBlockRegex, (match) => parseTable(match));
 
-  // Blockquote (> ile başlayan satırlar)
-  result = result.replace(
-    /^> (.+)$/gm,
-    `<div class="my-4 flex gap-3 rounded-xl border border-gold/30 bg-gold/5 p-4"><span class="mt-0.5 text-gold-dark">💡</span><p class="text-sm text-ink/70 leading-relaxed">$1</p></div>`
-  );
-
-  // ⚠️ işaretli blockquote'lar
   result = result.replace(
     /^> ⚠️ (.+)$/gm,
     `<div class="my-4 flex gap-3 rounded-xl border border-bordo/30 bg-bordo/5 p-4"><span class="mt-0.5">⚠️</span><p class="text-sm text-ink/70 leading-relaxed">$1</p></div>`
+  );
+
+  result = result.replace(
+    /^> 💡 (.+)$/gm,
+    `<div class="my-4 flex gap-3 rounded-xl border border-gold/30 bg-gold/5 p-4"><span class="mt-0.5">💡</span><p class="text-sm text-ink/70 leading-relaxed">$1</p></div>`
+  );
+
+  result = result.replace(
+    /^> (.+)$/gm,
+    `<div class="my-4 flex gap-3 rounded-xl border border-gold/30 bg-gold/5 p-4"><span class="mt-0.5 text-gold-dark">💡</span><p class="text-sm text-ink/70 leading-relaxed">$1</p></div>`
   );
 
   result = result
@@ -181,7 +185,7 @@ export default async function GuideDetailPage({
 
       {/* Kapak görseli */}
       {guide.cover_image_url && (
-        <div className="relative h-72 w-full sm:h-[480px]">
+        <div className="relative h-72 w-full sm:h-[420px]">
           <Image
             src={guide.cover_image_url}
             alt={guide.title}
@@ -190,65 +194,38 @@ export default async function GuideDetailPage({
             sizes="100vw"
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 px-6 pb-10 sm:px-12">
-            <div className="mx-auto max-w-4xl">
-              <div className="mb-3 flex items-center gap-3 text-xs text-white/70">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" /> {guide.read_time} dk okuma
-                </span>
-                <span>·</span>
-                <span>{publishDate}</span>
-              </div>
-              <h1 className="font-display text-3xl font-bold leading-tight text-white sm:text-5xl">
-                {guide.title}
-              </h1>
-              {guide.excerpt && (
-                <p className="mt-3 max-w-2xl text-base text-white/80 leading-relaxed">{guide.excerpt}</p>
-              )}
-            </div>
-          </div>
         </div>
       )}
 
       <div className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-12">
-        {/* Kapak görseli yoksa başlık burada */}
-        {!guide.cover_image_url && (
-          <div className="mb-8">
-            <Link
-              href="/rehberler"
-              className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
-            >
-              <ArrowLeft className="h-4 w-4" /> Tüm Rehberler
-            </Link>
-            <div className="mb-3 flex items-center gap-3 text-xs text-ink/40">
-              <span className="flex items-center gap-1">
-                <Clock className="h-3.5 w-3.5" /> {guide.read_time} dk okuma
-              </span>
-              <span>·</span>
-              <span>{publishDate}</span>
-            </div>
-            <h1 className="font-display text-3xl font-bold leading-tight text-navy sm:text-4xl">
-              {guide.title}
-            </h1>
-            {guide.excerpt && (
-              <p className="mt-4 text-lg text-ink/60 leading-relaxed">{guide.excerpt}</p>
-            )}
-          </div>
-        )}
 
-        {/* Kapak görseli varsa geri link */}
-        {guide.cover_image_url && (
-          <Link
-            href="/rehberler"
-            className="mb-8 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
-          >
-            <ArrowLeft className="h-4 w-4" /> Tüm Rehberler
-          </Link>
-        )}
+        {/* Geri link */}
+        <Link
+          href="/rehberler"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
+        >
+          <ArrowLeft className="h-4 w-4" /> Tüm Rehberler
+        </Link>
+
+        {/* Başlık & meta */}
+        <div className="mb-8">
+          <div className="mb-3 flex items-center gap-3 text-xs text-ink/40">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" /> {guide.read_time} dk okuma
+            </span>
+            <span>·</span>
+            <span>{publishDate}</span>
+          </div>
+          <h1 className="font-display text-3xl font-bold leading-tight text-navy sm:text-4xl">
+            {guide.title}
+          </h1>
+          {guide.excerpt && (
+            <p className="mt-4 text-lg text-ink/60 leading-relaxed">{guide.excerpt}</p>
+          )}
+        </div>
 
         {/* İçindekiler */}
-<GuideTableOfContents headings={headings} />
+        <GuideTableOfContents headings={headings} />
 
         {/* İçerik */}
         <article
