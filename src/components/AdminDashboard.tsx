@@ -16,6 +16,7 @@ import PaymentsList from "@/components/admin/PaymentsList";
 import ProspectsList from "@/components/admin/ProspectsList";
 import Overview from "@/components/admin/Overview";
 import BusinessAnalytics from "@/components/admin/BusinessAnalytics";
+import GuidesList from "@/components/admin/GuidesList";
 import {
   Clock,
   CheckCircle2,
@@ -30,6 +31,7 @@ import {
   PhoneCall,
   Hash,
   AlertTriangle,
+  BookOpen,
   Wallet,
   UserPlus,
   BarChart2,
@@ -48,6 +50,7 @@ type Tab =
   | "expiry"
   | "payments"
   | "prospects"
+  | "guides"
   | "analytics";
 
 interface Stats {
@@ -141,6 +144,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "categories", label: "Kategoriler", icon: LayoutGrid },
         { key: "tags", label: "Etiketler", icon: Hash },
         { key: "features", label: "Özellikler", icon: TagsIcon },
+        { key: "guides", label: "Rehberler", icon: BookOpen },
         { key: "requests", label: "Talepler", icon: PhoneCall, badge: stats.requests },
         { key: "reports", label: "Bildirimler", icon: Flag, badge: stats.reports },
         { key: "analytics", label: "Raporlar", icon: BarChart2 },
@@ -256,6 +260,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "categories" && <CategoryManager />}
           {tab === "tags" && <TagManager />}
           {tab === "features" && <FeatureManager />}
+          {tab === "guides" && <GuidesList />}
           {tab === "requests" && <ContactRequestsList />}
           {tab === "reports" && <ReportsList />}
           {tab === "analytics" && <BusinessAnalytics />}

@@ -9,6 +9,7 @@ import {
   Users,
   Sparkles,
   Star,
+  BookOpen,
   Building2,
   LayoutGrid,
   Eye,
@@ -37,7 +38,16 @@ interface OpenNowBusiness {
   neighborhood: string | null;
   tier: "basic" | "premium";
 }
-
+async function getLatestGuides() {
+  const { data } = await supabase
+    .from("guides")
+    .select("id, title, slug, excerpt, cover_image_url, read_time, featured, created_at")
+    .eq("published", true)
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(3);
+  return data ?? [];
+}
 async function getData() {
   const [{ data: allCategories }, { data: allBusinesses }, { data: featured }, { data: recent }, { data: tagLinks }] =
     await Promise.all([
@@ -167,7 +177,7 @@ async function getNobetciEczaneler() {
       "https://eczaneapi.com/api/v1/pharmacies/on-duty?city=ankara&district=golbasi",
       {
         headers: { "X-API-Key": process.env.ECZANE_API_KEY! },
-        next: { revalidate: 3600 },
+        next: { revalidate: 21600 },
       }
     );
     const data = await res.json();
@@ -182,6 +192,7 @@ async function getNobetciEczaneler() {
 }
 
 export default async function HomePage() {
+  const latestGuides = await getLatestGuides();
   const nobetciEczaneler = await getNobetciEczaneler();
   const { categories, featured, recent, neighborhoods, popularTags, openNowRestaurants, stats } =
     await getData();
@@ -382,6 +393,77 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+        {/* Son Rehberler */}
+{latestGuides.length > 0 && (
+  <section className="mb-20">
+    <div className="mb-6 flex items-center justify-between">
+      <div>
+        <div className="mb-1 flex items-center gap-1.5">
+          <BookOpen className="h-4 w-4 text-bordo" />
+          <span className="text-xs font-bold uppercase tracking-wide text-bordo">
+            Rehberler
+          </span>
+        </div>
+        <h2 className="font-display text-2xl font-bold text-navy">
+          Gölbaşı Hakkında Her Şey
+        </h2>
+        <p className="text-sm text-ink/60">
+          Gölbaşı'nda yaşamı kolaylaştıran rehber yazıları.
+        </p>
+      </div>
+      <Link
+        href="/rehberler"
+        className="text-sm font-semibold text-bordo hover:underline"
+      >
+        Tümünü Gör →
+      </Link>
+    </div>
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {latestGuides.map((guide) => (
+        <Link
+          key={guide.id}
+          href={`/rehberler/${guide.slug}`}
+          className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:shadow-lg"
+        >
+          <div className="relative h-44 w-full bg-offwhite">
+            {guide.cover_image_url ? (
+              <Image
+                src={guide.cover_image_url}
+                alt={guide.title}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center">
+                <BookOpen className="h-8 w-8 text-ink/10" />
+              </div>
+            )}
+            {guide.featured && (
+              <span className="absolute left-3 top-3 rounded-full bg-gold px-2.5 py-1 text-xs font-bold text-gold-dark">
+                Öne Çıkan
+              </span>
+            )}
+          </div>
+          <div className="flex flex-1 flex-col p-4">
+            <h3 className="mb-2 font-display text-base font-bold text-navy transition-colors group-hover:text-bordo line-clamp-2">
+              {guide.title}
+            </h3>
+            {guide.excerpt && (
+              <p className="mb-3 flex-1 text-sm text-ink/60 line-clamp-2">
+                {guide.excerpt}
+              </p>
+            )}
+            <div className="flex items-center gap-1.5 text-xs text-ink/40">
+              <Clock className="h-3.5 w-3.5" />
+              {guide.read_time} dk okuma
+            </div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  </section>
+)}
         {/* Nasıl çalışır */}
         <section className="mb-20 grid gap-6 sm:grid-cols-3">
           {[
