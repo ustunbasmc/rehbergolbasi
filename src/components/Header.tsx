@@ -147,6 +147,10 @@ export default function Header() {
               <Search className="h-5 w-5" />
             </button>
           )}
+          <Link href="/isletmeler-icin" className="group relative py-1 transition-colors hover:text-bordo">
+  İşletmeniz İçin
+  <span className="absolute inset-x-0 -bottom-0.5 h-0.5 origin-left scale-x-0 bg-bordo transition-transform duration-200 group-hover:scale-x-100" />
+</Link>
           <Link
             href="/isletme-ekle"
             className="hidden items-center gap-1.5 rounded-full bg-bordo px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-bordo-dark hover:shadow-md sm:flex"
@@ -202,6 +206,13 @@ export default function Header() {
           >
             Hakkımızda
           </Link>
+          <Link
+  href="/isletmeler-icin"
+  onClick={() => setOpen(false)}
+  className="rounded-lg px-3 py-3 font-semibold text-ink hover:bg-offwhite"
+>
+  İşletmeniz İçin
+</Link>
           <Link
             href="/isletme-ekle"
             onClick={() => setOpen(false)}
