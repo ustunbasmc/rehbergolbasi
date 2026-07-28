@@ -32,22 +32,18 @@ export default function CookieConsent() {
 
   return (
     <>
-      {consent === "accepted" && (
-        <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-            strategy="afterInteractive"
-          />
-          <Script id="ga-init" strategy="afterInteractive">
-            {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_ID}', { anonymize_ip: true });
-            `}
-          </Script>
-        </>
-      )}
+      <Script
+  src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+  strategy="afterInteractive"
+/>
+<Script id="ga-init" strategy="afterInteractive">
+  {`
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', '${GA_ID}', { anonymize_ip: true });
+  `}
+</Script>
 
       {showBanner && (
         <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-white p-4 shadow-[0_-4px_20px_rgba(20,33,61,0.12)] sm:p-5">

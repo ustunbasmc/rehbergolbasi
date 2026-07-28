@@ -91,14 +91,7 @@ export default function RootLayout({
   src="https://www.googletagmanager.com/gtag/js?id=G-L482G7RJWM"
   strategy="afterInteractive"
 />
-<Script id="google-analytics" strategy="afterInteractive">
-  {`
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-L482G7RJWM');
-  `}
-</Script>
+
       <body className="min-h-full flex flex-col font-body">
         <script
           type="application/ld+json"
