@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Clock, ArrowLeft, BookOpen } from "lucide-react";
 import GuideTableOfContents from "@/components/GuideTableOfContents";
+import GuideSidebar from "@/components/GuideSidebar";
 
 export const revalidate = 60;
 
@@ -197,56 +198,62 @@ export default async function GuideDetailPage({
         </div>
       )}
 
-      <div className="mx-auto max-w-4xl px-5 py-8 sm:px-6 sm:py-12">
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-12">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+          <div className="min-w-0 flex-1 lg:max-w-3xl">
 
-        {/* Geri link */}
-        <Link
-          href="/rehberler"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
-        >
-          <ArrowLeft className="h-4 w-4" /> Tüm Rehberler
-        </Link>
-
-        {/* Başlık & meta */}
-        <div className="mb-8">
-          <div className="mb-3 flex items-center gap-3 text-xs text-ink/40">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" /> {guide.read_time} dk okuma
-            </span>
-            <span>·</span>
-            <span>{publishDate}</span>
-          </div>
-          <h1 className="font-display text-3xl font-bold leading-tight text-navy sm:text-4xl">
-            {guide.title}
-          </h1>
-          {guide.excerpt && (
-            <p className="mt-4 text-lg text-ink/60 leading-relaxed">{guide.excerpt}</p>
-          )}
-        </div>
-
-        {/* İçindekiler */}
-        <GuideTableOfContents headings={headings} />
-
-        {/* İçerik */}
-        <article
-          className="min-w-0"
-          dangerouslySetInnerHTML={{ __html: htmlContent }}
-        />
-
-        {/* Alt bilgi */}
-        <div className="mt-16 border-t border-line pt-8">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-bold text-navy">RehberGölbaşı</p>
-              <p className="text-xs text-ink/50">Gölbaşı'nın dijital rehberi</p>
-            </div>
+            {/* Geri link */}
             <Link
               href="/rehberler"
-              className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-navy hover:border-bordo hover:text-bordo"
+              className="mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
             >
-              Diğer Rehberler →
+              <ArrowLeft className="h-4 w-4" /> Tüm Rehberler
             </Link>
+
+            {/* Başlık & meta */}
+            <div className="mb-8">
+              <div className="mb-3 flex items-center gap-3 text-xs text-ink/40">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" /> {guide.read_time} dk okuma
+                </span>
+                <span>·</span>
+                <span>{publishDate}</span>
+              </div>
+              <h1 className="font-display text-3xl font-bold leading-tight text-navy sm:text-4xl">
+                {guide.title}
+              </h1>
+              {guide.excerpt && (
+                <p className="mt-4 text-lg text-ink/60 leading-relaxed">{guide.excerpt}</p>
+              )}
+            </div>
+
+            {/* İçindekiler */}
+            <GuideTableOfContents headings={headings} />
+
+            {/* İçerik */}
+            <article
+              className="min-w-0"
+              dangerouslySetInnerHTML={{ __html: htmlContent }}
+            />
+
+            {/* Alt bilgi */}
+            <div className="mt-16 border-t border-line pt-8">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold text-navy">RehberGölbaşı</p>
+                  <p className="text-xs text-ink/50">Gölbaşı'nın dijital rehberi</p>
+                </div>
+                <Link
+                  href="/rehberler"
+                  className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-navy hover:border-bordo hover:text-bordo"
+                >
+                  Diğer Rehberler →
+                </Link>
+              </div>
+            </div>
           </div>
+
+          <GuideSidebar currentGuideId={guide.id} />
         </div>
       </div>
     </div>
