@@ -8,7 +8,8 @@ import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
 import {
   Plus, Trash2, CheckCircle2, Upload, X, Building2,
-  MapPin, Share2, Sparkles, HelpCircle, ShieldCheck, Rocket,
+  MapPin, Share2, Sparkles, HelpCircle, ShieldCheck, Rocket, 
+  Gauge,
 } from "lucide-react";
 
 function slugify(text: string) {
@@ -161,7 +162,20 @@ export default function NewBusinessForm() {
     setFreeMonths(1);
     setSlugTouched(false);
   }
-
+const completionChecks = [
+  { label: "İşletme adı", done: !!form.name.trim() },
+  { label: "Kategori", done: !!categoryId },
+  { label: "Açıklama", done: form.description.trim().length > 50 },
+  { label: "Telefon veya WhatsApp", done: !!form.phone.trim() || !!form.whatsapp.trim() },
+  { label: "Adres/Mahalle", done: !!form.address.trim() || !!form.neighborhood.trim() },
+  { label: "Kapak fotoğrafı", done: !!coverFile },
+  { label: "En az 1 özellik", done: selectedFeatures.length > 0 },
+  { label: "En az 1 etiket", done: selectedTags.length > 0 },
+  { label: "En az 1 SSS", done: faqs.some((f) => f.question.trim() && f.answer.trim()) },
+];
+const completionScore = Math.round(
+  (completionChecks.filter((c) => c.done).length / completionChecks.length) * 100
+);
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -272,7 +286,39 @@ export default function NewBusinessForm() {
           Bu form üzerinden eklenen işletme direkt onaylı ve yayında olarak kaydedilir.
         </p>
       </div>
-
+<div className="rounded-2xl border border-line bg-white p-4">
+  <div className="mb-2 flex items-center justify-between">
+    <div className="flex items-center gap-1.5">
+      <Gauge className="h-4 w-4 text-bordo" />
+      <span className="text-sm font-bold text-navy">Profil Tamamlanma Oranı</span>
+    </div>
+    <span
+      className={`text-sm font-bold ${
+        completionScore >= 80 ? "text-green-600" : completionScore >= 50 ? "text-gold-dark" : "text-bordo"
+      }`}
+    >
+      %{completionScore}
+    </span>
+  </div>
+  <div className="mb-3 h-2 overflow-hidden rounded-full bg-offwhite">
+    <div
+      className={`h-full rounded-full transition-all duration-300 ${
+        completionScore >= 80 ? "bg-green-500" : completionScore >= 50 ? "bg-gold" : "bg-bordo"
+      }`}
+      style={{ width: `${completionScore}%` }}
+    />
+  </div>
+  <div className="flex flex-wrap gap-1.5">
+    {completionChecks.filter((c) => !c.done).map((c) => (
+      <span
+        key={c.label}
+        className="rounded-full bg-offwhite px-2.5 py-1 text-[11px] font-semibold text-ink/50"
+      >
+        Eksik: {c.label}
+      </span>
+    ))}
+  </div>
+</div>
       {success && (
         <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />

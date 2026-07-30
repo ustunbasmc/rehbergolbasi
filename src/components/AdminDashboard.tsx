@@ -18,8 +18,13 @@ import Overview from "@/components/admin/Overview";
 import BusinessAnalytics from "@/components/admin/BusinessAnalytics";
 import GuidesList from "@/components/admin/GuidesList";
 import NewBusinessForm from "@/components/admin/NewBusinessForm";
+import GlobalSearch from "@/components/admin/GlobalSearch";
+import EditBusinessModal from "@/components/admin/EditBusinessModal";
+import type { Business } from "@/lib/types";
+import MessageTemplates from "@/components/admin/MessageTemplates";
 import {
   Clock,
+  MessageSquareText,
   CheckCircle2,
   XCircle,
   Building2,
@@ -54,6 +59,7 @@ type Tab =
   | "prospects"
   | "guides"
   | "analytics"
+  | "templates"
   | "new-business";
 
 interface Stats {
@@ -68,6 +74,7 @@ interface Stats {
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>("overview");
+  const [searchSelectedBusiness, setSearchSelectedBusiness] = useState<Business | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<Stats>({
     total: 0,
@@ -121,6 +128,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     await supabase.auth.signOut();
     onLogout();
   }
+  async function handleSearchSelect(businessId: string) {
+  const { data } = await supabase
+    .from("businesses")
+    .select("*, category:categories(id, name, slug)")
+    .eq("id", businessId)
+    .single();
+  if (data) setSearchSelectedBusiness(data);
+}
 
   type NavItem = { key: Tab; label: string; icon: React.ElementType; badge?: number };
   type NavSection = { title: string; items: NavItem[] };
@@ -149,6 +164,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "tags", label: "Etiketler", icon: Hash },
         { key: "features", label: "Özellikler", icon: TagsIcon },
         { key: "guides", label: "Rehberler", icon: BookOpen },
+        { key: "templates", label: "Mesaj Şablonları", icon: MessageSquareText },
         { key: "requests", label: "Talepler", icon: PhoneCall, badge: stats.requests },
         { key: "reports", label: "Bildirimler", icon: Flag, badge: stats.reports },
         { key: "analytics", label: "Raporlar", icon: BarChart2 },
@@ -222,12 +238,13 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="card-shadow flex items-center justify-between border-b border-line bg-white px-5 py-4 sm:px-8">
-          <div>
-            <h1 className="font-display text-xl font-bold text-navy">{currentLabel}</h1>
-            <p className="text-xs text-ink/50">RehberGölbaşı yönetim paneli</p>
-          </div>
-        </header>
+        <header className="card-shadow flex flex-col gap-3 border-b border-line bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+  <div>
+    <h1 className="font-display text-xl font-bold text-navy">{currentLabel}</h1>
+    <p className="text-xs text-ink/50">RehberGölbaşı yönetim paneli</p>
+  </div>
+  <GlobalSearch onSelect={handleSearchSelect} />
+</header>
 
         <main className="min-w-0 px-4 py-6 sm:px-8 sm:py-8">
           {tab === "overview" && (
@@ -254,6 +271,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <Overview />
             </>
           )}
+          {tab === "templates" && <MessageTemplates />}
           {tab === "new-business" && <NewBusinessForm />}
           {tab === "pending" && <PendingList />}
           {tab === "approved" && <ApprovedList categories={categories} />}
@@ -270,6 +288,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "analytics" && <BusinessAnalytics />}
         </main>
       </div>
+
+      {searchSelectedBusiness && (
+        <EditBusinessModal
+          business={searchSelectedBusiness}
+          categories={categories}
+          onClose={() => setSearchSelectedBusiness(null)}
+          onSaved={() => { setSearchSelectedBusiness(null); loadStats(); }}
+          onDeleted={() => { setSearchSelectedBusiness(null); loadStats(); }}
+        />
+      )}
     </div>
   );
 }
