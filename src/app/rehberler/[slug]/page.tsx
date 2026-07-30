@@ -253,7 +253,7 @@ export default async function GuideDetailPage({
             </div>
           </div>
 
-          <GuideSidebar currentGuideId={guide.id} />
+          <GuideSidebar currentGuideId={guide.id} guideTitle={guide.title} guideSlug={guide.slug} />
         </div>
       </div>
     </div>
