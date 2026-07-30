@@ -5,7 +5,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { Cookie } from "lucide-react";
 
-const GA_ID = "G-L482G7RJWM";
+const GA_ID = "G-S9J3BYS755";
 const STORAGE_KEY = "rehbergolbasi_cookie_consent";
 
 export default function CookieConsent() {
