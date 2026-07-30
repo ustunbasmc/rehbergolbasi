@@ -92,19 +92,38 @@ async function getData(slug: string) {
     .order("display_order", { ascending: true });
 
   let similar: typeof business extends infer T ? T[] : never = [];
-  if (business.tier !== "premium") {
+if (business.tier !== "premium" && business.category_id) {
+  // Bu işletmenin kategorisinin ana kategorisini bul
+  const { data: currentCategory } = await supabase
+    .from("categories")
+    .select("id, parent_id")
+    .eq("id", business.category_id)
+    .single();
+
+  const topCategoryId = currentCategory?.parent_id ?? currentCategory?.id ?? business.category_id;
+
+  // O ana kategoriye bağlı tüm kategori ID'lerini topla (ana kategori + tüm alt kategorileri)
+  const { data: relatedCategories } = await supabase
+    .from("categories")
+    .select("id")
+    .or(`id.eq.${topCategoryId},parent_id.eq.${topCategoryId}`);
+
+  const categoryIds = (relatedCategories ?? []).map((c) => c.id);
+
+  if (categoryIds.length > 0) {
     const { data: similarData } = await supabase
       .from("businesses")
       .select("*")
       .eq("status", "approved")
       .eq("is_active", true)
-      .eq("category_id", business.category_id)
+      .in("category_id", categoryIds)
       .neq("id", business.id)
       .order("tier", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(3);
     similar = similarData ?? [];
   }
+}
 
   return {
     business,
