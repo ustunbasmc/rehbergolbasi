@@ -17,6 +17,7 @@ import ProspectsList from "@/components/admin/ProspectsList";
 import Overview from "@/components/admin/Overview";
 import BusinessAnalytics from "@/components/admin/BusinessAnalytics";
 import GuidesList from "@/components/admin/GuidesList";
+import NewBusinessForm from "@/components/admin/NewBusinessForm";
 import {
   Clock,
   CheckCircle2,
@@ -34,6 +35,7 @@ import {
   BookOpen,
   Wallet,
   UserPlus,
+  PlusCircle,
   BarChart2,
 } from "lucide-react";
 
@@ -51,7 +53,8 @@ type Tab =
   | "payments"
   | "prospects"
   | "guides"
-  | "analytics";
+  | "analytics"
+  | "new-business";
 
 interface Stats {
   total: number;
@@ -130,6 +133,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     {
       title: "Başvurular",
       items: [
+        { key: "new-business", label: "Yeni İşletme Ekle", icon: PlusCircle },
         { key: "pending", label: "Bekleyenler", icon: Clock, badge: stats.pending },
         { key: "approved", label: "Onaylılar", icon: CheckCircle2 },
         { key: "rejected", label: "Reddedilenler", icon: XCircle },
@@ -250,7 +254,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <Overview />
             </>
           )}
-
+          {tab === "new-business" && <NewBusinessForm />}
           {tab === "pending" && <PendingList />}
           {tab === "approved" && <ApprovedList categories={categories} />}
           {tab === "rejected" && <RejectedList />}
