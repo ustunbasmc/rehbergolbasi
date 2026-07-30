@@ -39,14 +39,26 @@ export default async function IsletmeEklePage() {
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
-              <TrendingUp className="h-4 w-4 text-gold" /> Şu an ücretsiz
+            <div className="flex items-center gap-2 rounded-full bg-gold/20 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
+              <TrendingUp className="h-4 w-4 text-gold" /> İlk ay ücretsiz, sonra günlük 12 TL
             </div>
             <div className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
               <Clock className="h-4 w-4 text-gold" /> Hızlı onay süreci
             </div>
             <div className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
               <MessageCircle className="h-4 w-4 text-gold" /> Direkt WhatsApp/telefon talebi
+            </div>
+          </div>
+
+          <div className="mt-6 flex items-center gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gold text-2xl">
+              🎉
+            </div>
+            <div>
+              <p className="font-display text-lg font-bold text-white">İlk Ay Tamamen Ücretsiz</p>
+              <p className="text-xs text-white/70 leading-relaxed">
+                30 gün boyunca hiçbir ücret yok. Sonrasında devam etmek isterseniz günlük sadece 12 TL (aylık 360 TL) — istemezseniz profiliniz ücretsiz kaldırılır.
+              </p>
             </div>
           </div>
         </div>
