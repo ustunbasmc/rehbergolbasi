@@ -3,7 +3,6 @@ import { Bitter, Work_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import SiteChrome from "@/components/SiteChrome";
 import CookieConsent from "@/components/CookieConsent";
-import Script from "next/script";
 
 const bitter = Bitter({
   variable: "--font-display",
@@ -87,10 +86,7 @@ export default function RootLayout({
       lang="tr"
       className={`${bitter.variable} ${workSans.variable} ${plexMono.variable} h-full antialiased`}
     >
-      <Script
-  src="https://www.googletagmanager.com/gtag/js?id=G-L482G7RJWM"
-  strategy="afterInteractive"
-/>
+
 
       <body className="min-h-full flex flex-col font-body">
         <script
