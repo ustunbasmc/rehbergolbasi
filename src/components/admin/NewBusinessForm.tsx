@@ -1,11 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import type { Category } from "@/lib/types";
 import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
-import { Plus, Trash2, CheckCircle2 } from "lucide-react";
+import {
+  Plus, Trash2, CheckCircle2, Upload, X, Building2,
+  MapPin, Share2, Sparkles, HelpCircle, ShieldCheck, Rocket,
+} from "lucide-react";
 
 function slugify(text: string) {
   const trMap: Record<string, string> = {
@@ -17,18 +21,55 @@ function slugify(text: string) {
     .replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
+async function uploadFile(file: File): Promise<string | null> {
+  const ext = file.name.split(".").pop();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from("business-photos").upload(path, file);
+  if (error) return null;
+  const { data } = supabase.storage.from("business-photos").getPublicUrl(path);
+  return data.publicUrl;
+}
+
 interface FaqDraft {
   question: string;
   answer: string;
 }
 
 const inputClass =
-  "w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none focus:border-bordo";
+  "w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-bordo transition-colors";
 const labelClass = "mb-1.5 block text-sm font-semibold text-navy";
+
+function SectionCard({
+  icon: Icon,
+  title,
+  subtitle,
+  children,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-line bg-white">
+      <div className="flex items-center gap-3 border-b border-line bg-offwhite px-5 py-3.5">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-bordo">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div>
+          <p className="text-sm font-bold text-navy">{title}</p>
+          {subtitle && <p className="text-xs text-ink/40">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="flex flex-col gap-4 p-5">{children}</div>
+    </div>
+  );
+}
 
 export default function NewBusinessForm() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,8 +89,14 @@ export default function NewBusinessForm() {
     instagram_url: "",
     facebook_url: "",
     tiktok_url: "",
+    owner_name: "",
+    owner_phone: "",
+    owner_email: "",
   });
 
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [faqs, setFaqs] = useState<FaqDraft[]>([]);
@@ -71,14 +118,17 @@ export default function NewBusinessForm() {
 
   function handleNameChange(value: string) {
     update("name", value);
-    if (!slugTouched) {
-      update("slug", slugify(value));
-    }
+    if (!slugTouched) update("slug", slugify(value));
   }
 
   function handleCategoryChange(id: string) {
     setCategoryId(id);
     setSubcategoryId("");
+  }
+
+  function handleCoverChange(file: File | null) {
+    setCoverFile(file);
+    setCoverPreview(file ? URL.createObjectURL(file) : null);
   }
 
   function addFaq() {
@@ -97,9 +147,13 @@ export default function NewBusinessForm() {
     setForm({
       name: "", slug: "", description: "", phone: "", whatsapp: "",
       address: "", neighborhood: "", instagram_url: "", facebook_url: "", tiktok_url: "",
+      owner_name: "", owner_phone: "", owner_email: "",
     });
     setCategoryId("");
     setSubcategoryId("");
+    setCoverFile(null);
+    setCoverPreview(null);
+    setGalleryFiles([]);
     setSelectedFeatures([]);
     setSelectedTags([]);
     setFaqs([]);
@@ -118,6 +172,20 @@ export default function NewBusinessForm() {
     if (!categoryId) { setError("Kategori seçmelisin."); return; }
 
     setLoading(true);
+    setUploading(true);
+
+    let coverUrl: string | null = null;
+    if (coverFile) {
+      coverUrl = await uploadFile(coverFile);
+    }
+
+    const galleryUrls: string[] = [];
+    for (const file of galleryFiles) {
+      const url = await uploadFile(file);
+      if (url) galleryUrls.push(url);
+    }
+
+    setUploading(false);
 
     const finalCategoryId = subcategoryId || categoryId;
     const freeUntil = new Date();
@@ -137,6 +205,7 @@ export default function NewBusinessForm() {
         instagram_url: form.instagram_url.trim() || null,
         facebook_url: form.facebook_url.trim() || null,
         tiktok_url: form.tiktok_url.trim() || null,
+        cover_image_url: coverUrl,
         tier,
         status: "approved",
         is_active: true,
@@ -149,6 +218,12 @@ export default function NewBusinessForm() {
       setError("Kaydedilemedi: " + insertError?.message);
       setLoading(false);
       return;
+    }
+
+    if (galleryUrls.length > 0) {
+      await supabase.from("business_photos").insert(
+        galleryUrls.map((url, i) => ({ business_id: inserted.id, url, display_order: i }))
+      );
     }
 
     if (selectedFeatures.length > 0) {
@@ -175,179 +250,262 @@ export default function NewBusinessForm() {
       );
     }
 
+    if (form.owner_name.trim() || form.owner_phone.trim() || form.owner_email.trim()) {
+      await supabase.from("business_owner_info").insert({
+        business_id: inserted.id,
+        owner_name: form.owner_name.trim() || null,
+        owner_phone: form.owner_phone.trim() || null,
+        owner_email: form.owner_email.trim() || null,
+      });
+    }
+
     setLoading(false);
     setSuccess(`"${inserted.name}" başarıyla oluşturuldu ve yayına alındı! → rehbergolbasi.com/isletme/${inserted.slug}`);
     resetForm();
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex max-w-2xl flex-col gap-5 pb-10">
       <div>
-        <h2 className="font-display text-lg font-bold text-navy">Yeni İşletme Ekle</h2>
-        <p className="text-xs text-ink/50">
+        <h2 className="font-display text-xl font-bold text-navy">Yeni İşletme Ekle</h2>
+        <p className="text-sm text-ink/50">
           Bu form üzerinden eklenen işletme direkt onaylı ve yayında olarak kaydedilir.
         </p>
       </div>
 
       {success && (
-        <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+        <div className="flex items-start gap-2 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
           {success}
         </div>
       )}
-      {error && <p className="text-sm text-bordo">{error}</p>}
-
-      <div>
-        <label className={labelClass}>İşletme adı *</label>
-        <input
-          value={form.name}
-          onChange={(e) => handleNameChange(e.target.value)}
-          className={inputClass}
-          placeholder="Örn. Elit Peyzaj"
-        />
-      </div>
-
-      <div>
-        <label className={labelClass}>Slug *</label>
-        <input
-          value={form.slug}
-          onChange={(e) => { update("slug", e.target.value); setSlugTouched(true); }}
-          className={`${inputClass} font-mono`}
-          placeholder="elit-peyzaj"
-        />
-        <p className="mt-1 text-xs text-ink/40">rehbergolbasi.com/isletme/{form.slug || "..."}</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass}>Ana kategori *</label>
-          <select
-            value={categoryId}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className={inputClass}
-          >
-            <option value="">Seçiniz</option>
-            {topLevelCategories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
+      {error && (
+        <div className="rounded-xl border border-bordo/20 bg-bordo/5 p-4 text-sm text-bordo">
+          {error}
         </div>
-        {subcategories.length > 0 && (
+      )}
+
+      {/* Temel Bilgiler */}
+      <SectionCard icon={Building2} title="Temel Bilgiler">
+        <div>
+          <label className={labelClass}>İşletme adı *</label>
+          <input
+            value={form.name}
+            onChange={(e) => handleNameChange(e.target.value)}
+            className={inputClass}
+            placeholder="Örn. Elit Peyzaj"
+          />
+        </div>
+
+        <div>
+          <label className={labelClass}>Slug *</label>
+          <input
+            value={form.slug}
+            onChange={(e) => { update("slug", e.target.value); setSlugTouched(true); }}
+            className={`${inputClass} font-mono`}
+            placeholder="elit-peyzaj"
+          />
+          <p className="mt-1 text-xs text-ink/40">rehbergolbasi.com/isletme/{form.slug || "..."}</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className={labelClass}>Alt kategori</label>
+            <label className={labelClass}>Ana kategori *</label>
             <select
-              value={subcategoryId}
-              onChange={(e) => setSubcategoryId(e.target.value)}
+              value={categoryId}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className={inputClass}
             >
-              <option value="">Genel</option>
-              {subcategories.map((c) => (
+              <option value="">Seçiniz</option>
+              {topLevelCategories.map((c) => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
           </div>
-        )}
-      </div>
+          {subcategories.length > 0 && (
+            <div>
+              <label className={labelClass}>Alt kategori</label>
+              <select
+                value={subcategoryId}
+                onChange={(e) => setSubcategoryId(e.target.value)}
+                className={inputClass}
+              >
+                <option value="">Genel</option>
+                {subcategories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
 
-      <div>
-        <label className={labelClass}>Açıklama</label>
-        <textarea
-          value={form.description}
-          onChange={(e) => update("description", e.target.value)}
-          rows={6}
-          className={inputClass}
-          placeholder="SEO odaklı, uzun açıklama..."
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>Telefon</label>
-          <input
-            value={form.phone}
-            onChange={(e) => update("phone", e.target.value)}
+          <label className={labelClass}>Açıklama</label>
+          <textarea
+            value={form.description}
+            onChange={(e) => update("description", e.target.value)}
+            rows={6}
             className={inputClass}
-            placeholder="05XXXXXXXXX"
+            placeholder="SEO odaklı, uzun açıklama..."
           />
         </div>
-        <div>
-          <label className={labelClass}>WhatsApp</label>
-          <input
-            value={form.whatsapp}
-            onChange={(e) => update("whatsapp", e.target.value)}
-            className={inputClass}
-            placeholder="905XXXXXXXXX"
-          />
-        </div>
-      </div>
+      </SectionCard>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className={labelClass}>Mahalle</label>
-          <input
-            value={form.neighborhood}
-            onChange={(e) => update("neighborhood", e.target.value)}
-            className={inputClass}
-          />
+      {/* İletişim & Konum */}
+      <SectionCard icon={MapPin} title="İletişim & Konum">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>Telefon</label>
+            <input
+              value={form.phone}
+              onChange={(e) => update("phone", e.target.value)}
+              className={inputClass}
+              placeholder="05XXXXXXXXX"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>WhatsApp</label>
+            <input
+              value={form.whatsapp}
+              onChange={(e) => update("whatsapp", e.target.value)}
+              className={inputClass}
+              placeholder="905XXXXXXXXX"
+            />
+          </div>
         </div>
-        <div>
-          <label className={labelClass}>Adres</label>
-          <input
-            value={form.address}
-            onChange={(e) => update("address", e.target.value)}
-            className={inputClass}
-          />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>Mahalle</label>
+            <input
+              value={form.neighborhood}
+              onChange={(e) => update("neighborhood", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Adres</label>
+            <input
+              value={form.address}
+              onChange={(e) => update("address", e.target.value)}
+              className={inputClass}
+            />
+          </div>
         </div>
-      </div>
+      </SectionCard>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div>
-          <label className={labelClass}>Instagram</label>
-          <input
-            value={form.instagram_url}
-            onChange={(e) => update("instagram_url", e.target.value)}
-            className={inputClass}
-          />
+      {/* Sosyal Medya */}
+      <SectionCard icon={Share2} title="Sosyal Medya" subtitle="İsteğe bağlı">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label className={labelClass}>Instagram</label>
+            <input
+              value={form.instagram_url}
+              onChange={(e) => update("instagram_url", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Facebook</label>
+            <input
+              value={form.facebook_url}
+              onChange={(e) => update("facebook_url", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>TikTok</label>
+            <input
+              value={form.tiktok_url}
+              onChange={(e) => update("tiktok_url", e.target.value)}
+              className={inputClass}
+            />
+          </div>
         </div>
-        <div>
-          <label className={labelClass}>Facebook</label>
-          <input
-            value={form.facebook_url}
-            onChange={(e) => update("facebook_url", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className={labelClass}>TikTok</label>
-          <input
-            value={form.tiktok_url}
-            onChange={(e) => update("tiktok_url", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-      </div>
+      </SectionCard>
 
-      <div>
-        <label className={labelClass}>Özellikler</label>
-        <FeaturesSelector value={selectedFeatures} onChange={setSelectedFeatures} />
-      </div>
-
-      <div>
-        <label className={labelClass}>Etiketler</label>
-        <TagsSelector value={selectedTags} onChange={setSelectedTags} />
-      </div>
-
-      <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className={labelClass}>Sıkça Sorulan Sorular</label>
-          <button
-            type="button"
-            onClick={addFaq}
-            className="flex items-center gap-1 text-xs font-semibold text-bordo hover:underline"
-          >
-            <Plus className="h-3.5 w-3.5" /> Soru ekle
-          </button>
+      {/* Fotoğraflar */}
+      <SectionCard icon={Upload} title="Fotoğraflar" subtitle="İsteğe bağlı, önerilir">
+        <div>
+          <label className={labelClass}>Kapak fotoğrafı</label>
+          {coverPreview ? (
+            <div className="group relative mb-2 h-40 w-full overflow-hidden rounded-xl border border-line bg-offwhite">
+              <Image src={coverPreview} alt="Kapak önizleme" fill className="object-cover" />
+              <button
+                type="button"
+                onClick={() => handleCoverChange(null)}
+                className="absolute right-2 top-2 rounded-full bg-bordo p-1.5 text-white opacity-0 transition group-hover:opacity-100"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <div className="mb-2 flex h-24 items-center justify-center rounded-xl border border-dashed border-line bg-offwhite text-xs text-ink/40">
+              Henüz kapak görseli seçilmedi
+            </div>
+          )}
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-line px-3 py-2.5 text-sm font-semibold text-ink/60 hover:border-bordo hover:text-bordo">
+            <Upload className="h-4 w-4" /> Kapak Görseli Seç
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleCoverChange(e.target.files?.[0] ?? null)}
+              className="hidden"
+            />
+          </label>
         </div>
+
+        <div>
+          <label className={labelClass}>Galeri fotoğrafları</label>
+          {galleryFiles.length > 0 && (
+            <div className="mb-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {galleryFiles.map((file, i) => (
+                <div key={i} className="group relative h-16 overflow-hidden rounded-lg border border-line bg-offwhite">
+                  <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setGalleryFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="absolute right-0.5 top-0.5 rounded-full bg-bordo p-0.5 text-white opacity-0 transition group-hover:opacity-100"
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-line px-3 py-2.5 text-sm font-semibold text-ink/60 hover:border-bordo hover:text-bordo">
+            <Upload className="h-4 w-4" /> Galeri Fotoğrafı Ekle
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => setGalleryFiles((prev) => [...prev, ...Array.from(e.target.files ?? [])])}
+              className="hidden"
+            />
+          </label>
+        </div>
+      </SectionCard>
+
+      {/* Özellikler & Etiketler */}
+      <SectionCard icon={Sparkles} title="Özellikler & Etiketler">
+        <div>
+          <label className={labelClass}>Özellikler</label>
+          <FeaturesSelector value={selectedFeatures} onChange={setSelectedFeatures} />
+        </div>
+        <div>
+          <label className={labelClass}>Etiketler</label>
+          <TagsSelector value={selectedTags} onChange={setSelectedTags} />
+        </div>
+      </SectionCard>
+
+      {/* SSS */}
+      <SectionCard icon={HelpCircle} title="Sıkça Sorulan Sorular" subtitle="İsteğe bağlı">
+        <button
+          type="button"
+          onClick={addFaq}
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-line py-3 text-sm font-semibold text-bordo hover:bg-offwhite"
+        >
+          <Plus className="h-4 w-4" /> Soru ekle
+        </button>
         <div className="flex flex-col gap-3">
           {faqs.map((faq, i) => (
             <div key={i} className="rounded-lg border border-line bg-offwhite p-3">
@@ -361,29 +519,61 @@ export default function NewBusinessForm() {
                 value={faq.question}
                 onChange={(e) => updateFaq(i, "question", e.target.value)}
                 placeholder="Soru"
-                className={`${inputClass} mb-2 bg-white`}
+                className={`${inputClass} mb-2`}
               />
               <textarea
                 value={faq.answer}
                 onChange={(e) => updateFaq(i, "answer", e.target.value)}
                 placeholder="Cevap"
                 rows={2}
-                className={`${inputClass} bg-white`}
+                className={inputClass}
               />
             </div>
           ))}
         </div>
-      </div>
+      </SectionCard>
 
-      <div className="rounded-lg border border-line bg-offwhite p-4">
-        <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">Yayın Ayarları</p>
+      {/* Sahiplik Bilgisi */}
+      <SectionCard icon={ShieldCheck} title="Sahiplik Bilgisi" subtitle="Gizli tutulur, sadece admin görür">
+        <div>
+          <label className={labelClass}>İşletme sahibinin adı</label>
+          <input
+            value={form.owner_name}
+            onChange={(e) => update("owner_name", e.target.value)}
+            className={inputClass}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className={labelClass}>Sahibinin telefonu</label>
+            <input
+              value={form.owner_phone}
+              onChange={(e) => update("owner_phone", e.target.value)}
+              className={inputClass}
+              placeholder="05XXXXXXXXX"
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Sahibinin e-postası</label>
+            <input
+              type="email"
+              value={form.owner_email}
+              onChange={(e) => update("owner_email", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Yayın Ayarları */}
+      <SectionCard icon={Rocket} title="Yayın Ayarları">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className={labelClass}>Paket</label>
             <select
               value={tier}
               onChange={(e) => setTier(e.target.value as "basic" | "premium")}
-              className={`${inputClass} bg-white`}
+              className={inputClass}
             >
               <option value="basic">Basic</option>
               <option value="premium">Premium (Öne Çıkan)</option>
@@ -396,18 +586,18 @@ export default function NewBusinessForm() {
               min={0}
               value={freeMonths}
               onChange={(e) => setFreeMonths(Number(e.target.value))}
-              className={`${inputClass} bg-white`}
+              className={inputClass}
             />
           </div>
         </div>
-      </div>
+      </SectionCard>
 
       <button
         type="submit"
         disabled={loading}
-        className="rounded-lg bg-bordo px-5 py-3 text-sm font-bold text-white hover:bg-bordo-dark disabled:opacity-60"
+        className="rounded-xl bg-bordo px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-bordo-dark hover:shadow-md disabled:opacity-60"
       >
-        {loading ? "Oluşturuluyor..." : "İşletmeyi Oluştur ve Yayınla"}
+        {uploading ? "Fotoğraflar yükleniyor..." : loading ? "Oluşturuluyor..." : "İşletmeyi Oluştur ve Yayınla"}
       </button>
     </form>
   );
