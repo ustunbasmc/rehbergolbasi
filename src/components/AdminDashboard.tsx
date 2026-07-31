@@ -15,6 +15,7 @@ import ExpiryAlertsList from "@/components/admin/ExpiryAlertsList";
 import PaymentsList from "@/components/admin/PaymentsList";
 import ProspectsList from "@/components/admin/ProspectsList";
 import Overview from "@/components/admin/Overview";
+import WorkOrdersList from "@/components/admin/WorkOrdersList";
 import BusinessAnalytics from "@/components/admin/BusinessAnalytics";
 import GuidesList from "@/components/admin/GuidesList";
 import NewBusinessForm from "@/components/admin/NewBusinessForm";
@@ -26,6 +27,7 @@ import {
   Clock,
   MessageSquareText,
   CheckCircle2,
+  Briefcase,
   XCircle,
   Building2,
   LayoutGrid,
@@ -53,6 +55,7 @@ type Tab =
   | "reports"
   | "features"
   | "requests"
+  | "work-orders"
   | "tags"
   | "expiry"
   | "payments"
@@ -157,6 +160,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     {
       title: "Yönetim",
       items: [
+        { key: "work-orders", label: "İş Emirleri", icon: Briefcase },
         { key: "expiry", label: "Süre Uyarıları", icon: AlertTriangle, badge: stats.expiryAlerts },
         { key: "payments", label: "Ödemeler", icon: Wallet },
         { key: "prospects", label: "Potansiyel İşletmeler", icon: UserPlus },
@@ -286,6 +290,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "requests" && <ContactRequestsList />}
           {tab === "reports" && <ReportsList />}
           {tab === "analytics" && <BusinessAnalytics />}
+          {tab === "work-orders" && <WorkOrdersList />}
         </main>
       </div>
 

@@ -115,11 +115,6 @@ export default function Overview() {
   const [topViewed, setTopViewed] = useState<TopViewed[]>([]);
   const [expiringSoon, setExpiringSoon] = useState<ExpiringSoon[]>([]);
   const [dailyEvents, setDailyEvents] = useState<DailyEvent[]>([]);
-  const [todos, setTodos] = useState({
-  pendingCount: 0,
-  expiringCount: 0,
-  draftGuidesCount: 0,
-});
   const [kpis, setKpis] = useState({
     totalBusinesses: 0,
     activeBusinesses: 0,
@@ -127,6 +122,11 @@ export default function Overview() {
     totalEngagement: 0,
     totalCalls: 0,
     totalWhatsapp: 0,
+  });
+  const [todos, setTodos] = useState({
+    pendingCount: 0,
+    expiringCount: 0,
+    draftGuidesCount: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -137,35 +137,37 @@ export default function Overview() {
     since14.setDate(since14.getDate() - 13);
 
     const [
-  { data: businesses },
-  { data: payments },
-  { data: topBusinesses },
-  { data: expiryCandidates },
-  { data: events },
-  { count: draftGuides },
-] = await Promise.all([
-  supabase.from("businesses").select("status, is_active, category:categories(name)"),
-  supabase.from("payments").select("amount, paid_at"),
-  supabase
-    .from("businesses")
-    .select("id, name, slug, view_count")
-    .eq("status", "approved")
-    .order("view_count", { ascending: false })
-    .limit(5),
-  supabase
-    .from("businesses")
-    .select("id, name, slug, free_until, paid_until")
-    .eq("status", "approved")
-    .eq("is_active", true),
-  supabase
-    .from("business_events")
-    .select("event_type, occurred_at")
-    .gte("occurred_at", since14.toISOString()),
-  supabase
-    .from("guides")
-    .select("id", { count: "exact", head: true })
-    .eq("published", false),
-]);
+      { data: businesses },
+      { data: payments },
+      { data: topBusinesses },
+      { data: expiryCandidates },
+      { data: events },
+      { count: draftGuides },
+      { data: workOrderRevenue },
+    ] = await Promise.all([
+      supabase.from("businesses").select("status, is_active, category:categories(name)"),
+      supabase.from("payments").select("amount, paid_at"),
+      supabase
+        .from("businesses")
+        .select("id, name, slug, view_count")
+        .eq("status", "approved")
+        .order("view_count", { ascending: false })
+        .limit(5),
+      supabase
+        .from("businesses")
+        .select("id, name, slug, free_until, paid_until")
+        .eq("status", "approved")
+        .eq("is_active", true),
+      supabase
+        .from("business_events")
+        .select("event_type, occurred_at")
+        .gte("occurred_at", since14.toISOString()),
+      supabase
+        .from("guides")
+        .select("id", { count: "exact", head: true })
+        .eq("published", false),
+      supabase.from("work_orders").select("price, revenue_date").neq("status", "cancelled"),
+    ]);
 
     if (businesses) {
       const catMap = new Map<string, number>();
@@ -195,12 +197,12 @@ export default function Overview() {
       ]);
 
       setKpis((prev) => ({
-  ...prev,
-  totalBusinesses: businesses.length,
-  activeBusinesses: active,
-}));
+        ...prev,
+        totalBusinesses: businesses.length,
+        activeBusinesses: active,
+      }));
 
-setTodos((prev) => ({ ...prev, pendingCount: statusMap.pending }));
+      setTodos((prev) => ({ ...prev, pendingCount: statusMap.pending }));
     }
 
     const now = new Date();
@@ -222,6 +224,16 @@ setTodos((prev) => ({ ...prev, pendingCount: statusMap.pending }));
       if (month) month.total += p.amount ?? 0;
       if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
         currentMonthRevenue += p.amount ?? 0;
+      }
+    });
+    (workOrderRevenue ?? []).forEach((w) => {
+      if (!w.revenue_date || !w.price) return;
+      const d = new Date(w.revenue_date);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      const month = months.find((m) => m.key === key);
+      if (month) month.total += w.price;
+      if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+        currentMonthRevenue += w.price;
       }
     });
     setRevenueData(months);
@@ -247,11 +259,12 @@ setTodos((prev) => ({ ...prev, pendingCount: statusMap.pending }));
       .sort((a, b) => a.daysLeft - b.daysLeft)
       .slice(0, 5);
     setExpiringSoon(soon);
+
     setTodos((prev) => ({
-  ...prev,
-  expiringCount: soon.filter((b) => b.daysLeft <= 7).length,
-  draftGuidesCount: draftGuides ?? 0,
-}));
+      ...prev,
+      expiringCount: soon.filter((b) => b.daysLeft <= 7).length,
+      draftGuidesCount: draftGuides ?? 0,
+    }));
 
     // Günlük etkileşim trendi (son 14 gün)
     const dayMap: Record<string, DailyEvent> = {};
@@ -313,44 +326,44 @@ setTodos((prev) => ({ ...prev, pendingCount: statusMap.pending }));
   }
 
   const todoItems = [
-  todos.pendingCount > 0 && {
-    icon: ListTodo,
-    text: `${todos.pendingCount} bekleyen başvuru var`,
-    color: "text-gold-dark",
-  },
-  todos.expiringCount > 0 && {
-    icon: Clock,
-    text: `${todos.expiringCount} işletmenin süresi 7 gün içinde doluyor`,
-    color: "text-bordo",
-  },
-  todos.draftGuidesCount > 0 && {
-    icon: FileEdit,
-    text: `${todos.draftGuidesCount} rehber taslak halinde bekliyor`,
-    color: "text-navy",
-  },
-].filter(Boolean) as { icon: React.ElementType; text: string; color: string }[];
+    todos.pendingCount > 0 && {
+      icon: ListTodo,
+      text: `${todos.pendingCount} bekleyen başvuru var`,
+      color: "text-gold-dark",
+    },
+    todos.expiringCount > 0 && {
+      icon: Clock,
+      text: `${todos.expiringCount} işletmenin süresi 7 gün içinde doluyor`,
+      color: "text-bordo",
+    },
+    todos.draftGuidesCount > 0 && {
+      icon: FileEdit,
+      text: `${todos.draftGuidesCount} rehber taslak halinde bekliyor`,
+      color: "text-navy",
+    },
+  ].filter(Boolean) as { icon: React.ElementType; text: string; color: string }[];
 
-return (
-  <div className="flex flex-col gap-6">
-    {/* Bugün Yapılacaklar */}
-    {todoItems.length > 0 && (
-      <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4">
-        <div className="mb-2 flex items-center gap-1.5">
-          <ListTodo className="h-4 w-4 text-gold-dark" />
-          <span className="text-sm font-bold text-navy">Bugün Yapılacaklar</span>
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Bugün Yapılacaklar */}
+      {todoItems.length > 0 && (
+        <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4">
+          <div className="mb-2 flex items-center gap-1.5">
+            <ListTodo className="h-4 w-4 text-gold-dark" />
+            <span className="text-sm font-bold text-navy">Bugün Yapılacaklar</span>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {todoItems.map((item, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm text-ink/70">
+                <item.icon className={`h-3.5 w-3.5 shrink-0 ${item.color}`} />
+                {item.text}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-1.5">
-          {todoItems.map((item, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm text-ink/70">
-              <item.icon className={`h-3.5 w-3.5 shrink-0 ${item.color}`} />
-              {item.text}
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
+      )}
 
-    {/* KPI Kartları */}
+      {/* KPI Kartları */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <KpiCard
           icon={Building2}
