@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
+import WorkCalendar from "@/components/admin/WorkCalendar";
 import {
   Plus, Trash2, CheckCircle2, Circle, Briefcase, Calendar,
-  Wallet, ChevronDown, X,
+  Wallet, ChevronDown, X, List, CalendarDays,
 } from "lucide-react";
 
 interface WorkTask {
@@ -36,6 +37,7 @@ function formatDate(d: string) {
 }
 
 export default function WorkOrdersList() {
+  const [view, setView] = useState<"list" | "calendar">("list");
   const [orders, setOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -146,20 +148,40 @@ export default function WorkOrdersList() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-lg font-bold text-navy">İş Takibi</h2>
-          <p className="text-xs text-ink/50">
-            {orders.length} iş · Toplam {formatCurrency(totalActiveRevenue)}
-          </p>
-        </div>
-        <button
-          onClick={() => setShowNewForm(!showNewForm)}
-          className="flex items-center gap-2 rounded-lg bg-bordo px-4 py-2 text-sm font-bold text-white hover:bg-bordo-dark"
-        >
-          <Plus className="h-4 w-4" /> Yeni İş
-        </button>
-      </div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <h2 className="font-display text-lg font-bold text-navy">İş Takibi</h2>
+    <p className="text-xs text-ink/50">
+      {orders.length} iş · Toplam {formatCurrency(totalActiveRevenue)}
+    </p>
+  </div>
+  <div className="flex items-center gap-2">
+    <div className="flex rounded-lg border border-line p-1">
+      <button
+        onClick={() => setView("list")}
+        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+          view === "list" ? "bg-navy text-white" : "text-ink/60 hover:bg-offwhite"
+        }`}
+      >
+        <List className="h-3.5 w-3.5" /> Liste
+      </button>
+      <button
+        onClick={() => setView("calendar")}
+        className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+          view === "calendar" ? "bg-navy text-white" : "text-ink/60 hover:bg-offwhite"
+        }`}
+      >
+        <CalendarDays className="h-3.5 w-3.5" /> Takvim
+      </button>
+    </div>
+    <button
+      onClick={() => setShowNewForm(!showNewForm)}
+      className="flex items-center gap-2 rounded-lg bg-bordo px-4 py-2 text-sm font-bold text-white hover:bg-bordo-dark"
+    >
+      <Plus className="h-4 w-4" /> Yeni İş
+    </button>
+  </div>
+</div>
 
       {showNewForm && (
         <div className="mb-6 rounded-2xl border border-line bg-offwhite p-5">
@@ -220,8 +242,9 @@ export default function WorkOrdersList() {
           </button>
         </div>
       )}
-
-      {loading ? (
+{view === "calendar" ? (
+        <WorkCalendar />
+      ) : loading ? (
         <p className="text-sm text-ink/40">Yükleniyor...</p>
       ) : orders.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-line p-10 text-center">
