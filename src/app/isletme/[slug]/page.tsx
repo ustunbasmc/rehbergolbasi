@@ -15,6 +15,7 @@ import {
   QrCode,
   Star,
   Hash,
+  Globe,
 } from "lucide-react";
 import PhotoGallery from "@/components/PhotoGallery";
 import QuickActions from "@/components/QuickActions";
@@ -92,38 +93,36 @@ async function getData(slug: string) {
     .order("display_order", { ascending: true });
 
   let similar: typeof business extends infer T ? T[] : never = [];
-if (business.tier !== "premium" && business.category_id) {
-  // Bu işletmenin kategorisinin ana kategorisini bul
-  const { data: currentCategory } = await supabase
-    .from("categories")
-    .select("id, parent_id")
-    .eq("id", business.category_id)
-    .single();
+  if (business.tier !== "premium" && business.category_id) {
+    const { data: currentCategory } = await supabase
+      .from("categories")
+      .select("id, parent_id")
+      .eq("id", business.category_id)
+      .single();
 
-  const topCategoryId = currentCategory?.parent_id ?? currentCategory?.id ?? business.category_id;
+    const topCategoryId = currentCategory?.parent_id ?? currentCategory?.id ?? business.category_id;
 
-  // O ana kategoriye bağlı tüm kategori ID'lerini topla (ana kategori + tüm alt kategorileri)
-  const { data: relatedCategories } = await supabase
-    .from("categories")
-    .select("id")
-    .or(`id.eq.${topCategoryId},parent_id.eq.${topCategoryId}`);
+    const { data: relatedCategories } = await supabase
+      .from("categories")
+      .select("id")
+      .or(`id.eq.${topCategoryId},parent_id.eq.${topCategoryId}`);
 
-  const categoryIds = (relatedCategories ?? []).map((c) => c.id);
+    const categoryIds = (relatedCategories ?? []).map((c) => c.id);
 
-  if (categoryIds.length > 0) {
-    const { data: similarData } = await supabase
-      .from("businesses")
-      .select("*")
-      .eq("status", "approved")
-      .eq("is_active", true)
-      .in("category_id", categoryIds)
-      .neq("id", business.id)
-      .order("tier", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(3);
-    similar = similarData ?? [];
+    if (categoryIds.length > 0) {
+      const { data: similarData } = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("status", "approved")
+        .eq("is_active", true)
+        .in("category_id", categoryIds)
+        .neq("id", business.id)
+        .order("tier", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(3);
+      similar = similarData ?? [];
+    }
   }
-}
 
   return {
     business,
@@ -137,7 +136,7 @@ if (business.tier !== "premium" && business.category_id) {
 }
 
 export async function generateMetadata({
-  params
+  params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
@@ -173,7 +172,7 @@ export async function generateMetadata({
 }
 
 export default async function BusinessPage({
-  params
+  params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
@@ -298,7 +297,7 @@ export default async function BusinessPage({
             </div>
           }
         />
-        
+
         <QuickActions
           phone={business.phone}
           whatsapp={business.whatsapp}
@@ -400,6 +399,16 @@ export default async function BusinessPage({
                     className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold text-navy transition-colors hover:border-navy"
                   >
                     <Link2 className="h-3.5 w-3.5" /> TikTok
+                  </a>
+                )}
+                {business.website && (
+                  <a
+                    href={business.website}
+                    target="_blank"
+                    rel="nofollow noopener noreferrer"
+                    className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-xs font-semibold text-navy transition-colors hover:border-navy"
+                  >
+                    <Globe className="h-3.5 w-3.5" /> Web Sitesi
                   </a>
                 )}
               </div>

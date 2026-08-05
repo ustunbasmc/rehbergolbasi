@@ -63,6 +63,7 @@ export interface Business {
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;
+  website: string | null;
   tier: MembershipTier;
   is_founding_member: boolean;
   free_until: string | null;

@@ -41,7 +41,6 @@ export default function EditBusinessModal({
   onSaved: () => void;
   onDeleted: () => void;
 }) {
-  // Kategori: önce ana kategori seçilir, sonra (varsa) alt kategori
   const mainCategories = categories.filter((c) => !c.parent_id);
   const initialCategory = categories.find((c) => c.id === business.category_id);
   const initialMainId = initialCategory?.parent_id ?? initialCategory?.id ?? "";
@@ -63,6 +62,7 @@ export default function EditBusinessModal({
     instagram_url: business.instagram_url ?? "",
     facebook_url: business.facebook_url ?? "",
     tiktok_url: business.tiktok_url ?? "",
+    website: business.website ?? "",
   });
   const [tier, setTier] = useState<"basic" | "premium">(business.tier);
   const [lat, setLat] = useState<number | null>(business.lat);
@@ -93,6 +93,7 @@ export default function EditBusinessModal({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(business.cover_image_url ?? null);
+
   useEffect(() => {
     supabase
       .from("business_features")
@@ -211,6 +212,7 @@ export default function EditBusinessModal({
         instagram_url: form.instagram_url || null,
         facebook_url: form.facebook_url || null,
         tiktok_url: form.tiktok_url || null,
+        website: form.website || null,
         lat,
         lng,
         opening_hours: openingHours,
@@ -449,6 +451,16 @@ export default function EditBusinessModal({
           </div>
 
           <div>
+            <label className="mb-1 block text-sm font-semibold text-navy">Web sitesi</label>
+            <input
+              value={form.website}
+              onChange={(e) => update("website", e.target.value)}
+              placeholder="https://www.example.com"
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-bordo"
+            />
+          </div>
+
+          <div>
             <label className="mb-1 block text-sm font-semibold text-navy">Konum</label>
             <p className="mb-2 text-xs text-ink/50">Haritada işletmenin bulunduğu noktaya tıkla.</p>
             <LocationPicker
@@ -512,10 +524,11 @@ export default function EditBusinessModal({
               className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-bordo"
             />
           </div>
+
           <CoverImageManager
-              businessId={business.id}
-              currentUrl={coverUrl}
-              onUpdated={(url) => setCoverUrl(url)}
+            businessId={business.id}
+            currentUrl={coverUrl}
+            onUpdated={(url) => setCoverUrl(url)}
           />
           <GalleryManager businessId={business.id} />
           <FaqManager businessId={business.id} />
