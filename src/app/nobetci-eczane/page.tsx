@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Clock, AlertCircle, ChevronDown } from "lucide-react";
+import { Bus, Clock, AlertCircle, ChevronDown, ExternalLink, MapPin, Sparkles } from "lucide-react";
 import Link from "next/link";
 import PharmacyCard from "@/components/PharmacyCard";
 
@@ -137,69 +137,134 @@ export default async function NobetciEczanePage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-8 sm:px-6 sm:py-12">
+    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {pharmacyJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pharmacyJsonLd) }} />
       )}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
-      <div className="mb-8">
-        <Link
-          href="/"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
-        >
-          ← Anasayfa
-        </Link>
-        <h1 className="font-display text-3xl font-bold text-navy">Ankara Gölbaşı Nöbetçi Eczane</h1>
-        <div className="mt-2 flex items-center gap-2 text-sm text-ink/60">
-          <Clock className="h-4 w-4" />
-          <span>{today}</span>
-        </div>
-      </div>
+      <Link
+        href="/"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
+      >
+        ← Anasayfa
+      </Link>
 
-      <div className="mb-6 flex items-start gap-3 rounded-2xl border border-gold/30 bg-gold/5 p-4">
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-gold-dark" />
-        <p className="text-sm text-ink/70">
-          Eczaneye gitmeden önce telefonla açık olduğunu teyit etmeniz önerilir. Bilgiler her gece 00:00'da güncellenir.
-        </p>
-      </div>
+      <div className="grid gap-8 lg:grid-cols-[1fr_300px] lg:gap-12">
+        <main className="min-w-0">
+          <h1 className="font-display text-3xl font-bold text-navy">Ankara Gölbaşı Nöbetçi Eczane</h1>
+          <div className="mt-2 flex items-center gap-2 text-sm text-ink/60">
+            <Clock className="h-4 w-4" />
+            <span>{today}</span>
+          </div>
 
-      {pharmacies.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-white p-8 text-center">
-          <p className="text-sm text-ink/50">
-            Bugün için nöbetçi eczane bilgisi bulunamadı.
+          <div className="mb-6 mt-5 flex items-start gap-3 rounded-2xl border border-gold/30 bg-gold/5 p-4">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-gold-dark" />
+            <p className="text-sm text-ink/70">
+              Eczaneye gitmeden önce telefonla açık olduğunu teyit etmeniz önerilir. Bilgiler her
+              gece 00:00'da güncellenir.
+            </p>
+          </div>
+
+          {pharmacies.length === 0 ? (
+            <div className="rounded-2xl border border-line bg-white p-8 text-center">
+              <p className="text-sm text-ink/50">Bugün için nöbetçi eczane bilgisi bulunamadı.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm font-semibold text-ink/50">
+                {pharmacies.length} nöbetçi eczane bulundu
+              </p>
+              {pharmacies.map((pharmacy) => (
+                <PharmacyCard key={pharmacy.id} pharmacy={pharmacy} />
+              ))}
+            </div>
+          )}
+
+          <section className="mt-10 border-t border-line pt-8">
+            <h2 className="mb-4 font-display text-xl font-bold text-navy">Sıkça sorulan sorular</h2>
+            <div className="flex flex-col gap-2">
+              {SSS.map((s, i) => (
+                <details key={i} className="group rounded-xl border border-line bg-white p-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-semibold text-navy">
+                    {s.soru}
+                    <ChevronDown className="h-4 w-4 shrink-0 text-ink/40 transition-transform group-open:rotate-180" />
+                  </summary>
+                  <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink/65">{s.cevap}</p>
+                </details>
+              ))}
+            </div>
+          </section>
+
+          <p className="mt-8 text-center text-xs text-ink/30 lg:text-left">
+            Veri kaynağı: EczaneAPI — Ankara Eczacılar Odası verileri
           </p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4">
-          <p className="text-sm font-semibold text-ink/50">
-            {pharmacies.length} nöbetçi eczane bulundu
-          </p>
-          {pharmacies.map((pharmacy) => (
-            <PharmacyCard key={pharmacy.id} pharmacy={pharmacy} />
-          ))}
-        </div>
-      )}
+        </main>
 
-      <section className="mt-10 border-t border-line pt-8">
-        <h2 className="mb-4 font-display text-xl font-bold text-navy">Sıkça sorulan sorular</h2>
-        <div className="flex flex-col gap-2">
-          {SSS.map((s, i) => (
-            <details key={i} className="group rounded-xl border border-line bg-white p-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-semibold text-navy">
-                {s.soru}
-                <ChevronDown className="h-4 w-4 shrink-0 text-ink/40 transition-transform group-open:rotate-180" />
-              </summary>
-              <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink/65">{s.cevap}</p>
-            </details>
-          ))}
-        </div>
-      </section>
+        <aside className="hidden lg:block">
+          <div className="sticky top-8 flex flex-col gap-4">
+            <div className="rounded-2xl border border-line bg-white p-4">
+              <p className="mb-3 text-[13px] font-semibold text-navy">Gölbaşı'nda faydalı bilgiler</p>
+              <ul className="flex flex-col gap-1">
+                <li>
+                  <Link
+                    href="/otobus-saatleri"
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink/65 hover:bg-navy/5 hover:text-bordo"
+                  >
+                    <Bus className="h-3.5 w-3.5 shrink-0 text-bordo" />
+                    Otobüs saatleri
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/resmi-kurumlar"
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink/65 hover:bg-navy/5 hover:text-bordo"
+                  >
+                    <MapPin className="h-3.5 w-3.5 shrink-0 text-bordo" />
+                    Resmi kurumlar
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/rehberler"
+                    className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink/65 hover:bg-navy/5 hover:text-bordo"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 text-bordo" />
+                    Gölbaşı rehberleri
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-      <p className="mt-8 text-center text-xs text-ink/30">
-        Veri kaynağı: EczaneAPI — Ankara Eczacılar Odası verileri
-      </p>
+            <a
+              href="https://www.eczaneturkiye.com/ankara/golbasi"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between rounded-2xl border border-line bg-navy/[0.03] p-4"
+            >
+              <div>
+                <p className="text-[13px] font-semibold text-navy">Alternatif kaynak</p>
+                <p className="mt-0.5 text-[12.5px] text-ink/55">Eczane Türkiye'de de kontrol edin</p>
+              </div>
+              <ExternalLink className="h-4 w-4 shrink-0 text-ink/40" />
+            </a>
+
+            <div className="rounded-2xl border border-gold/30 bg-gold/[0.06] p-4">
+              <p className="mb-1.5 text-[13px] font-semibold text-navy">İşletmeniz burada olsun</p>
+              <p className="mb-3 text-[12.5px] leading-relaxed text-ink/60">
+                Gölbaşı'nda işletmenizi ücretsiz ekleyin, binlerce ziyaretçiye ulaşın.
+              </p>
+              <Link
+                href="/isletme-ekle"
+                className="block rounded-lg bg-navy px-3 py-2 text-center text-[13px] font-semibold text-white hover:bg-navy/90"
+              >
+                Ücretsiz ekle
+              </Link>
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
