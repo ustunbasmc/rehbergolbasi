@@ -14,30 +14,13 @@ interface Pharmacy {
   location: { latitude: number; longitude: number } | null;
 }
 
-// Sunucu UTC calissa bile Turkiye tarihini dogru hesaplar.
-// new Date().toISOString() UTC doner; TR UTC+3 oldugu icin 00:00-03:00
-// arasi "dunun" tarihini almak gibi bir hataya yol aciyordu.
-function istanbulTarihi(date: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Istanbul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
-}
-
-function istanbulGorselTarih(date: Date = new Date()): string {
-  return date.toLocaleDateString("tr-TR", {
-    timeZone: "Europe/Istanbul",
+export async function generateMetadata(): Promise<Metadata> {
+  const gorselTarih = new Date().toLocaleDateString("tr-TR", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-}
-
-export async function generateMetadata(): Promise<Metadata> {
-  const gorselTarih = istanbulGorselTarih();
   return {
     title: `Gölbaşı Nöbetçi Eczane — ${gorselTarih} Bugün Açık Eczaneler`,
     description:
@@ -64,31 +47,14 @@ async function getPharmacies(): Promise<Pharmacy[]> {
         next: { revalidate: 21600 },
       }
     );
-
-    if (!res.ok) {
-      console.error(
-        `[nobetci-eczane] EczaneAPI ${res.status} ${res.statusText} döndü — tarih: ${istanbulTarihi()}`
-      );
-      return [];
-    }
-
     const data = await res.json();
-    const today = istanbulTarihi();
+
+    const today = new Date().toISOString().slice(0, 10);
     const todayGroup = (data?.data ?? []).find(
       (g: { date: string; pharmacies: Pharmacy[] }) => g.date === today
     );
-
-    if (!todayGroup) {
-      console.error(
-        `[nobetci-eczane] ${today} için grup bulunamadı. API'den gelen tarihler: ${(data?.data ?? [])
-          .map((g: { date: string }) => g.date)
-          .join(", ")}`
-      );
-    }
-
     return todayGroup?.pharmacies ?? [];
-  } catch (err) {
-    console.error("[nobetci-eczane] EczaneAPI isteği başarısız:", err);
+  } catch {
     return [];
   }
 }
@@ -107,13 +73,18 @@ const SSS = [
   {
     soru: "Bu sayfadaki bilgiler ne sıklıkla güncelleniyor?",
     cevap:
-      "Nöbetçi eczane listesi her gece 00:00'da (Türkiye saatiyle) güncellenir ve Ankara Eczacılar Odası verilerine dayanır.",
+      "Nöbetçi eczane listesi her gece 00:00'da güncellenir ve Ankara Eczacılar Odası verilerine dayanır.",
   },
 ];
 
 export default async function NobetciEczanePage() {
   const pharmacies = await getPharmacies();
-  const gorselTarih = istanbulGorselTarih();
+  const today = new Date().toLocaleDateString("tr-TR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -183,32 +154,28 @@ export default async function NobetciEczanePage() {
         <h1 className="font-display text-3xl font-bold text-navy">Ankara Gölbaşı Nöbetçi Eczane</h1>
         <div className="mt-2 flex items-center gap-2 text-sm text-ink/60">
           <Clock className="h-4 w-4" />
-          <span>{gorselTarih}</span>
+          <span>{today}</span>
         </div>
       </div>
 
       <div className="mb-6 flex items-start gap-3 rounded-2xl border border-gold/30 bg-gold/5 p-4">
         <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-gold-dark" />
         <p className="text-sm text-ink/70">
-          Eczaneye gitmeden önce telefonla açık olduğunu teyit etmeniz önerilir. Bilgiler her gece
-          00:00'da (Türkiye saatiyle) güncellenir.
+          Eczaneye gitmeden önce telefonla açık olduğunu teyit etmeniz önerilir. Bilgiler her gece 00:00'da güncellenir.
         </p>
       </div>
 
       {pharmacies.length === 0 ? (
         <div className="rounded-2xl border border-line bg-white p-8 text-center">
-          <p className="text-sm text-ink/50">Bugün için nöbetçi eczane bilgisi bulunamadı.</p>
-          <p className="mt-2 text-xs text-ink/35">
-            Sorun devam ederse{" "}
-            <a href="https://www.eczaneturkiye.com/ankara/golbasi" target="_blank" rel="noopener noreferrer" className="underline">
-              Eczane Türkiye
-            </a>{" "}
-            üzerinden de kontrol edebilirsiniz.
+          <p className="text-sm text-ink/50">
+            Bugün için nöbetçi eczane bilgisi bulunamadı.
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <p className="text-sm font-semibold text-ink/50">{pharmacies.length} nöbetçi eczane bulundu</p>
+          <p className="text-sm font-semibold text-ink/50">
+            {pharmacies.length} nöbetçi eczane bulundu
+          </p>
           {pharmacies.map((pharmacy) => (
             <PharmacyCard key={pharmacy.id} pharmacy={pharmacy} />
           ))}
