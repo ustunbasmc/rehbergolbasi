@@ -47,7 +47,7 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
   }, []);
 
   return (
-    <article id={`hat-${hat.no}`} className="scroll-mt-20 rounded-2xl border border-line bg-white p-4 transition hover:border-bordo/30 sm:p-5">
+    <article id={`hat-${hat.no}`} className="scroll-mt-24 rounded-2xl border border-line bg-white p-4 transition hover:border-bordo/30 sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className={`shrink-0 rounded-lg ${stil.bg} px-2.5 py-1.5 text-sm font-bold text-white`}>
@@ -150,7 +150,7 @@ export default function OtobusHatlariList() {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 -mx-5 bg-white/95 px-5 pb-3 pt-2 backdrop-blur-sm sm:-mx-6 sm:px-6">
+      <div className="sticky top-0 z-10 bg-white/95 py-2 backdrop-blur-sm">
         <div className="relative mb-3">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/35" />
           <input
