@@ -23,12 +23,18 @@ function slugify(text: string) {
 }
 
 async function uploadFile(file: File): Promise<string | null> {
-  const ext = file.name.split(".").pop();
-  const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase.storage.from("business-photos").upload(path, file);
-  if (error) return null;
-  const { data } = supabase.storage.from("business-photos").getPublicUrl(path);
-  return data.publicUrl;
+  // Görsel sunucu tarafında sıkıştırılıp WebP'ye çevrilir (/api/upload-photo).
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("/api/upload-photo", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) return null;
+  const result = await res.json();
+  return result.url ?? null;
 }
 
 interface FaqDraft {
@@ -475,7 +481,7 @@ const completionScore = Math.round(
           <label className={labelClass}>Kapak fotoğrafı</label>
           {coverPreview ? (
             <div className="group relative mb-2 h-40 w-full overflow-hidden rounded-xl border border-line bg-offwhite">
-              <Image src={coverPreview} alt="Kapak önizleme" fill className="object-cover" />
+              <Image src={coverPreview} alt="Kapak önizleme" fill className="object-cover" unoptimized />
               <button
                 type="button"
                 onClick={() => handleCoverChange(null)}
@@ -506,7 +512,7 @@ const completionScore = Math.round(
             <div className="mb-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
               {galleryFiles.map((file, i) => (
                 <div key={i} className="group relative h-16 overflow-hidden rounded-lg border border-line bg-offwhite">
-                  <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" />
+                  <Image src={URL.createObjectURL(file)} alt="" fill className="object-cover" unoptimized />
                   <button
                     type="button"
                     onClick={() => setGalleryFiles((prev) => prev.filter((_, idx) => idx !== i))}

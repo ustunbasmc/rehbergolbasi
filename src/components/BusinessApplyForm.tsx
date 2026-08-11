@@ -37,12 +37,29 @@ function slugify(text: string) {
 }
 
 async function uploadFile(file: File): Promise<string | null> {
-  const fileExt = file.name.split(".").pop();
-  const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
-  const { error: uploadError } = await supabase.storage.from("business-photos").upload(filePath, file);
-  if (uploadError) return null;
-  const { data } = supabase.storage.from("business-photos").getPublicUrl(filePath);
-  return data.publicUrl;
+  // PDF dosyaları sıkıştırma API'sinden geçemez (sharp yalnızca görsel işler),
+  // bunlar doğrudan Supabase'e, eski yöntemle yüklenir.
+  if (file.type === "application/pdf") {
+    const fileExt = file.name.split(".").pop();
+    const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from("business-photos").upload(filePath, file);
+    if (uploadError) return null;
+    const { data } = supabase.storage.from("business-photos").getPublicUrl(filePath);
+    return data.publicUrl;
+  }
+
+  // Görseller sunucu tarafında sıkıştırılıp WebP'ye çevrilir (/api/upload-photo).
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("/api/upload-photo", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) return null;
+  const result = await res.json();
+  return result.url ?? null;
 }
 
 interface FaqDraft {

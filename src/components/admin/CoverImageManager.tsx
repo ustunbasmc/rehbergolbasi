@@ -23,31 +23,29 @@ export default function CoverImageManager({
     setError(null);
 
     const file = files[0];
-    const fileExt = file.name.split(".").pop();
-    const filePath = `covers/${businessId}-${Date.now()}.${fileExt}`;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("prefix", `covers/${businessId}-`);
 
-    const { error: uploadError } = await supabase.storage
-      .from("business-photos")
-      .upload(filePath, file, { upsert: true });
+    const res = await fetch("/api/upload-photo", {
+      method: "POST",
+      body: formData,
+    });
 
-    if (uploadError) {
-      setError("Yükleme hatası: " + uploadError.message);
+    const result = await res.json();
+
+    if (!res.ok) {
+      setError("Yükleme hatası: " + (result.error ?? "bilinmeyen hata"));
       setUploading(false);
       return;
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from("business-photos")
-      .getPublicUrl(filePath);
-
-    const newUrl = publicUrlData.publicUrl;
-
     await supabase
       .from("businesses")
-      .update({ cover_image_url: newUrl })
+      .update({ cover_image_url: result.url })
       .eq("id", businessId);
 
-    onUpdated(newUrl);
+    onUpdated(result.url);
     setUploading(false);
   }
 
@@ -69,7 +67,7 @@ export default function CoverImageManager({
 
       {currentUrl ? (
         <div className="group relative mb-2 h-40 w-full overflow-hidden rounded-xl bg-offwhite">
-          <Image src={currentUrl} alt="Kapak görseli" fill className="object-cover" />
+          <Image src={currentUrl} alt="Kapak görseli" fill unoptimized className="object-cover" />
           <button
             onClick={handleRemove}
             className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-bordo px-2.5 py-1.5 text-xs font-bold text-white opacity-0 transition group-hover:opacity-100"

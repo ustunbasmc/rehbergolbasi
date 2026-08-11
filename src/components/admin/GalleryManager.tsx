@@ -35,25 +35,25 @@ export default function GalleryManager({ businessId }: { businessId: string }) {
     let nextOrder = photos.length > 0 ? Math.max(...photos.map((p) => p.display_order)) + 1 : 0;
 
     for (const file of Array.from(files)) {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("prefix", "gallery-");
 
-      const { error: uploadError } = await supabase.storage
-        .from("business-photos")
-        .upload(filePath, file);
+      const res = await fetch("/api/upload-photo", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (uploadError) {
-        setError("Yükleme hatası: " + uploadError.message);
+      const result = await res.json();
+
+      if (!res.ok) {
+        setError("Yükleme hatası: " + (result.error ?? "bilinmeyen hata"));
         continue;
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from("business-photos")
-        .getPublicUrl(filePath);
-
       await supabase.from("business_photos").insert({
         business_id: businessId,
-        url: publicUrlData.publicUrl,
+        url: result.url,
         display_order: nextOrder,
       });
 
@@ -79,7 +79,7 @@ export default function GalleryManager({ businessId }: { businessId: string }) {
         <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
           {photos.map((photo) => (
             <div key={photo.id} className="group relative h-20 overflow-hidden rounded-lg bg-offwhite">
-              <Image src={photo.url} alt="" fill className="object-cover" />
+              <Image src={photo.url} alt="" fill unoptimized className="object-cover" />
               <button
                 onClick={() => handleDelete(photo.id)}
                 className="absolute right-1 top-1 rounded-full bg-bordo p-1 text-white opacity-0 transition group-hover:opacity-100"

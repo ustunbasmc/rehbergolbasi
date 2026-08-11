@@ -30,6 +30,7 @@ export default function BusinessCard({ business }: { business: Business }) {
             src={business.cover_image_url}
             alt={business.name}
             fill
+            unoptimized
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover"
           />

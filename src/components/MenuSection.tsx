@@ -35,7 +35,7 @@ export default function MenuSection({ items }: { items: MenuItem[] }) {
               aria-label={`Menü fotoğrafı ${i + 1}, büyük gör`}
               className="relative h-32 w-24 shrink-0 overflow-hidden rounded-lg border border-line bg-offwhite"
             >
-              <Image src={item.url} alt={`Menü fotoğrafı ${i + 1}`} fill sizes="96px" className="object-cover" />
+              <Image src={item.url} alt={`Menü fotoğrafı ${i + 1}`} fill unoptimized sizes="96px" className="object-cover" />
             </button>
           ))}
         </div>
@@ -98,6 +98,7 @@ export default function MenuSection({ items }: { items: MenuItem[] }) {
               src={images[openIndex].url}
               alt={`Menü fotoğrafı ${openIndex + 1}`}
               fill
+              unoptimized
               sizes="(max-width: 640px) 100vw, 640px"
               className="object-contain"
             />
