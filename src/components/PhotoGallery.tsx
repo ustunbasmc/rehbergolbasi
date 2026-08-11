@@ -51,6 +51,7 @@ export default function PhotoGallery({
             alt={`${businessName} kapak fotoğrafı`}
             fill
             priority
+            unoptimized
             sizes="(max-width: 640px) 100vw, 896px"
             className={`object-cover transition-opacity duration-500 ${
               coverLoaded ? "opacity-100" : "opacity-0"
@@ -130,6 +131,7 @@ export default function PhotoGallery({
               src={images[openIndex]}
               alt={`${businessName} fotoğraf ${openIndex + 1}`}
               fill
+              unoptimized
               sizes="(max-width: 640px) 100vw, 768px"
               className="object-contain"
             />

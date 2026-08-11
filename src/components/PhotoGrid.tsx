@@ -44,9 +44,9 @@ export default function PhotoGrid({
                 src={photo.url}
                 alt={`${businessName} fotoğraf ${i + 1}`}
                 fill
+                unoptimized
                 sizes="80px"
                 className="object-cover"
-                quality={90}
               />
             </div>
           </button>
@@ -84,9 +84,9 @@ export default function PhotoGrid({
               src={photos[openIndex].url}
               alt={`${businessName} fotoğraf ${openIndex + 1}`}
               fill
+              unoptimized
               sizes="(max-width: 640px) 100vw, 672px"
               className="object-contain"
-              quality={95}
             />
           </div>
 
