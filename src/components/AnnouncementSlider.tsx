@@ -29,14 +29,14 @@ export default function AnnouncementSlider({ announcements }: { announcements: A
   const current = announcements[index];
 
   const slide = (
-    <div className="relative aspect-[9/16] w-full overflow-hidden rounded-3xl bg-navy shadow-xl">
+    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-3xl bg-navy shadow-xl">
       {current.image_url ? (
         <Image
           src={current.image_url}
           alt={current.title}
           fill
           unoptimized
-          sizes="(max-width: 640px) 70vw, 260px"
+          sizes="(max-width: 1024px) 100vw, 760px"
           className="object-cover"
         />
       ) : (
@@ -48,7 +48,7 @@ export default function AnnouncementSlider({ announcements }: { announcements: A
   );
 
   return (
-    <div className="relative mx-auto w-full max-w-[220px] sm:max-w-[260px]">
+    <div className="relative w-full">
       {current.link_url ? <Link href={current.link_url}>{slide}</Link> : slide}
 
       {announcements.length > 1 && (
@@ -56,16 +56,16 @@ export default function AnnouncementSlider({ announcements }: { announcements: A
           <button
             onClick={() => setIndex((i) => (i - 1 + announcements.length) % announcements.length)}
             aria-label="Önceki duyuru"
-            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-1.5 text-white backdrop-blur-sm hover:bg-white/25"
+            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-2 text-white backdrop-blur-sm hover:bg-white/25"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={() => setIndex((i) => (i + 1) % announcements.length)}
             aria-label="Sonraki duyuru"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-1.5 text-white backdrop-blur-sm hover:bg-white/25"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-2 text-white backdrop-blur-sm hover:bg-white/25"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-5 w-5" />
           </button>
           <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
             {announcements.map((a, i) => (

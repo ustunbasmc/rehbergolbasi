@@ -343,11 +343,9 @@ export default async function HomePage() {
       <section className="border-b border-line bg-offwhite">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
           {announcements.length > 0 ? (
-            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:justify-center">
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
               <AnnouncementSlider announcements={announcements} />
-              <div className="w-full sm:max-w-sm">
-                <WeatherWidget />
-              </div>
+              <WeatherWidget />
             </div>
           ) : (
             <div className="mx-auto max-w-sm">
