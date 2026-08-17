@@ -29,39 +29,26 @@ export default function AnnouncementSlider({ announcements }: { announcements: A
   const current = announcements[index];
 
   const slide = (
-    <div className="relative h-64 w-full overflow-hidden rounded-3xl bg-navy sm:h-80">
+    <div className="relative aspect-[9/16] w-full overflow-hidden rounded-3xl bg-navy shadow-xl">
       {current.image_url ? (
         <Image
           src={current.image_url}
           alt={current.title}
           fill
           unoptimized
-          sizes="(max-width: 1024px) 100vw, 760px"
+          sizes="(max-width: 640px) 70vw, 260px"
           className="object-cover"
         />
       ) : (
-        <div className="absolute inset-0 bg-gradient-to-br from-navy to-bordo-dark" />
+        <div className="flex h-full items-center justify-center bg-gradient-to-br from-navy to-bordo-dark">
+          <Megaphone className="h-8 w-8 text-white/20" />
+        </div>
       )}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(180deg, rgba(11,21,38,0.15) 0%, rgba(11,21,38,0.85) 100%)",
-        }}
-      />
-      <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
-        <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold px-2.5 py-1 text-[11px] font-bold text-gold-dark">
-          <Megaphone className="h-3 w-3" /> Duyuru
-        </span>
-        <h3 className="font-display text-2xl font-bold text-white sm:text-3xl">{current.title}</h3>
-        {current.description && (
-          <p className="mt-2 max-w-lg text-sm text-white/75">{current.description}</p>
-        )}
-      </div>
     </div>
   );
 
   return (
-    <div className="relative">
+    <div className="relative mx-auto w-full max-w-[220px] sm:max-w-[260px]">
       {current.link_url ? <Link href={current.link_url}>{slide}</Link> : slide}
 
       {announcements.length > 1 && (
@@ -69,16 +56,16 @@ export default function AnnouncementSlider({ announcements }: { announcements: A
           <button
             onClick={() => setIndex((i) => (i - 1 + announcements.length) % announcements.length)}
             aria-label="Önceki duyuru"
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-2 text-white backdrop-blur-sm hover:bg-white/25"
+            className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-1.5 text-white backdrop-blur-sm hover:bg-white/25"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <button
             onClick={() => setIndex((i) => (i + 1) % announcements.length)}
             aria-label="Sonraki duyuru"
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-2 text-white backdrop-blur-sm hover:bg-white/25"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/15 p-1.5 text-white backdrop-blur-sm hover:bg-white/25"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
           <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
             {announcements.map((a, i) => (
@@ -87,7 +74,7 @@ export default function AnnouncementSlider({ announcements }: { announcements: A
                 onClick={() => setIndex(i)}
                 aria-label={`${i + 1}. duyuruya git`}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-6 bg-white" : "w-1.5 bg-white/40"
+                  i === index ? "w-5 bg-white" : "w-1.5 bg-white/40"
                 }`}
               />
             ))}
