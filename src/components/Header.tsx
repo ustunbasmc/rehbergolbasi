@@ -61,12 +61,15 @@ export default function Header() {
     setQuery("");
   }
 
+  // Sınır kontrollü eşleşme: "/isletmeler-icin", "/isletmeler" ile
+  // BAŞLASA da onun bir alt sayfası değildir — tam eşitlik ya da
+  // "/isletmeler/..." şeklinde devam etmesi gerekir.
   function isActive(href: string, exact: boolean) {
     if (exact) return pathname === href;
-    return pathname.startsWith(href);
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
-  const faydaliActive = FAYDALI_BILGILER.some((item) => pathname.startsWith(item.href));
+  const faydaliActive = FAYDALI_BILGILER.some((item) => isActive(item.href, false));
 
   return (
     <header
@@ -74,7 +77,7 @@ export default function Header() {
         scrolled ? "shadow-[0_6px_20px_rgba(20,33,61,0.10)]" : ""
       }`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-2.5 sm:py-3">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-2 sm:py-2.5">
         {/* Sol: mobil menü + logo + nav */}
         <div className="flex items-center gap-6">
           <button
@@ -85,18 +88,15 @@ export default function Header() {
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
 
-          <Link href="/" className="flex shrink-0 flex-col items-start" onClick={() => setOpen(false)}>
+          <Link href="/" className="flex shrink-0 items-center" onClick={() => setOpen(false)}>
             <Image
               src="/logo.png"
               alt="RehberGölbaşı"
               width={220}
               height={62}
               priority
-              className="h-10 w-auto sm:h-12"
+              className="h-7 w-auto sm:h-8"
             />
-            <span className="hidden pl-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-ink/35 sm:block">
-              Gölbaşı&apos;nın Dijital Rehberi
-            </span>
           </Link>
 
           <nav className="hidden items-center gap-6 font-body text-sm font-semibold text-ink sm:flex">
@@ -206,14 +206,12 @@ export default function Header() {
 
           <Link
             href="/isletme-ekle"
-            className="hidden items-center overflow-hidden rounded-full shadow-sm transition-all hover:shadow-md sm:flex"
+            className="hidden items-center gap-1.5 rounded-full bg-gradient-to-r from-bordo to-bordo-dark px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:shadow-lg hover:shadow-bordo/25 hover:brightness-110 active:scale-[0.97] sm:flex"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-navy text-[11px] font-black tracking-tight text-white">
-              RG
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
+              <Plus className="h-3.5 w-3.5" />
             </span>
-            <span className="-ml-px flex items-center gap-1.5 bg-bordo py-2.5 pl-4 pr-5 text-sm font-bold text-white transition-colors hover:bg-bordo-dark">
-              <Plus className="h-4 w-4" /> İşletmeni Ekle
-            </span>
+            İşletmeni Ekle
           </Link>
         </div>
       </div>
@@ -284,9 +282,12 @@ export default function Header() {
           <Link
             href="/isletme-ekle"
             onClick={() => setOpen(false)}
-            className="mt-1 flex items-center justify-center gap-1.5 rounded-full bg-bordo px-4 py-3 text-center font-bold text-white"
+            className="mt-1 flex items-center justify-center gap-1.5 rounded-full bg-gradient-to-r from-bordo to-bordo-dark px-4 py-3 text-center font-bold text-white shadow-sm"
           >
-            <Plus className="h-4 w-4" /> İşletmeni Ekle
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
+              <Plus className="h-3.5 w-3.5" />
+            </span>
+            İşletmeni Ekle
           </Link>
         </nav>
       )}
