@@ -6,7 +6,7 @@ import {
   Search,
   MapPin,
   ShieldCheck,
-  Users,
+  Zap,
   Sparkles,
   Star,
   BookOpen,
@@ -18,6 +18,10 @@ import {
   Phone,
   MessageCircle,
   UtensilsCrossed,
+  Pill,
+  Bus,
+  Landmark,
+  Plus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CategoryGrid, { type CategoryWithBusinesses } from "@/components/CategoryGrid";
@@ -27,6 +31,15 @@ import { getOpenStatus } from "@/lib/openingHours";
 import type { OpeningHours } from "@/lib/types";
 
 export const revalidate = 60;
+
+const HIZLI_ERISIM = [
+  { href: "/isletmeler", label: "İşletmeler", icon: Building2, bg: "bg-bordo/10", color: "text-bordo" },
+  { href: "/nobetci-eczane", label: "Nöbetçi Eczane", icon: Pill, bg: "bg-green-500/10", color: "text-green-600" },
+  { href: "/otobus-saatleri", label: "Otobüs Saatleri", icon: Bus, bg: "bg-navy/10", color: "text-navy" },
+  { href: "/isletmeler/resmi-kurumlar", label: "Resmi Kurumlar", icon: Landmark, bg: "bg-gold/15", color: "text-gold-dark" },
+  { href: "/rehberler", label: "Rehberler", icon: BookOpen, bg: "bg-purple-500/10", color: "text-purple-600" },
+  { href: "/isletme-ekle", label: "İşletmeni Ekle", icon: Plus, bg: "bg-bordo/10", color: "text-bordo" },
+];
 
 interface OpenNowBusiness {
   id: string;
@@ -249,16 +262,28 @@ export default async function HomePage() {
             </button>
           </form>
 
-          <div className="mx-auto mt-10 flex max-w-xl flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-white/80">
-            <span className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-white/60" /> {stats.businessCount}+ işletme
-            </span>
-            <span className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-white/60" /> Doğrulanmış kayıtlar
-            </span>
-            <span className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-white/60" /> İlk ay ücretsiz
-            </span>
+          <div className="mx-auto mt-10 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              { icon: Zap, title: "Hızlı Erişim", desc: "İhtiyacın olan işletmeye tek tıkla ulaş" },
+              { icon: ShieldCheck, title: "Doğrulanmış Kayıtlar", desc: "Güncel ve güvenilir işletme bilgileri" },
+              { icon: Sparkles, title: "İlk Ay Ücretsiz", desc: "Yeni işletmeler için avantajlı başlangıç" },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div
+                  key={item.title}
+                  className="flex items-start gap-3 rounded-xl bg-white/10 p-3 text-left backdrop-blur-sm"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
+                    <Icon className="h-4 w-4 text-white" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-white">{item.title}</p>
+                    <p className="text-xs text-white/70">{item.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -287,6 +312,32 @@ export default async function HomePage() {
           })}
         </div>
       </section>
+
+      {/* Hızlı Erişim */}
+      <section className="border-b border-line bg-offwhite">
+        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
+          <h2 className="mb-1 font-display text-xl font-bold text-navy">Hızlı Erişim</h2>
+          <p className="mb-5 text-sm text-ink/60">Gölbaşı&apos;nda en çok aranan bilgilere tek tıkla ulaş.</p>
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+            {HIZLI_ERISIM.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="card-shadow flex flex-col items-center gap-2 rounded-2xl border border-line bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-bordo hover:shadow-md"
+                >
+                  <span className={`flex h-12 w-12 items-center justify-center rounded-full ${item.bg}`}>
+                    <Icon className={`h-5 w-5 ${item.color}`} />
+                  </span>
+                  <span className="text-xs font-bold leading-tight text-navy">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
         <div className="mb-20 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <OpenRestaurantsWidget restaurants={openNowRestaurants} />
