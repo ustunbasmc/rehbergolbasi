@@ -2,6 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import NobetciEczaneWidget from "@/components/NobetciEczaneWidget";
 import OpenRestaurantsWidget from "@/components/OpenRestaurantsWidget";
+import AnnouncementSlider from "@/components/AnnouncementSlider";
+import WeatherWidget from "@/components/WeatherWidget";
 import {
   Search,
   MapPin,
@@ -11,8 +13,6 @@ import {
   Star,
   BookOpen,
   Building2,
-  LayoutGrid,
-  Eye,
   Hash,
   Clock,
   Phone,
@@ -26,7 +26,6 @@ import {
 import { supabase } from "@/lib/supabase";
 import CategoryGrid, { type CategoryWithBusinesses } from "@/components/CategoryGrid";
 import BusinessCard from "@/components/BusinessCard";
-import StatsCounter from "@/components/StatsCounter";
 import { getOpenStatus } from "@/lib/openingHours";
 import type { OpeningHours } from "@/lib/types";
 
@@ -190,6 +189,15 @@ const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_i
   },
 };
 }
+async function getAnnouncements() {
+  const { data } = await supabase
+    .from("announcements")
+    .select("id, title, description, image_url, link_url")
+    .eq("is_active", true)
+    .order("display_order", { ascending: true });
+  return data ?? [];
+}
+
 async function getNobetciEczaneler() {
   try {
     const res = await fetch(
@@ -213,6 +221,7 @@ async function getNobetciEczaneler() {
 export default async function HomePage() {
   const latestGuides = await getLatestGuides();
   const nobetciEczaneler = await getNobetciEczaneler();
+  const announcements = await getAnnouncements();
   const { categories, featured, recent, neighborhoods, popularTags, openNowRestaurants, stats } =
     await getData();
 
@@ -305,33 +314,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Sayılarla RehberGölbaşı */}
-      <section className="border-b border-line bg-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-5 py-10 sm:grid-cols-4">
-          {[
-            { icon: Building2, label: "İşletme", value: stats.businessCount },
-            { icon: LayoutGrid, label: "Kategori", value: stats.categoryCount },
-            { icon: MapPin, label: "Mahalle", value: stats.neighborhoodCount },
-            { icon: Eye, label: "Görüntülenme", value: stats.totalViews },
-          ].map((s) => {
-            const Icon = s.icon;
-            return (
-              <div key={s.label} className="flex flex-col items-center text-center">
-                <Icon className="mb-2 h-5 w-5 text-bordo" />
-                <p className="font-display text-3xl font-extrabold text-navy">
-                  <StatsCounter value={s.value} />+
-                </p>
-                <p className="text-xs font-semibold uppercase tracking-wide text-ink/50">
-                  {s.label}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
       {/* Hızlı Erişim */}
-      <section className="border-b border-line bg-offwhite">
+      <section className="border-b border-line bg-white">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
           <h2 className="mb-1 font-display text-xl font-bold text-navy">Hızlı Erişim</h2>
           <p className="mb-5 text-sm text-ink/60">Gölbaşı&apos;nda en çok aranan bilgilere tek tıkla ulaş.</p>
@@ -352,6 +336,22 @@ export default async function HomePage() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Duyurular + Hava Durumu */}
+      <section className="border-b border-line bg-offwhite">
+        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
+          {announcements.length > 0 ? (
+            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+              <AnnouncementSlider announcements={announcements} />
+              <WeatherWidget />
+            </div>
+          ) : (
+            <div className="mx-auto max-w-sm">
+              <WeatherWidget />
+            </div>
+          )}
         </div>
       </section>
 

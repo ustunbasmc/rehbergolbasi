@@ -23,6 +23,7 @@ import GlobalSearch from "@/components/admin/GlobalSearch";
 import EditBusinessModal from "@/components/admin/EditBusinessModal";
 import type { Business } from "@/lib/types";
 import MessageTemplates from "@/components/admin/MessageTemplates";
+import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
 import {
   Clock,
   MessageSquareText,
@@ -44,6 +45,7 @@ import {
   UserPlus,
   PlusCircle,
   BarChart2,
+  Megaphone,
 } from "lucide-react";
 
 type Tab =
@@ -63,7 +65,8 @@ type Tab =
   | "guides"
   | "analytics"
   | "templates"
-  | "new-business";
+  | "new-business"
+  | "announcements";
 
 interface Stats {
   total: number;
@@ -168,6 +171,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "tags", label: "Etiketler", icon: Hash },
         { key: "features", label: "Özellikler", icon: TagsIcon },
         { key: "guides", label: "Rehberler", icon: BookOpen },
+        { key: "announcements", label: "Duyurular", icon: Megaphone },
         { key: "templates", label: "Mesaj Şablonları", icon: MessageSquareText },
         { key: "requests", label: "Talepler", icon: PhoneCall, badge: stats.requests },
         { key: "reports", label: "Bildirimler", icon: Flag, badge: stats.reports },
@@ -287,6 +291,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "tags" && <TagManager />}
           {tab === "features" && <FeatureManager />}
           {tab === "guides" && <GuidesList />}
+          {tab === "announcements" && <AnnouncementsManager />}
           {tab === "requests" && <ContactRequestsList />}
           {tab === "reports" && <ReportsList />}
           {tab === "analytics" && <BusinessAnalytics />}
