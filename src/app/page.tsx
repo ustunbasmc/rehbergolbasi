@@ -41,6 +41,12 @@ const HIZLI_ERISIM = [
   { href: "/isletme-ekle", label: "İşletmeni Ekle", icon: Plus, bg: "bg-bordo/10", color: "text-bordo" },
 ];
 
+const HERO_GUVEN = [
+  { icon: Zap, title: "Hızlı Erişim", desc: "İhtiyacın olana tek tıkla ulaş" },
+  { icon: ShieldCheck, title: "Doğrulanmış Kayıtlar", desc: "Güncel, güvenilir işletme bilgisi" },
+  { icon: Sparkles, title: "İlk Ay Ücretsiz", desc: "Yeni işletmeler avantajlı başlar" },
+];
+
 interface OpenNowBusiness {
   id: string;
   name: string;
@@ -212,78 +218,89 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero */}
-      <section className="relative overflow-hidden px-5 py-28 text-center text-white sm:py-32">
-        <Image
-          src="/hero-golbasi.jpg"
-          alt="Gölbaşı Gölü"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(11,21,38,0.55) 0%, rgba(11,21,38,0.82) 55%, rgba(11,21,38,0.95) 100%)",
-          }}
-        />
-        <div className="relative">
-          <p className="mb-3 font-mono text-sm uppercase tracking-widest text-white/70">
-            Gölbaşı, Ankara
-          </p>
-          <h1 className="mx-auto max-w-2xl font-display text-4xl font-extrabold leading-tight sm:text-5xl">
-            Gölbaşı&apos;nda ne ararsan,{" "}
-            <span className="text-bordo-dark bg-white rounded px-2">komşundan komşuna</span> burada.
-          </h1>
-          <p className="mx-auto mt-5 max-w-xl text-white/80">
-            Restorandan kuaföre, emlakçıdan tesisatçıya — güvenilir işletmeler tek adreste.
-          </p>
+      {/* Hero — açık zemin, iki sütun (KP düzeni), sağda kendi göl fotoğrafımız */}
+      <section className="overflow-hidden bg-offwhite">
+        <div className="mx-auto max-w-6xl px-5 py-14 sm:px-6 sm:py-20">
+          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
+            {/* Sol: başlık + arama */}
+            <div>
+              <span className="mb-4 inline-block rounded-full bg-bordo/10 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-bordo">
+                Gölbaşı, Ankara
+              </span>
+              <h1 className="font-display text-4xl font-extrabold leading-[1.1] text-navy sm:text-5xl">
+                Gölbaşı&apos;nda ne ararsan,{" "}
+                <span className="text-bordo">komşundan komşuna</span> burada.
+              </h1>
+              <p className="mt-5 max-w-md text-base text-ink/60">
+                Restorandan kuaföre, emlakçıdan tesisatçıya — güvenilir işletmeler tek adreste.
+              </p>
 
-          <form
-            action="/isletmeler"
-            className="mx-auto mt-8 flex max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-2xl sm:flex-row"
-          >
-            <div className="flex flex-1 items-center gap-2 px-3 py-2">
-              <Search className="h-5 w-5 text-ink/40" />
-              <input
-                type="text"
-                name="q"
-                placeholder="Restoran, kuaför, emlakçı ara..."
-                className="w-full text-sm text-ink outline-none placeholder:text-ink/40"
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-xl bg-bordo px-6 py-3 text-sm font-semibold text-white transition hover:bg-bordo-dark"
-            >
-              Ara
-            </button>
-          </form>
-
-          <div className="mx-auto mt-10 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-            {[
-              { icon: Zap, title: "Hızlı Erişim", desc: "İhtiyacın olan işletmeye tek tıkla ulaş" },
-              { icon: ShieldCheck, title: "Doğrulanmış Kayıtlar", desc: "Güncel ve güvenilir işletme bilgileri" },
-              { icon: Sparkles, title: "İlk Ay Ücretsiz", desc: "Yeni işletmeler için avantajlı başlangıç" },
-            ].map((item) => {
-              const Icon = item.icon;
-              return (
-                <div
-                  key={item.title}
-                  className="flex items-start gap-3 rounded-xl bg-white/10 p-3 text-left backdrop-blur-sm"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15">
-                    <Icon className="h-4 w-4 text-white" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-white">{item.title}</p>
-                    <p className="text-xs text-white/70">{item.desc}</p>
-                  </div>
+              <form
+                action="/isletmeler"
+                className="mt-8 flex max-w-lg flex-col gap-2 rounded-2xl border border-line bg-white p-2 shadow-lg sm:flex-row"
+              >
+                <div className="flex flex-1 items-center gap-2 px-3 py-2">
+                  <Search className="h-5 w-5 text-ink/40" />
+                  <input
+                    type="text"
+                    name="q"
+                    placeholder="Restoran, kuaför, emlakçı ara..."
+                    className="w-full text-sm text-ink outline-none placeholder:text-ink/40"
+                  />
                 </div>
-              );
-            })}
+                <button
+                  type="submit"
+                  className="rounded-xl bg-bordo px-6 py-3 text-sm font-semibold text-white transition hover:bg-bordo-dark"
+                >
+                  Ara
+                </button>
+              </form>
+
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
+                  <Building2 className="h-4 w-4 text-bordo" /> {stats.businessCount}+ işletme
+                </span>
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
+                  <ShieldCheck className="h-4 w-4 text-bordo" /> Doğrulanmış kayıtlar
+                </span>
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
+                  <Sparkles className="h-4 w-4 text-bordo" /> İlk ay ücretsiz
+                </span>
+              </div>
+            </div>
+
+            {/* Sağ: göl fotoğrafı + taşan bilgi kartı */}
+            <div className="relative">
+              <div className="overflow-hidden rounded-3xl shadow-2xl">
+                <Image
+                  src="/hero-golbasi.jpg"
+                  alt="Gölbaşı Gölü"
+                  width={720}
+                  height={520}
+                  priority
+                  className="h-64 w-full object-cover sm:h-80 lg:h-96"
+                />
+              </div>
+
+              <div className="relative z-10 -mt-12 ml-4 mr-4 rounded-2xl border border-line bg-white p-4 shadow-xl sm:-mt-14 sm:ml-8 sm:mr-8 sm:p-5">
+                <div className="flex flex-col gap-3.5">
+                  {HERO_GUVEN.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.title} className="flex items-center gap-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bordo/10">
+                          <Icon className="h-4.5 w-4.5 text-bordo" />
+                        </span>
+                        <div>
+                          <p className="text-sm font-bold text-navy">{item.title}</p>
+                          <p className="text-xs text-ink/50">{item.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
