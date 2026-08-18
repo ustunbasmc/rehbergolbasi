@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Download, Share, MapPin } from "lucide-react";
+import { X, Download, Share, MapPin, ChevronDown } from "lucide-react";
 
 const DISMISS_KEY = "a2hs-dismissed-at";
-const DISMISS_DAYS = 14;
+const DISMISS_DAYS = 7;
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -15,11 +15,44 @@ interface NavigatorStandalone extends Navigator {
   standalone?: boolean;
 }
 
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
+
+function trackEvent(name: string) {
+  if (typeof window !== "undefined" && typeof window.gtag === "function") {
+    window.gtag("event", name);
+  }
+}
+
 export default function AddToHomeScreenBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [visible, setVisible] = useState(false);
   const [iconBroken, setIconBroken] = useState(false);
+
+  // Bağımsız (ana ekrandan açılmış) modda çalışıyorsa, bu GA4'e
+  // "pwa_standalone_open" olarak gönderilir. iOS'ta gerçek bir "kuruldu"
+  // sinyali olmadığı için en iyi vekil metrik budur: tekrar tekrar
+  // standalone açılış = biri ana ekrana eklemiş demektir.
+  useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (window.navigator as NavigatorStandalone).standalone === true;
+    if (isStandalone) {
+      trackEvent("pwa_standalone_open");
+    }
+  }, []);
+
+  useEffect(() => {
+    function onAppInstalled() {
+      trackEvent("pwa_install");
+    }
+    window.addEventListener("appinstalled", onAppInstalled);
+    return () => window.removeEventListener("appinstalled", onAppInstalled);
+  }, []);
 
   useEffect(() => {
     const isStandalone =
@@ -90,8 +123,9 @@ export default function AddToHomeScreenBanner() {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-navy">RehberGölbaşı&apos;nı ekle</p>
           {isIOS ? (
-            <p className="flex items-center gap-1 text-xs text-ink/55">
-              <Share className="h-3 w-3 shrink-0" /> Paylaş&apos;a dokun, sonra &quot;Ana Ekrana Ekle&quot;
+            <p className="text-xs leading-snug text-ink/55">
+              Ekranın altındaki <Share className="mx-0.5 inline h-3 w-3 shrink-0" /> paylaş
+              simgesine dokun, sonra &quot;Ana Ekrana Ekle&quot;yi seç
             </p>
           ) : (
             <p className="text-xs text-ink/55">Ana ekranına ekle, tek dokunuşla aç</p>
@@ -113,6 +147,13 @@ export default function AddToHomeScreenBanner() {
           <X className="h-5 w-5" />
         </button>
       </div>
+
+      {isIOS && (
+        <div className="flex items-center justify-center gap-1 border-t border-line bg-gold/10 py-1.5 text-[11px] font-semibold text-gold-dark">
+          <ChevronDown className="h-3.5 w-3.5 animate-bounce" />
+          Safari&apos;nin alt çubuğundaki paylaş simgesi burada
+        </div>
+      )}
     </div>
   );
 }
