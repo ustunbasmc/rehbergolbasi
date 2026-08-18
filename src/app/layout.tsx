@@ -1,8 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bitter, Work_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import SiteChrome from "@/components/SiteChrome";
 import CookieConsent from "@/components/CookieConsent";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import AddToHomeScreenBanner from "@/components/AddToHomeScreenBanner";
 
 const bitter = Bitter({
   variable: "--font-display",
@@ -31,6 +33,11 @@ export const metadata: Metadata = {
   description:
     "Gölbaşı'ndaki restoranlar, kuaförler, emlakçılar ve daha fazlası tek yerde.",
   keywords: ["Gölbaşı", "Ankara", "işletme rehberi", "Gölbaşı esnaf", "Gölbaşı firmalar"],
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
   openGraph: {
     type: "website",
     locale: "tr_TR",
@@ -49,6 +56,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#7A1F2E",
 };
 
 const jsonLd = {
@@ -95,6 +106,8 @@ export default function RootLayout({
         />
         <SiteChrome>{children}</SiteChrome>
         <CookieConsent />
+        <ServiceWorkerRegister />
+        <AddToHomeScreenBanner />
       </body>
     </html>
   );
