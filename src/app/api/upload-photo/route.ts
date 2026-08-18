@@ -18,6 +18,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Dosya bulunamadı" }, { status: 400 });
     }
 
+    // Tür ve boyut sınırı — bunlar olmadan biri buraya çok büyük veya
+    // görsel olmayan bir dosya gönderip sunucu kaynağını/bandwidth'i
+    // tüketebilir (video kaynağındaki 7. madde: "yüklemeyi sınırla").
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "Sadece görsel dosyaları kabul edilir" }, { status: 400 });
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "Dosya çok büyük (maksimum 10 MB)" }, { status: 413 });
+    }
+
     const arrayBuffer = await file.arrayBuffer();
     const inputBuffer = Buffer.from(arrayBuffer);
     console.log(`[upload-photo] Girdi: ${file.name}, ${inputBuffer.length} bayt, tip: ${file.type}`);
