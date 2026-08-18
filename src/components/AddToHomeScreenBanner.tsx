@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
-import { X, Download, Share } from "lucide-react";
+import { X, Download, Share, MapPin } from "lucide-react";
 
 const DISMISS_KEY = "a2hs-dismissed-at";
 const DISMISS_DAYS = 14;
@@ -20,6 +19,7 @@ export default function AddToHomeScreenBanner() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [iconBroken, setIconBroken] = useState(false);
 
   useEffect(() => {
     const isStandalone =
@@ -37,8 +37,6 @@ export default function AddToHomeScreenBanner() {
     const iOS = /iPad|iPhone|iPod/.test(ua) && !("MSStream" in window);
     setIsIOS(iOS);
 
-    // iOS'ta beforeinstallprompt hiç desteklenmiyor (Apple kısıtlaması),
-    // o yüzden orada banner'ı doğrudan gösterip yönlendirici metin veriyoruz.
     if (iOS) {
       setVisible(true);
       return;
@@ -69,15 +67,26 @@ export default function AddToHomeScreenBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white p-3 shadow-[0_-4px_20px_rgba(20,33,61,0.12)] sm:hidden">
-      <div className="flex items-center gap-3">
-        <Image
-          src="/icon-192.png"
-          alt="RehberGölbaşı"
-          width={44}
-          height={44}
-          className="shrink-0 rounded-xl"
-        />
+    <div
+      className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-white shadow-[0_-4px_20px_rgba(20,33,61,0.15)] sm:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="flex items-center gap-3 p-3">
+        {!iconBroken ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src="/icon-192.png"
+            alt=""
+            width={44}
+            height={44}
+            onError={() => setIconBroken(true)}
+            className="h-11 w-11 shrink-0 rounded-xl object-cover"
+          />
+        ) : (
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-bordo text-white">
+            <MapPin className="h-5 w-5" />
+          </span>
+        )}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-navy">RehberGölbaşı&apos;nı ekle</p>
           {isIOS ? (
@@ -99,9 +108,9 @@ export default function AddToHomeScreenBanner() {
         <button
           onClick={dismiss}
           aria-label="Kapat"
-          className="shrink-0 rounded-full p-1.5 text-ink/40 hover:bg-offwhite"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-ink/50 hover:bg-offwhite active:bg-offwhite"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
       </div>
     </div>
