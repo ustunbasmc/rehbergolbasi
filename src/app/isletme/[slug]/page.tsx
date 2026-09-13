@@ -16,7 +16,10 @@ import {
   Star,
   Hash,
   Globe,
+  ShieldCheck,
+  BadgeCheck,
 } from "lucide-react";
+import { VERIFICATION_LABELS, type VerificationStatus } from "@/lib/types";
 import PhotoGallery from "@/components/PhotoGallery";
 import QuickActions from "@/components/QuickActions";
 import BusinessCard from "@/components/BusinessCard";
@@ -112,7 +115,7 @@ async function getData(slug: string) {
     if (categoryIds.length > 0) {
       const { data: similarData } = await supabase
         .from("businesses")
-        .select("*")
+        .select("*, category:categories(name, icon)")
         .eq("status", "approved")
         .eq("is_active", true)
         .in("category_id", categoryIds)
@@ -185,7 +188,8 @@ export default async function BusinessPage({
     redirect(business.category ? `/isletmeler/${business.category.slug}` : "/isletmeler");
   }
 
-  const isPremium = business.tier === "premium";
+  // Migration henüz uygulanmadıysa kolon mevcut olmayabilir; güvenli varsayılan kullan.
+  const verificationStatus = (business.verification_status as VerificationStatus) ?? "unverified";
   const mapsUrl =
     business.lat && business.lng
       ? `https://www.google.com/maps/dir/?api=1&destination=${business.lat},${business.lng}`
@@ -275,9 +279,22 @@ export default async function BusinessPage({
                     <MapPin className="h-3 w-3" /> {business.neighborhood}
                   </span>
                 )}
-                {isPremium && (
+                {business.is_featured && (
                   <span className="flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[11px] font-bold text-gold-dark">
                     <Star className="h-3 w-3 fill-gold-dark" /> Öne Çıkan
+                  </span>
+                )}
+                {verificationStatus !== "unverified" && (
+                  <span
+                    className="flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm"
+                    title={VERIFICATION_LABELS[verificationStatus].description}
+                  >
+                    {verificationStatus === "owner_verified" ? (
+                      <ShieldCheck className="h-3 w-3" />
+                    ) : (
+                      <BadgeCheck className="h-3 w-3" />
+                    )}
+                    {VERIFICATION_LABELS[verificationStatus].shortLabel}
                   </span>
                 )}
                 {business.is_founding_member && (

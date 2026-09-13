@@ -8,9 +8,15 @@ import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
 import {
   Plus, Trash2, CheckCircle2, Upload, X, Building2,
-  MapPin, Share2, Sparkles, HelpCircle, ShieldCheck, Rocket, 
-  Gauge,
+  MapPin, Share2, Sparkles, HelpCircle, ShieldCheck, Rocket,
+  Gauge, Star,
 } from "lucide-react";
+import {
+  SHORT_DESCRIPTION_IDEAL_LENGTH,
+  SHORT_DESCRIPTION_MAX_LENGTH,
+} from "@/lib/businessDescription";
+import type { VerificationStatus } from "@/lib/types";
+import { VERIFICATION_LABELS } from "@/lib/types";
 
 function slugify(text: string) {
   const trMap: Record<string, string> = {
@@ -89,6 +95,7 @@ export default function NewBusinessForm() {
     name: "",
     slug: "",
     description: "",
+    short_description: "",
     phone: "",
     whatsapp: "",
     address: "",
@@ -108,7 +115,9 @@ export default function NewBusinessForm() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [faqs, setFaqs] = useState<FaqDraft[]>([]);
   const [tier, setTier] = useState<"basic" | "premium">("basic");
+  const [isFeatured, setIsFeatured] = useState(false);
   const [freeMonths, setFreeMonths] = useState(1);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("info_checked");
   const [slugTouched, setSlugTouched] = useState(false);
 
   useEffect(() => {
@@ -152,7 +161,7 @@ export default function NewBusinessForm() {
 
   function resetForm() {
     setForm({
-      name: "", slug: "", description: "", phone: "", whatsapp: "",
+      name: "", slug: "", description: "", short_description: "", phone: "", whatsapp: "",
       address: "", neighborhood: "", instagram_url: "", facebook_url: "", tiktok_url: "",
       owner_name: "", owner_phone: "", owner_email: "",
     });
@@ -165,13 +174,16 @@ export default function NewBusinessForm() {
     setSelectedTags([]);
     setFaqs([]);
     setTier("basic");
+    setIsFeatured(false);
     setFreeMonths(1);
+    setVerificationStatus("info_checked");
     setSlugTouched(false);
   }
 const completionChecks = [
   { label: "İşletme adı", done: !!form.name.trim() },
   { label: "Kategori", done: !!categoryId },
   { label: "Açıklama", done: form.description.trim().length > 50 },
+  { label: "Kısa açıklama", done: !!form.short_description.trim() },
   { label: "Telefon veya WhatsApp", done: !!form.phone.trim() || !!form.whatsapp.trim() },
   { label: "Adres/Mahalle", done: !!form.address.trim() || !!form.neighborhood.trim() },
   { label: "Kapak fotoğrafı", done: !!coverFile },
@@ -208,8 +220,14 @@ const completionScore = Math.round(
     setUploading(false);
 
     const finalCategoryId = subcategoryId || categoryId;
-    const freeUntil = new Date();
-    freeUntil.setMonth(freeUntil.getMonth() + freeMonths);
+    // Temel (basic) paket süresizdir, hiçbir zaman bitiş tarihi almaz.
+    // free_until yalnızca Plus (premium) denemesi için anlamlıdır.
+    let freeUntil: string | null = null;
+    if (tier === "premium") {
+      const d = new Date();
+      d.setMonth(d.getMonth() + freeMonths);
+      freeUntil = d.toISOString().slice(0, 10);
+    }
 
     const { data: inserted, error: insertError } = await supabase
       .from("businesses")
@@ -218,6 +236,7 @@ const completionScore = Math.round(
         slug: form.slug.trim(),
         category_id: finalCategoryId,
         description: form.description.trim() || null,
+        short_description: form.short_description.trim() || null,
         phone: form.phone.trim() || null,
         whatsapp: form.whatsapp.trim() || null,
         address: form.address.trim() || null,
@@ -227,9 +246,11 @@ const completionScore = Math.round(
         tiktok_url: form.tiktok_url.trim() || null,
         cover_image_url: coverUrl,
         tier,
+        is_featured: isFeatured,
+        verification_status: verificationStatus,
         status: "approved",
         is_active: true,
-        free_until: freeUntil.toISOString().slice(0, 10),
+        free_until: freeUntil,
       })
       .select()
       .single();
@@ -399,6 +420,31 @@ const completionScore = Math.round(
             rows={6}
             className={inputClass}
             placeholder="SEO odaklı, uzun açıklama..."
+          />
+        </div>
+
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <label className={labelClass}>
+              Kısa Açıklama <span className="font-normal text-ink/40">(kartlarda gösterilir)</span>
+            </label>
+            <span
+              className={`text-xs font-semibold ${
+                form.short_description.length > SHORT_DESCRIPTION_IDEAL_LENGTH
+                  ? "text-gold-dark"
+                  : "text-ink/40"
+              }`}
+            >
+              {form.short_description.length}/{SHORT_DESCRIPTION_MAX_LENGTH}
+            </span>
+          </div>
+          <textarea
+            value={form.short_description}
+            onChange={(e) => update("short_description", e.target.value.slice(0, SHORT_DESCRIPTION_MAX_LENGTH))}
+            rows={2}
+            maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
+            className={inputClass}
+            placeholder="1-2 cümlelik, kartlarda gösterilecek özet (önerilir)"
           />
         </div>
       </SectionCard>
@@ -627,19 +673,47 @@ const completionScore = Math.round(
               onChange={(e) => setTier(e.target.value as "basic" | "premium")}
               className={inputClass}
             >
-              <option value="basic">Basic</option>
-              <option value="premium">Premium (Öne Çıkan)</option>
+              <option value="basic">Temel (ücretsiz, süresiz)</option>
+              <option value="premium">Plus (aylık 360 TL)</option>
             </select>
           </div>
+          {tier === "premium" && (
+            <div>
+              <label className={labelClass}>Plus deneme süresi (ay)</label>
+              <input
+                type="number"
+                min={0}
+                value={freeMonths}
+                onChange={(e) => setFreeMonths(Number(e.target.value))}
+                className={inputClass}
+              />
+            </div>
+          )}
           <div>
-            <label className={labelClass}>Ücretsiz süre (ay)</label>
-            <input
-              type="number"
-              min={0}
-              value={freeMonths}
-              onChange={(e) => setFreeMonths(Number(e.target.value))}
+            <label className={labelClass}>Doğrulama Durumu</label>
+            <select
+              value={verificationStatus}
+              onChange={(e) => setVerificationStatus(e.target.value as VerificationStatus)}
               className={inputClass}
-            />
+            >
+              {(Object.keys(VERIFICATION_LABELS) as VerificationStatus[]).map((key) => (
+                <option key={key} value={key}>{VERIFICATION_LABELS[key].label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              type="button"
+              onClick={() => setIsFeatured((v) => !v)}
+              className={`flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold transition ${
+                isFeatured
+                  ? "border-gold bg-gold/10 text-gold-dark"
+                  : "border-line text-ink/50 hover:bg-offwhite"
+              }`}
+            >
+              <Star className={`h-4 w-4 ${isFeatured ? "fill-gold-dark" : ""}`} />
+              {isFeatured ? "Anasayfada Öne Çıkan" : "Öne Çıkar"}
+            </button>
           </div>
         </div>
       </SectionCard>

@@ -3,12 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Phone, MessageCircle, Star, UtensilsCrossed } from "lucide-react";
+import { trackBusinessEvent, formatTelHref, formatWhatsappUrl } from "@/lib/analytics";
 
 interface Restaurant {
   id: string;
   name: string;
   slug: string;
   tier: string;
+  is_featured: boolean;
   cover_image_url: string | null;
   neighborhood: string | null;
   phone: string | null;
@@ -45,7 +47,7 @@ export default function OpenRestaurantsWidget({
             <div
               key={b.id}
               className={`flex items-center gap-3 rounded-2xl bg-white p-3 ${
-                b.tier === "premium" ? "ring-2 ring-gold" : ""
+                b.is_featured ? "ring-2 ring-gold" : ""
               }`}
             >
               <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-offwhite">
@@ -68,7 +70,7 @@ export default function OpenRestaurantsWidget({
                   href={`/isletme/${b.slug}`}
                   className="flex items-center gap-1 truncate text-sm font-bold text-navy hover:text-bordo"
                 >
-                  {b.tier === "premium" && (
+                  {b.is_featured && (
                     <Star className="h-3 w-3 shrink-0 fill-gold text-gold" />
                   )}
                   <span className="truncate">{b.name}</span>
@@ -79,22 +81,26 @@ export default function OpenRestaurantsWidget({
               </div>
               <div className="flex shrink-0 gap-1.5">
                 {b.phone && (
-                  <button
-                    onClick={() => { window.location.href = "tel:" + b.phone; }}
+                  <a
+                    href={formatTelHref(b.phone)}
+                    onClick={() => trackBusinessEvent(b.id, "phone_click")}
                     aria-label={`${b.name} işletmesini ara`}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-bordo text-white transition-colors hover:bg-bordo-dark"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-bordo text-white transition-colors hover:bg-bordo-dark"
                   >
                     <Phone className="h-4 w-4" />
-                  </button>
+                  </a>
                 )}
                 {b.whatsapp && (
-                  <button
-                    onClick={() => window.open("https://wa.me/" + b.whatsapp!.replace(/\D/g, ""), "_blank")}
+                  <a
+                    href={formatWhatsappUrl(b.whatsapp)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => trackBusinessEvent(b.id, "whatsapp_click")}
                     aria-label={`${b.name} işletmesine WhatsApp'tan yaz`}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-navy/10 text-navy transition-colors hover:bg-navy hover:text-white"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-navy/10 text-navy transition-colors hover:bg-navy hover:text-white"
                   >
                     <MessageCircle className="h-4 w-4" />
-                  </button>
+                  </a>
                 )}
               </div>
             </div>

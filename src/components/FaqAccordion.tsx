@@ -21,6 +21,8 @@ export default function FaqAccordion({ faqs }: { faqs: BusinessFaq[] }) {
             <div key={faq.id} className="py-2.5 first:pt-0 last:pb-0">
               <button
                 onClick={() => setOpenId(isOpen ? null : faq.id)}
+                aria-expanded={isOpen}
+                aria-controls={`faq-answer-${faq.id}`}
                 className="flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-navy"
               >
                 {faq.question}
@@ -31,7 +33,9 @@ export default function FaqAccordion({ faqs }: { faqs: BusinessFaq[] }) {
                 />
               </button>
               {isOpen && (
-                <p className="mt-2 text-sm leading-relaxed text-ink/70">{faq.answer}</p>
+                <p id={`faq-answer-${faq.id}`} className="mt-2 text-sm leading-relaxed text-ink/70">
+                  {faq.answer}
+                </p>
               )}
             </div>
           );

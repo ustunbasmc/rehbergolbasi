@@ -29,11 +29,11 @@ export default function WhatsAppNotifier({
   const usingOwnerPhone = !!ownerPhone;
 
   const templates: Record<string, string> = {
-    hosgeldin: `Merhaba ${businessName} ekibi! 🎉\n\nİşletmeniz RehberGölbaşı'nda onaylandı ve yayına alındı. İlk ayınız tamamen ücretsiz.\n\nSayfanızı kontrol etmek ister misiniz? Herhangi bir düzeltme/ekleme talebiniz olursa bize yazmanız yeterli.`,
-    "10_gun": `Merhaba ${businessName} ekibi,\n\nRehberGölbaşı'ndaki listelenme süreniz ${formatDate(expiryDate)} tarihinde sona eriyor (10 gün kaldı). Yayında kalmaya devam etmek isterseniz ödeme bilgilerini iletebiliriz.`,
-    "3_gun": `Merhaba ${businessName} ekibi,\n\nHatırlatmak isteriz: RehberGölbaşı'ndaki listelenme süreniz ${formatDate(expiryDate)} tarihinde sona eriyor (3 gün kaldı). Ödeme yapmak için bize dönüş yapabilirsiniz.`,
-    son_gun: `Merhaba ${businessName} ekibi,\n\nRehberGölbaşı'ndaki listelenme süreniz bugün (${formatDate(expiryDate)}) sona eriyor. Ödeme yapılmazsa 7 gün içinde sayfanız geçici olarak pasife alınacak. Yayında kalmak için hemen dönüş yapabilirsiniz.`,
-    pasif: `Merhaba ${businessName} ekibi,\n\nÖdeme alınamadığı için RehberGölbaşı'ndaki sayfanız geçici olarak pasife alındı. Yeniden yayına almak isterseniz bize ulaşmanız yeterli.`,
+    hosgeldin: `Merhaba ${businessName} ekibi! 🎉\n\nİşletmeniz RehberGölbaşı'nda onaylandı ve yayına alındı. Temel profiliniz ücretsiz ve süresizdir.\n\nSayfanızı kontrol etmek ister misiniz? Herhangi bir düzeltme/ekleme talebiniz olursa bize yazmanız yeterli.`,
+    "10_gun": `Merhaba ${businessName} ekibi,\n\nRehberGölbaşı Plus üyeliğiniz ${formatDate(expiryDate)} tarihinde sona eriyor (10 gün kaldı). Plus'a devam etmek isterseniz ödeme bilgilerini iletebiliriz.`,
+    "3_gun": `Merhaba ${businessName} ekibi,\n\nHatırlatmak isteriz: RehberGölbaşı Plus üyeliğiniz ${formatDate(expiryDate)} tarihinde sona eriyor (3 gün kaldı). Ödeme yapmak için bize dönüş yapabilirsiniz.`,
+    son_gun: `Merhaba ${businessName} ekibi,\n\nRehberGölbaşı Plus üyeliğiniz bugün (${formatDate(expiryDate)}) sona eriyor. Ödeme yapılmazsa 7 gün içinde profiliniz otomatik olarak ücretsiz Temel pakete döner (kaldırılmaz, yayında kalmaya devam eder). Plus'a devam etmek için hemen dönüş yapabilirsiniz.`,
+    pasif: `Merhaba ${businessName} ekibi,\n\nÖdeme alınamadığı için RehberGölbaşı Plus üyeliğiniz sona erdi, profiliniz ücretsiz Temel pakete döndü ve yayında kalmaya devam ediyor. Plus'a yeniden geçmek isterseniz bize ulaşmanız yeterli.`,
     serbest: "",
   };
 
@@ -87,7 +87,7 @@ export default function WhatsAppNotifier({
             <option value="10_gun">Hatırlatma — 10 gün kaldı</option>
             <option value="3_gun">Hatırlatma — 3 gün kaldı</option>
             <option value="son_gun">Hatırlatma — Son gün</option>
-            <option value="pasif">Pasife Alındı Bilgisi</option>
+            <option value="pasif">Plus Süresi Doldu Bilgisi</option>
             <option value="serbest">Serbest Mesaj</option>
           </select>
 

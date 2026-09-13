@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { Cookie } from "lucide-react";
+import { COOKIE_CONSENT_STORAGE_KEY } from "@/lib/constants";
 
 const GA_ID = "G-S9J3BYS755";
-const STORAGE_KEY = "rehbergolbasi_cookie_consent";
+const STORAGE_KEY = COOKIE_CONSENT_STORAGE_KEY;
 
 export default function CookieConsent() {
   const [consent, setConsent] = useState<"accepted" | "rejected" | null>(null);
@@ -32,18 +33,22 @@ export default function CookieConsent() {
 
   return (
     <>
-      <Script
-  src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-  strategy="afterInteractive"
-/>
-<Script id="ga-init" strategy="afterInteractive">
-  {`
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', '${GA_ID}', { anonymize_ip: true });
-  `}
-</Script>
+      {consent === "accepted" && (
+        <>
+          <Script
+            src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+            strategy="afterInteractive"
+          />
+          <Script id="ga-init" strategy="afterInteractive">
+            {`
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', '${GA_ID}', { anonymize_ip: true });
+            `}
+          </Script>
+        </>
+      )}
 
       {showBanner && (
         <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-white p-4 shadow-[0_-4px_20px_rgba(20,33,61,0.12)] sm:p-5">

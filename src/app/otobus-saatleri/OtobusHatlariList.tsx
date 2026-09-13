@@ -39,6 +39,7 @@ function bugununGunu(): Gun {
 
 function HatKarti({ hat }: { hat: OtobusHatti }) {
   const [gun, setGun] = useState<Gun>("haftaici");
+  const [duraklarAcildi, setDuraklarAcildi] = useState(false);
   const stil = KATEGORI_STIL[hat.kategori];
   const Icon = stil.icon;
 
@@ -64,7 +65,7 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
         <div className="flex shrink-0 flex-col items-end gap-1">
           <Icon className={`h-4 w-4 ${stil.renk}`} />
           <p className="whitespace-nowrap text-right text-[12.5px] text-ink/45">
-            {hat.mesafeKm} km · {hat.sureDk} dk
+            Güzergâh {hat.mesafeKm} km · ~{hat.sureDk} dk
           </p>
         </div>
       </div>
@@ -109,7 +110,10 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
         );
       })}
 
-      <details className="group mt-4 border-t border-line pt-3">
+      <details
+        className="group mt-4 border-t border-line pt-3"
+        onToggle={(e) => setDuraklarAcildi(e.currentTarget.open)}
+      >
         <summary className="flex cursor-pointer list-none items-center justify-between text-[13px] font-medium text-bordo">
           <span className="flex items-center gap-1.5">
             <Route className="h-3.5 w-3.5" />
@@ -117,14 +121,18 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
           </span>
           <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
         </summary>
-        <ol className="mt-3 max-h-56 space-y-1.5 overflow-y-auto pr-1">
-          {hat.duraklar.map((durak, i) => (
-            <li key={i} className="flex gap-2.5 text-[13px] text-ink/70">
-              <span className="w-5 shrink-0 text-ink/35">{i + 1}</span>
-              {durak}
-            </li>
-          ))}
-        </ol>
+        {/* Duraklar yalnızca açıldığında DOM'a basılır — kapalıyken sayfa
+            ağırlığını gereksiz büyütmesin diye. */}
+        {duraklarAcildi && (
+          <ol className="mt-3 max-h-56 space-y-1.5 overflow-y-auto pr-1">
+            {hat.duraklar.map((durak, i) => (
+              <li key={i} className="flex gap-2.5 text-[13px] text-ink/70">
+                <span className="w-5 shrink-0 text-ink/35">{i + 1}</span>
+                {durak}
+              </li>
+            ))}
+          </ol>
+        )}
       </details>
     </article>
   );

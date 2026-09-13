@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Download, Share, MapPin, ChevronDown } from "lucide-react";
+import { COOKIE_CONSENT_STORAGE_KEY } from "@/lib/constants";
 
 const DISMISS_KEY = "a2hs-dismissed-at";
 const DISMISS_DAYS = 7;
@@ -59,6 +60,13 @@ export default function AddToHomeScreenBanner() {
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as NavigatorStandalone).standalone === true;
     if (isStandalone) return;
+
+    // Çerez onayı bekleyen bir banner varken bu banner da aynı sabit alanda
+    // (mobilde ekranın altı) gösterilirse ikisi üst üste biner ve çerez
+    // banner'ı erişilemez hale gelir. KVKK/çerez onayı önceliklidir — bu
+    // banner, kullanıcı bir tercih yapana kadar beklemeye alınır.
+    const cookieConsentDecided = !!localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+    if (!cookieConsentDecided) return;
 
     const dismissedAt = localStorage.getItem(DISMISS_KEY);
     if (dismissedAt) {

@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
-import { X, ChevronLeft, ChevronRight, Camera, Eye } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Camera, Eye, ImageOff } from "lucide-react";
 
 interface Photo {
   id: string;
@@ -59,8 +59,9 @@ export default function PhotoGallery({
             onLoad={() => setCoverLoaded(true)}
           />
         ) : (
-          <div className="flex h-full items-center justify-center font-display text-5xl font-bold text-white/10">
-            {businessName.charAt(0)}
+          <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-navy to-navy-dark">
+            <ImageOff className="h-9 w-9 text-white/15" aria-hidden="true" />
+            <span className="text-sm font-semibold text-white/25">Görsel yakında</span>
           </div>
         )}
         {coverUrl && !coverLoaded && (

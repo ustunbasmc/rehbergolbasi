@@ -83,7 +83,7 @@ export default function Header() {
           <button
             onClick={() => setOpen(!open)}
             aria-label={open ? "Menüyü kapat" : "Menüyü aç"}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-navy sm:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-navy lg:hidden"
           >
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -99,7 +99,7 @@ export default function Header() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-6 font-body text-sm font-semibold text-ink sm:flex">
+          <nav className="hidden items-center gap-6 font-body text-sm font-semibold text-ink lg:flex">
             {NAV_ITEMS.slice(0, 2).map((item) => {
               const active = isActive(item.href, item.exact);
               return (
@@ -197,7 +197,7 @@ export default function Header() {
           )}
           <Link
             href="/isletmeler-icin"
-            className={`hidden py-1 text-sm font-semibold transition-colors hover:text-bordo md:block ${
+            className={`hidden py-1 text-sm font-semibold transition-colors hover:text-bordo lg:block ${
               isActive("/isletmeler-icin", false) ? "text-bordo" : "text-ink"
             }`}
           >
@@ -206,7 +206,7 @@ export default function Header() {
 
           <Link
             href="/isletme-ekle"
-            className="hidden items-center gap-1.5 rounded-full bg-gradient-to-r from-bordo to-bordo-dark px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:shadow-lg hover:shadow-bordo/25 hover:brightness-110 active:scale-[0.97] sm:flex"
+            className="hidden items-center gap-1.5 rounded-full bg-gradient-to-r from-bordo to-bordo-dark px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:shadow-lg hover:shadow-bordo/25 hover:brightness-110 active:scale-[0.97] lg:flex"
           >
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
               <Plus className="h-3.5 w-3.5" />
@@ -218,7 +218,7 @@ export default function Header() {
 
       {/* Mobil açılır menü */}
       {open && (
-        <nav className="flex flex-col gap-1 border-t border-line bg-white px-5 py-4 sm:hidden">
+        <nav className="flex flex-col gap-1 border-t border-line bg-white px-5 py-4 lg:hidden">
           <Link
             href="/isletmeler"
             onClick={() => setOpen(false)}

@@ -218,7 +218,7 @@ export default async function NobetciEczanePage() {
                 </li>
                 <li>
                   <Link
-                    href="/resmi-kurumlar"
+                    href="/isletmeler/resmi-kurumlar"
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink/65 hover:bg-navy/5 hover:text-bordo"
                   >
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-bordo" />

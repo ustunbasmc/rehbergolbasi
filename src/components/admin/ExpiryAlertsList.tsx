@@ -23,7 +23,7 @@ const ALERT_LABELS: Record<AlertRow["alert_type"], { label: string; color: strin
   "10_gun": { label: "10 gün kaldı", color: "text-ink/60", icon: Clock },
   "3_gun": { label: "3 gün kaldı", color: "text-gold-dark", icon: Clock },
   son_gun: { label: "Son gün", color: "text-bordo", icon: AlertTriangle },
-  pasife_alindi: { label: "Pasife alındı", color: "text-white", icon: XCircle },
+  pasife_alindi: { label: "Plus süresi doldu, Temel'e döndü", color: "text-white", icon: XCircle },
 };
 
 export default function ExpiryAlertsList() {

@@ -28,6 +28,7 @@ import CategoryGrid, { type CategoryWithBusinesses } from "@/components/Category
 import BusinessCard from "@/components/BusinessCard";
 import { getOpenStatus } from "@/lib/openingHours";
 import type { OpeningHours } from "@/lib/types";
+import { computeExcludedCategoryIds } from "@/lib/businessStats";
 
 export const revalidate = 60;
 
@@ -42,8 +43,8 @@ const HIZLI_ERISIM = [
 
 const HERO_GUVEN = [
   { icon: Zap, title: "Hızlı Erişim", desc: "İhtiyacın olana tek tıkla ulaş" },
-  { icon: ShieldCheck, title: "Doğrulanmış Kayıtlar", desc: "Güncel, güvenilir işletme bilgisi" },
-  { icon: Sparkles, title: "İlk Ay Ücretsiz", desc: "Yeni işletmeler avantajlı başlar" },
+  { icon: ShieldCheck, title: "Kontrol Edilen Bilgiler", desc: "İletişim bilgileri ekip tarafından kontrol edilir" },
+  { icon: Sparkles, title: "Temel Kayıt Ücretsiz", desc: "İşletmeni süresiz ücretsiz ekle" },
 ];
 
 interface OpenNowBusiness {
@@ -55,6 +56,7 @@ interface OpenNowBusiness {
   cover_image_url: string | null;
   neighborhood: string | null;
   tier: "basic" | "premium";
+  is_featured: boolean;
 }
 async function getLatestGuides() {
   const { data } = await supabase
@@ -79,15 +81,15 @@ async function getData() {
         .order("created_at", { ascending: false }),
       supabase
         .from("businesses")
-        .select("*")
+        .select("*, category:categories(name, icon)")
         .eq("status", "approved")
         .eq("is_active", true)
-        .eq("tier", "premium")
+        .eq("is_featured", true)
         .order("created_at", { ascending: false })
         .limit(6),
       supabase
         .from("businesses")
-        .select("*")
+        .select("*, category:categories(name, icon)")
         .eq("status", "approved")
         .eq("is_active", true)
         .order("created_at", { ascending: false })
@@ -102,26 +104,30 @@ async function getData() {
 
   const topLevel = categories.filter((c) => !c.parent_id);
   const resmiKurumlarTop = topLevel.find((c) => c.slug === "resmi-kurumlar");
+  const excludedCategoryIds = new Set(computeExcludedCategoryIds(categories));
 
   const topIdFor = (categoryId: string): string => {
     const cat = categories.find((c) => c.id === categoryId);
     if (!cat) return categoryId;
     return cat.parent_id ?? cat.id;
   };
-  const isResmiKurum = (categoryId: string) =>
-  resmiKurumlarTop ? topIdFor(categoryId) === resmiKurumlarTop.id : false;
+  const isResmiKurum = (categoryId: string) => excludedCategoryIds.has(categoryId);
 
 const commercialBusinesses = businesses.filter((b) => !isResmiKurum(b.category_id));
 const commercialFeatured = (featured ?? []).filter((b) => !isResmiKurum(b.category_id));
 const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_id));
-  const categoriesWithBusinesses: CategoryWithBusinesses[] = topLevel.map((cat) => {
-    const inThisCategory = businesses.filter((b) => topIdFor(b.category_id) === cat.id);
-    return {
-      ...cat,
-      count: inThisCategory.length,
-      businesses: inThisCategory.slice(0, 2),
-    };
-  });
+  const categoriesWithBusinesses: CategoryWithBusinesses[] = topLevel
+    .map((cat) => {
+      const inThisCategory = businesses.filter((b) => topIdFor(b.category_id) === cat.id);
+      return {
+        ...cat,
+        count: inThisCategory.length,
+        businesses: inThisCategory.slice(0, 2),
+      };
+    })
+    // Ana sayfada yalnızca en az bir yayında işletmesi olan kategoriler görünür.
+    // /isletmeler sayfasında tüm kategoriler keşif amacıyla ayrıca listelenir.
+    .filter((cat) => cat.count > 0);
 
   const neighborhoodCounts = new Map<string, number>();
   businesses.forEach((b) => {
@@ -163,14 +169,16 @@ const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_i
 
     const { data: foodBusinesses } = await supabase
       .from("businesses")
-      .select("id, name, slug, phone, whatsapp, cover_image_url, neighborhood, tier, opening_hours")
+      .select(
+        "id, name, slug, phone, whatsapp, cover_image_url, neighborhood, tier, is_featured, opening_hours"
+      )
       .eq("status", "approved")
       .eq("is_active", true)
       .in("category_id", foodCategoryIds);
 
     openNowRestaurants = (foodBusinesses ?? [])
       .filter((b) => getOpenStatus(b.opening_hours as OpeningHours | null)?.isOpen)
-      .sort((a, b) => (a.tier === b.tier ? 0 : a.tier === "premium" ? -1 : 1))
+      .sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
       .slice(0, 6);
   }
 
@@ -270,10 +278,10 @@ export default async function HomePage() {
                   <Building2 className="h-4 w-4 text-bordo" /> {stats.businessCount}+ işletme
                 </span>
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
-                  <ShieldCheck className="h-4 w-4 text-bordo" /> Doğrulanmış kayıtlar
+                  <ShieldCheck className="h-4 w-4 text-bordo" /> Kontrol edilen işletme bilgileri
                 </span>
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
-                  <Sparkles className="h-4 w-4 text-bordo" /> İlk ay ücretsiz
+                  <Sparkles className="h-4 w-4 text-bordo" /> Temel kayıt ücretsiz
                 </span>
               </div>
             </div>
@@ -552,10 +560,11 @@ export default async function HomePage() {
         {/* İşletme daveti */}
         <section className="rounded-2xl bg-bordo px-8 py-12 text-center text-white">
           <h2 className="font-display text-2xl font-bold sm:text-3xl">
-            İşletmen Gölbaşı&apos;nda mı? İlk ay ücretsiz listelen.
+            İşletmen Gölbaşı&apos;nda mı? Ücretsiz listelen.
           </h2>
           <p className="mx-auto mt-3 max-w-md text-white/80">
-            Hemen başvur, kısa süre içinde yayında ol. İlk ayın tamamen ücretsiz.
+            Temel işletme kaydı ücretsizdir. Dilersen RehberGölbaşı Plus&apos;a geçebilirsin —
+            ilk 30 gün ücretsiz, sonra aylık 360 TL.
           </p>
           <Link
             href="/isletme-ekle"

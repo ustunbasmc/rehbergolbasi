@@ -10,6 +10,10 @@ import OpeningHoursEditor from "@/components/OpeningHoursEditor";
 import FeaturesSelector from "@/components/FeaturesSelector";
 import AccordionSection from "@/components/AccordionSection";
 import { Plus, Trash2, Check, ShieldCheck } from "lucide-react";
+import {
+  SHORT_DESCRIPTION_IDEAL_LENGTH,
+  SHORT_DESCRIPTION_MAX_LENGTH,
+} from "@/lib/businessDescription";
 
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
   ssr: false,
@@ -103,6 +107,7 @@ export default function BusinessApplyForm({ categories }: { categories: Category
   const [form, setForm] = useState({
     name: "",
     description: "",
+    short_description: "",
     phone: "",
     whatsapp: "",
     address: "",
@@ -217,6 +222,7 @@ export default function BusinessApplyForm({ categories }: { categories: Category
         slug,
         category_id: finalCategoryId,
         description: form.description || null,
+        short_description: form.short_description.trim() || null,
         phone: form.phone || null,
         whatsapp: form.whatsapp || null,
         address: form.address || null,
@@ -413,8 +419,38 @@ export default function BusinessApplyForm({ categories }: { categories: Category
                 onChange={(e) => update("description", e.target.value)}
                 rows={3}
                 className={inputClass}
-                placeholder="İşletmeni kısaca tanıt"
+                placeholder="İşletmeni tanıt"
               />
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className={labelClass}>
+                  Kısa Açıklama <span className="font-normal text-ink/40">(isteğe bağlı)</span>
+                </label>
+                <span
+                  className={`text-xs font-semibold ${
+                    form.short_description.length > SHORT_DESCRIPTION_IDEAL_LENGTH
+                      ? "text-gold-dark"
+                      : "text-ink/40"
+                  }`}
+                >
+                  {form.short_description.length}/{SHORT_DESCRIPTION_MAX_LENGTH}
+                </span>
+              </div>
+              <textarea
+                value={form.short_description}
+                onChange={(e) =>
+                  update("short_description", e.target.value.slice(0, SHORT_DESCRIPTION_MAX_LENGTH))
+                }
+                rows={2}
+                maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
+                className={inputClass}
+                placeholder="Kartlarda gösterilecek 1-2 cümlelik kısa özet"
+              />
+              <p className="mt-1 text-xs text-ink/40">
+                Boş bırakırsan, açıklamanın ilk cümlesinden otomatik bir özet gösteririz.
+              </p>
             </div>
 
             <p className="text-center text-xs text-ink/40">

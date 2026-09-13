@@ -7,7 +7,7 @@ import { ChevronDown, HelpCircle } from "lucide-react";
 const FAQS = [
   {
     q: "RehberGölbaşı'na işletme eklemek ücretli mi?",
-    a: "Hayır, şu an için tamamen ücretsiz. Site kullanıcı sayısı ve işletme sayısı büyüdükçe isteğe bağlı öne çıkarma paketleri sunmayı planlıyoruz, ancak temel listelenme her zaman mümkün olacak.",
+    a: "Hayır, temel işletme kaydı ücretsizdir ve süresizdir. Daha gelişmiş bir profil istersen (WhatsApp bağlantısı, geniş galeri, analitikler, öne çıkarma) RehberGölbaşı Plus'a geçebilirsin — aylık 360 TL, ilk 30 gün ücretsiz.",
   },
   {
     q: "Başvurum ne kadar sürede onaylanıyor?",
@@ -31,7 +31,7 @@ const FAQS = [
   },
   {
     q: "Reklam ya da sponsorlu içerik var mı?",
-    a: "Hayır, sitede üçüncü taraf reklamı göstermiyoruz. 'Öne Çıkan' rozeti, ileride sunacağımız isteğe bağlı bir görünürlük paketine ait olacak, dış reklam değildir.",
+    a: "Hayır, sitede üçüncü taraf reklamı göstermiyoruz. 'Öne Çıkan' rozeti, isteğe bağlı bir görünürlük paketine ait olan bizim kendi işletmelerimizin işaretlemesidir, dış reklam değildir.",
   },
 ];
 
@@ -62,6 +62,8 @@ export default function SSSPage() {
               <div key={i} className="p-4">
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  aria-controls={`sss-answer-${i}`}
                   className="flex w-full items-center justify-between gap-4 text-left"
                 >
                   <span className="font-semibold text-navy">{faq.q}</span>
@@ -72,7 +74,9 @@ export default function SSSPage() {
                   />
                 </button>
                 {isOpen && (
-                  <p className="mt-3 leading-relaxed text-ink/70">{faq.a}</p>
+                  <p id={`sss-answer-${i}`} className="mt-3 leading-relaxed text-ink/70">
+                    {faq.a}
+                  </p>
                 )}
               </div>
             );

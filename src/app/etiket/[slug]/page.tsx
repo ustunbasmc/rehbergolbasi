@@ -28,7 +28,7 @@ async function getData(slug: string) {
 
   const { data: businesses } = await supabase
     .from("businesses")
-    .select("*")
+    .select("*, category:categories(name, icon)")
     .eq("status", "approved")
     .eq("is_active", true)
     .in("id", businessIds)
@@ -56,6 +56,9 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: {
+      canonical: `https://rehbergolbasi.com/etiket/${slug}`,
+    },
     openGraph: { title, description },
     twitter: { title, description },
   };

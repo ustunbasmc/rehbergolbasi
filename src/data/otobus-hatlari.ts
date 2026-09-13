@@ -1,3 +1,13 @@
+/**
+ * Bu sayfadaki hat/saat verilerinin kaynağı ve güncellik bilgisi. Sahte bir
+ * tarih göstermemek için `sonKontrolTarihi` gerçek veri kontrolü yapıldığında
+ * elle güncellenmelidir — build/deploy tarihinden veya `new Date()`'ten asla
+ * otomatik türetilmez. Gerçek tarih bilinmiyorsa null bırakılır ve arayüzde
+ * "belirtilmedi" olarak gösterilir.
+ */
+export const OTOBUS_VERI_KAYNAGI = "EGO Genel Müdürlüğü";
+export const OTOBUS_SON_KONTROL_TARIHI: string | null = null; // örn: "2026-09-01"
+
 export type HatKategori =
   | "sehir-merkezi"
   | "akkopru-asti"

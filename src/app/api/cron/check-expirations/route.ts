@@ -21,17 +21,20 @@ export async function GET(request: Request) {
 
   const today = new Date();
 
+  // Yalnızca Plus (premium) paketin deneme/abonelik süresi takip edilir.
+  // Temel (basic) paket süresizdir ve hiçbir zaman bu kontrole tabi değildir.
   const { data: businesses, error } = await supabaseAdmin
     .from("businesses")
-    .select("id, name, slug, free_until, paid_until, is_active")
+    .select("id, name, slug, free_until, paid_until, is_active, tier")
     .eq("status", "approved")
-    .eq("is_active", true);
+    .eq("is_active", true)
+    .eq("tier", "premium");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const results = { warned10: 0, warned3: 0, warned0: 0, deactivated: 0 };
+  const results = { warned10: 0, warned3: 0, warned0: 0, downgraded: 0 };
 
   for (const b of businesses ?? []) {
     const expiry = b.paid_until ?? b.free_until;
@@ -55,11 +58,17 @@ export async function GET(request: Request) {
         .insert({ business_id: b.id, alert_type: "son_gun" });
       if (!insertError) results.warned0++;
     } else if (daysLeft === -7) {
-      await supabaseAdmin.from("businesses").update({ is_active: false }).eq("id", b.id);
+      // Plus denemesi/aboneliği bitti ve ödeme yapılmadı: profil SİLİNMEZ ve
+      // PASİFE ALINMAZ, yalnızca ücretsiz Temel pakete düşürülür ve yayında
+      // kalmaya devam eder.
+      await supabaseAdmin
+        .from("businesses")
+        .update({ tier: "basic", is_featured: false })
+        .eq("id", b.id);
       await supabaseAdmin
         .from("expiry_alerts")
         .insert({ business_id: b.id, alert_type: "pasife_alindi" });
-      results.deactivated++;
+      results.downgraded++;
     }
   }
 

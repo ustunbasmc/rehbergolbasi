@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bus, ChevronDown, ExternalLink, MapPin, Pill, Sparkles } from "lucide-react";
+import { Bus, ChevronDown, ExternalLink, MapPin, Pill, Sparkles, Info } from "lucide-react";
 import OtobusHatlariList from "./OtobusHatlariList";
+import { OTOBUS_VERI_KAYNAGI, OTOBUS_SON_KONTROL_TARIHI } from "@/data/otobus-hatlari";
 
 export const metadata: Metadata = {
-  title: "Gölbaşı Otobüs Saatleri — Tüm EGO Hatları ve Güzergahları | Rehber Gölbaşı",
+  title: "Gölbaşı Otobüs Saatleri — Tüm EGO Hatları ve Güzergahları",
   description:
     "Gölbaşı'ndan Kızılay, Ulus, Akköprü, AŞTİ ve İncek'e giden tüm EGO otobüs hatları. Hafta içi, Cumartesi ve Pazar hareket saatleri, güzergahlar ve tüm duraklar — güncel ve eksiksiz.",
   alternates: {
@@ -103,7 +104,7 @@ export default function OtobusSaatleriPage() {
             href="https://www.ego.gov.tr/otobusnerede"
             target="_blank"
             rel="noopener noreferrer"
-            className="mb-8 flex items-center justify-between rounded-2xl border border-line bg-navy/[0.03] p-4"
+            className="mb-4 flex items-center justify-between rounded-2xl border border-line bg-navy/[0.03] p-4"
           >
             <div>
               <p className="text-sm font-semibold text-navy">Canlı otobüs takibi</p>
@@ -111,6 +112,31 @@ export default function OtobusSaatleriPage() {
             </div>
             <ExternalLink className="h-4 w-4 shrink-0 text-ink/40" />
           </a>
+
+          <div className="mb-8 flex items-start gap-2.5 rounded-2xl border border-gold/30 bg-gold/5 p-4 text-[13px] leading-relaxed text-ink/70">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-gold-dark" />
+            <p>
+              <span className="font-semibold text-navy">Kaynak:</span> {OTOBUS_VERI_KAYNAGI}.{" "}
+              <span className="font-semibold text-navy">Son kontrol:</span>{" "}
+              {OTOBUS_SON_KONTROL_TARIHI
+                ? new Date(OTOBUS_SON_KONTROL_TARIHI).toLocaleDateString("tr-TR", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : "belirtilmedi"}
+              . Sefer saatleri değişebileceğinden yola çıkmadan önce{" "}
+              <a
+                href="https://www.ego.gov.tr/otobusnerede"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-bordo hover:underline"
+              >
+                EGO Otobüs Nerede
+              </a>{" "}
+              üzerinden teyit ediniz.
+            </p>
+          </div>
 
           <OtobusHatlariList />
 
@@ -170,7 +196,7 @@ export default function OtobusSaatleriPage() {
                 </li>
                 <li>
                   <Link
-                    href="/resmi-kurumlar"
+                    href="/isletmeler/resmi-kurumlar"
                     className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] text-ink/65 hover:bg-navy/5 hover:text-bordo"
                   >
                     <MapPin className="h-3.5 w-3.5 shrink-0 text-bordo" />

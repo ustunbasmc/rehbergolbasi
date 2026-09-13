@@ -3,9 +3,13 @@
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
-import type { Business, Category, OpeningHours } from "@/lib/types";
-import { DEFAULT_OPENING_HOURS } from "@/lib/types";
-import { X, Star, Trash2, ShieldCheck, CreditCard, RotateCcw } from "lucide-react";
+import type { Business, Category, OpeningHours, VerificationStatus } from "@/lib/types";
+import { DEFAULT_OPENING_HOURS, VERIFICATION_LABELS } from "@/lib/types";
+import { X, Star, Trash2, ShieldCheck, CreditCard, RotateCcw, Sparkles, ImageOff } from "lucide-react";
+import {
+  SHORT_DESCRIPTION_IDEAL_LENGTH,
+  SHORT_DESCRIPTION_MAX_LENGTH,
+} from "@/lib/businessDescription";
 import GalleryManager from "@/components/admin/GalleryManager";
 import OpeningHoursEditor from "@/components/OpeningHoursEditor";
 import FeaturesSelector from "@/components/FeaturesSelector";
@@ -55,6 +59,7 @@ export default function EditBusinessModal({
   const [form, setForm] = useState({
     name: business.name,
     description: business.description ?? "",
+    short_description: business.short_description ?? "",
     phone: business.phone ?? "",
     whatsapp: business.whatsapp ?? "",
     address: business.address ?? "",
@@ -65,6 +70,10 @@ export default function EditBusinessModal({
     website: business.website ?? "",
   });
   const [tier, setTier] = useState<"basic" | "premium">(business.tier);
+  const [isFeatured, setIsFeatured] = useState(business.is_featured ?? false);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
+    business.verification_status ?? "unverified"
+  );
   const [lat, setLat] = useState<number | null>(business.lat);
   const [lng, setLng] = useState<number | null>(business.lng);
   const [openingHours, setOpeningHours] = useState<OpeningHours>(
@@ -199,12 +208,17 @@ export default function EditBusinessModal({
     setSaving(true);
     setError(null);
 
+    const verificationChanged = verificationStatus !== (business.verification_status ?? "unverified");
+
+    const { data: authData } = await supabase.auth.getUser();
+
     const { error: updateError } = await supabase
       .from("businesses")
       .update({
         name: form.name,
         category_id: effectiveCategoryId,
         description: form.description || null,
+        short_description: form.short_description.trim() || null,
         phone: form.phone || null,
         whatsapp: form.whatsapp || null,
         address: form.address || null,
@@ -217,6 +231,14 @@ export default function EditBusinessModal({
         lng,
         opening_hours: openingHours,
         tier,
+        is_featured: isFeatured,
+        verification_status: verificationStatus,
+        ...(verificationChanged
+          ? {
+              verification_updated_at: new Date().toISOString(),
+              verification_updated_by: authData.user?.email ?? null,
+            }
+          : {}),
       })
       .eq("id", business.id);
 
@@ -404,7 +426,37 @@ export default function EditBusinessModal({
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-semibold text-navy">Açıklama</label>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="block text-sm font-semibold text-navy">
+                Kısa Açıklama <span className="font-normal text-ink/40">(kartlarda gösterilir)</span>
+              </label>
+              <span
+                className={`text-xs font-semibold ${
+                  form.short_description.length > SHORT_DESCRIPTION_IDEAL_LENGTH
+                    ? "text-gold-dark"
+                    : "text-ink/40"
+                }`}
+              >
+                {form.short_description.length}/{SHORT_DESCRIPTION_MAX_LENGTH}
+              </span>
+            </div>
+            <textarea
+              value={form.short_description}
+              onChange={(e) => update("short_description", e.target.value.slice(0, SHORT_DESCRIPTION_MAX_LENGTH))}
+              rows={2}
+              maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
+              placeholder="Kartlarda ve liste görünümlerinde gösterilecek 1-2 cümlelik özet"
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-bordo"
+            />
+            {!form.short_description.trim() && (
+              <p className="mt-1 text-xs text-ink/40">
+                Boş bırakılırsa, uzun açıklamanın ilk cümlesinden otomatik özet üretilir.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-navy">Uzun Açıklama</label>
             <textarea
               value={form.description}
               onChange={(e) => update("description", e.target.value)}
@@ -525,6 +577,11 @@ export default function EditBusinessModal({
             />
           </div>
 
+          {!coverUrl && (
+            <div className="flex items-center gap-1.5 rounded-lg border border-gold/40 bg-gold/10 px-3 py-2 text-xs font-semibold text-gold-dark">
+              <ImageOff className="h-3.5 w-3.5 shrink-0" /> Kapak görseli eksik
+            </div>
+          )}
           <CoverImageManager
             businessId={business.id}
             currentUrl={coverUrl}
@@ -532,6 +589,28 @@ export default function EditBusinessModal({
           />
           <GalleryManager businessId={business.id} />
           <FaqManager businessId={business.id} />
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-navy">Doğrulama Durumu</label>
+            <select
+              value={verificationStatus}
+              onChange={(e) => setVerificationStatus(e.target.value as VerificationStatus)}
+              className="w-full rounded-lg border border-line px-3 py-2 text-sm outline-none focus:border-bordo"
+            >
+              {(Object.keys(VERIFICATION_LABELS) as VerificationStatus[]).map((key) => (
+                <option key={key} value={key}>
+                  {VERIFICATION_LABELS[key].label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-ink/40">{VERIFICATION_LABELS[verificationStatus].description}</p>
+            {business.verification_updated_at && (
+              <p className="mt-1 text-[11px] text-ink/35">
+                Son değişiklik: {formatDate(business.verification_updated_at)}
+                {business.verification_updated_by ? ` — ${business.verification_updated_by}` : ""}
+              </p>
+            )}
+          </div>
 
           <div className="rounded-lg border border-line bg-offwhite p-3">
             <div className="mb-2 flex items-center gap-1.5">
@@ -568,18 +647,36 @@ export default function EditBusinessModal({
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setTier(tier === "premium" ? "basic" : "premium")}
-            className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold transition ${
-              tier === "premium"
-                ? "border-gold bg-gold/10 text-gold-dark"
-                : "border-line text-ink/50 hover:bg-offwhite"
-            }`}
-          >
-            <Star className={`h-4 w-4 ${tier === "premium" ? "fill-gold-dark" : ""}`} />
-            {tier === "premium" ? "Öne Çıkan (aktif)" : "Öne Çıkar"}
-          </button>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setTier(tier === "premium" ? "basic" : "premium")}
+              className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold transition ${
+                tier === "premium"
+                  ? "border-navy bg-navy/5 text-navy"
+                  : "border-line text-ink/50 hover:bg-offwhite"
+              }`}
+            >
+              <Sparkles className="h-4 w-4" />
+              {tier === "premium" ? "Plus paketi (aktif)" : "Temel paket"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFeatured((v) => !v)}
+              className={`flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-bold transition ${
+                isFeatured
+                  ? "border-gold bg-gold/10 text-gold-dark"
+                  : "border-line text-ink/50 hover:bg-offwhite"
+              }`}
+            >
+              <Star className={`h-4 w-4 ${isFeatured ? "fill-gold-dark" : ""}`} />
+              {isFeatured ? "Anasayfada Öne Çıkan" : "Öne Çıkar"}
+            </button>
+          </div>
+          <p className="-mt-2 text-xs text-ink/40">
+            Paket (Temel/Plus) ile &quot;Öne Çıkan&quot; rozeti birbirinden bağımsızdır — Öne Çıkan
+            rozeti yalnızca gerçekten öne çıkarılmış işletmelerde gösterilmelidir.
+          </p>
 
           {error && <p className="text-sm text-bordo">{error}</p>}
 

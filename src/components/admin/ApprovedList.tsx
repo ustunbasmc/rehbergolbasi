@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Business, Category } from "@/lib/types";
-import { Star } from "lucide-react";
+import { Star, ImageOff } from "lucide-react";
 import EditBusinessModal from "@/components/admin/EditBusinessModal";
 
 export default function ApprovedList({ categories }: { categories: Category[] }) {
@@ -11,6 +11,7 @@ export default function ApprovedList({ categories }: { categories: Category[] })
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [missingCoverOnly, setMissingCoverOnly] = useState(false);
   const [editing, setEditing] = useState<Business | null>(null);
 
   const loadApproved = useCallback(async () => {
@@ -32,6 +33,15 @@ export default function ApprovedList({ categories }: { categories: Category[] })
     setBusinesses(data ?? []);
     setLoading(false);
   }, [search, categoryFilter]);
+
+  const visibleBusinesses = useMemo(
+    () => (missingCoverOnly ? businesses.filter((b) => !b.cover_image_url) : businesses),
+    [businesses, missingCoverOnly]
+  );
+  const missingCoverCount = useMemo(
+    () => businesses.filter((b) => !b.cover_image_url).length,
+    [businesses]
+  );
 
   useEffect(() => {
     const timeout = setTimeout(loadApproved, 250);
@@ -73,17 +83,28 @@ export default function ApprovedList({ categories }: { categories: Category[] })
             </option>
           ))}
         </select>
+        <button
+          type="button"
+          onClick={() => setMissingCoverOnly((v) => !v)}
+          className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+            missingCoverOnly
+              ? "border-gold bg-gold/10 text-gold-dark"
+              : "border-line text-ink/60 hover:border-gold/40"
+          }`}
+        >
+          <ImageOff className="h-3.5 w-3.5" /> Kapak görseli eksik ({missingCoverCount})
+        </button>
       </div>
 
       {loading ? (
         <p className="text-ink/50">Yükleniyor...</p>
-      ) : businesses.length === 0 ? (
+      ) : visibleBusinesses.length === 0 ? (
         <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
           Sonuç bulunamadı.
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {businesses.map((b) => (
+          {visibleBusinesses.map((b) => (
             <button
               key={b.id}
               onClick={() => setEditing(b)}
@@ -92,9 +113,14 @@ export default function ApprovedList({ categories }: { categories: Category[] })
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-display text-base font-bold text-navy">{b.name}</h3>
-                  {b.tier === "premium" && (
+                  {b.is_featured && (
                     <span className="flex items-center gap-1 rounded-full bg-gold px-2 py-0.5 text-[10px] font-bold text-gold-dark">
                       <Star className="h-2.5 w-2.5 fill-gold-dark" /> Öne Çıkan
+                    </span>
+                  )}
+                  {!b.cover_image_url && (
+                    <span className="flex items-center gap-1 rounded-full bg-offwhite px-2 py-0.5 text-[10px] font-semibold text-ink/50">
+                      <ImageOff className="h-2.5 w-2.5" /> Kapak yok
                     </span>
                   )}
                 </div>

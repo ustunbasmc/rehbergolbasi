@@ -36,7 +36,7 @@ async function getData(slug: string) {
 
   const { data: businesses } = await supabase
     .from("businesses")
-    .select("*")
+    .select("*, category:categories(name, icon)")
     .eq("status", "approved")
     .eq("is_active", true)
     .in("category_id", categoryIds)
@@ -69,6 +69,9 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: {
+      canonical: `https://rehbergolbasi.com/isletmeler/${kategori}`,
+    },
     openGraph: { title, description },
     twitter: { title, description },
   };

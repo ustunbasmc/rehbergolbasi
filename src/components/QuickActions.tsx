@@ -1,20 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Phone, MessageCircle, Navigation, Share2, Check } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-
-async function trackClick(
-  businessId: string,
-  eventType: "phone_click" | "whatsapp_click"
-) {
-  const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
-  await supabase.from("business_events").insert({
-    business_id: businessId,
-    event_type: eventType,
-    referrer: document.referrer || null,
-    device: isMobile ? "mobile" : "desktop",
-  });
-}
+import { trackBusinessEvent, formatTelHref, formatWhatsappUrl } from "@/lib/analytics";
 
 export default function QuickActions({
   phone,
@@ -51,8 +38,8 @@ export default function QuickActions({
       {phone && (
         <button
           onClick={async () => {
-            await trackClick(businessId, "phone_click");
-            window.location.href = "tel:" + phone;
+            await trackBusinessEvent(businessId, "phone_click");
+            window.location.href = formatTelHref(phone);
           }}
           className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-bordo py-2.5 text-white transition hover:bg-bordo-dark"
         >
@@ -63,8 +50,8 @@ export default function QuickActions({
       {whatsapp && (
         <button
           onClick={async () => {
-            await trackClick(businessId, "whatsapp_click");
-            window.open("https://wa.me/" + whatsapp.replace(/\D/g, ""), "_blank");
+            await trackBusinessEvent(businessId, "whatsapp_click");
+            window.open(formatWhatsappUrl(whatsapp), "_blank");
           }}
           className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-navy py-2.5 text-white transition hover:bg-navy-dark"
         >
@@ -74,7 +61,10 @@ export default function QuickActions({
       )}
       {mapsUrl && (
         <button
-          onClick={() => window.open(mapsUrl, "_blank")}
+          onClick={async () => {
+            await trackBusinessEvent(businessId, "directions_click");
+            window.open(mapsUrl, "_blank");
+          }}
           className="flex flex-1 flex-col items-center gap-1 rounded-xl bg-offwhite py-2.5 text-navy transition hover:bg-navy/10"
         >
           <Navigation className="h-[18px] w-[18px]" />

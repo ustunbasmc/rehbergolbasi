@@ -29,11 +29,11 @@ export default function PendingList() {
     setActingId(id);
 
     if (status === "approved") {
-      const freeUntil = new Date();
-      freeUntil.setMonth(freeUntil.getMonth() + 1);
+      // Temel profil süresizdir — free_until yalnızca Plus (premium) denemesi
+      // başlatıldığında set edilir (bkz. EditBusinessModal "Ödeme Alındı" akışı).
       await supabase
         .from("businesses")
-        .update({ status, free_until: freeUntil.toISOString(), is_active: true })
+        .update({ status, is_active: true })
         .eq("id", id);
       pingIndexNow(`https://rehbergolbasi.com/isletme/${slug}`);
     } else {
@@ -76,7 +76,7 @@ export default function PendingList() {
               disabled={actingId === b.id}
               className="rounded-lg bg-navy px-4 py-2 text-sm font-bold text-white hover:bg-navy-dark disabled:opacity-60"
             >
-              Onayla (1 ay ücretsiz başlat)
+              Onayla ve Yayınla (Temel — ücretsiz)
             </button>
             <button
               onClick={() => handleDecision(b.id, "rejected", b.slug)}

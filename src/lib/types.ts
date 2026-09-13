@@ -35,6 +35,28 @@ export const DEFAULT_OPENING_HOURS: OpeningHours = {
 };
 export type MembershipTier = "basic" | "premium";
 export type BusinessStatus = "pending" | "approved" | "rejected" | "suspended";
+export type VerificationStatus = "unverified" | "info_checked" | "owner_verified";
+
+export const VERIFICATION_LABELS: Record<
+  VerificationStatus,
+  { label: string; shortLabel: string; description: string }
+> = {
+  unverified: {
+    label: "Doğrulanmadı",
+    shortLabel: "Doğrulanmadı",
+    description: "Bu işletmenin bilgileri henüz RehberGölbaşı tarafından kontrol edilmedi.",
+  },
+  info_checked: {
+    label: "Bilgileri Kontrol Edildi",
+    shortLabel: "Kontrol Edildi",
+    description: "İletişim ve adres bilgileri RehberGölbaşı tarafından kontrol edildi.",
+  },
+  owner_verified: {
+    label: "İşletme Sahibi Tarafından Doğrulandı",
+    shortLabel: "Sahibi Onayladı",
+    description: "Bu profil işletme sahibi veya yetkilisi tarafından doğrulandı.",
+  },
+};
 
 export interface Category {
   id: string;
@@ -66,6 +88,7 @@ export interface Business {
   website: string | null;
   tier: MembershipTier;
   is_founding_member: boolean;
+  is_featured: boolean;
   free_until: string | null;
   paid_until: string | null;
   status: BusinessStatus;
@@ -74,6 +97,10 @@ export interface Business {
   created_at: string;
   category?: Category;
   is_active: boolean;
+  short_description: string | null;
+  verification_status: VerificationStatus;
+  verification_updated_at: string | null;
+  verification_updated_by: string | null;
 }
 
 export interface BusinessPhoto {

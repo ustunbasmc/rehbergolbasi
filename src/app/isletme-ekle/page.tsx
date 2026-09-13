@@ -40,7 +40,7 @@ export default async function IsletmeEklePage() {
 
           <div className="mt-7 flex flex-wrap gap-3">
             <div className="flex items-center gap-2 rounded-full bg-gold/20 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
-              <TrendingUp className="h-4 w-4 text-gold" /> İlk ay ücretsiz, sonra günlük 12 TL
+              <TrendingUp className="h-4 w-4 text-gold" /> Temel kayıt süresiz ücretsiz
             </div>
             <div className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
               <Clock className="h-4 w-4 text-gold" /> Hızlı onay süreci
@@ -55,9 +55,11 @@ export default async function IsletmeEklePage() {
               🎉
             </div>
             <div>
-              <p className="font-display text-lg font-bold text-white">İlk Ay Tamamen Ücretsiz</p>
+              <p className="font-display text-lg font-bold text-white">Temel İşletme Kaydı Ücretsizdir</p>
               <p className="text-xs text-white/70 leading-relaxed">
-                30 gün boyunca hiçbir ücret yok. Sonrasında devam etmek isterseniz günlük sadece 12 TL (aylık 360 TL) — istemezseniz profiliniz ücretsiz kaldırılır.
+                Gelişmiş profil, WhatsApp, galeri, analitik ve öne çıkarma özellikleri için
+                RehberGölbaşı Plus'a geçebilirsiniz. Plus üyelik aylık 360 TL'dir ve ilk 30 gün
+                ücretsizdir; ödeme yapmazsanız profiliniz kaldırılmaz, ücretsiz Temel pakete döner.
               </p>
             </div>
           </div>
