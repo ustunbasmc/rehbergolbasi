@@ -1,698 +1,810 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import type { Category, OpeningHours } from "@/lib/types";
-import { DEFAULT_OPENING_HOURS } from "@/lib/types";
-import OpeningHoursEditor from "@/components/OpeningHoursEditor";
-import FeaturesSelector from "@/components/FeaturesSelector";
-import AccordionSection from "@/components/AccordionSection";
-import { Plus, Trash2, Check, ShieldCheck } from "lucide-react";
+import type { ApplicantType } from "@/lib/types";
+import { APPLICANT_TYPE_LABELS } from "@/lib/types";
 import {
-  SHORT_DESCRIPTION_IDEAL_LENGTH,
-  SHORT_DESCRIPTION_MAX_LENGTH,
-} from "@/lib/businessDescription";
+  formatPhoneInput,
+  isValidTurkishPhone,
+  normalizeUrl,
+  normalizeInstagram,
+  generateReferenceCode,
+  generateSubmissionId,
+  detectDeviceGroup,
+  readAttributionParams,
+} from "@/lib/submissionUtils";
+import { trackFormEvent, formatWhatsappUrl } from "@/lib/analytics";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
+import {
+  Building2,
+  User,
+  Phone,
+  MapPin,
+  Link2,
+  AtSign,
+  Globe,
+  Upload,
+  X,
+  ShieldCheck,
+  CheckCircle2,
+  MessageCircle,
+  Plus,
+  Home,
+} from "lucide-react";
 
-const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex h-[200px] items-center justify-center rounded-lg border border-line bg-offwhite text-sm text-ink/40">
-      Harita yükleniyor...
-    </div>
-  ),
-});
+const MAX_PHOTOS = 5;
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_PHOTO_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-function slugify(text: string) {
-  const trMap: Record<string, string> = {
-    ç: "c", Ç: "c", ğ: "g", Ğ: "g", ı: "i", İ: "i",
-    ö: "o", Ö: "o", ş: "s", Ş: "s", ü: "u", Ü: "u"
-  };
-  return text
-    .split("")
-    .map((ch) => trMap[ch] ?? ch)
-    .join("")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+interface FormState {
+  applicantType: ApplicantType | "";
+  businessName: string;
+  applicantName: string;
+  contactPhone: string;
+  contactIsPublic: boolean;
+  businessPhone: string;
+  address: string;
+  mapsUrl: string;
+  instagram: string;
+  website: string;
+  note: string;
+  kvkkAccepted: boolean;
 }
 
-async function uploadFile(file: File): Promise<string | null> {
-  // PDF dosyaları sıkıştırma API'sinden geçemez (sharp yalnızca görsel işler),
-  // bunlar doğrudan Supabase'e, eski yöntemle yüklenir.
-  if (file.type === "application/pdf") {
-    const fileExt = file.name.split(".").pop();
-    const filePath = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt}`;
-    const { error: uploadError } = await supabase.storage.from("business-photos").upload(filePath, file);
-    if (uploadError) return null;
-    const { data } = supabase.storage.from("business-photos").getPublicUrl(filePath);
-    return data.publicUrl;
-  }
+const INITIAL_FORM: FormState = {
+  applicantType: "",
+  businessName: "",
+  applicantName: "",
+  contactPhone: "",
+  contactIsPublic: true,
+  businessPhone: "",
+  address: "",
+  mapsUrl: "",
+  instagram: "",
+  website: "",
+  note: "",
+  kvkkAccepted: false,
+};
 
-  // Görseller sunucu tarafında sıkıştırılıp WebP'ye çevrilir (/api/upload-photo).
-  const formData = new FormData();
-  formData.append("file", file);
+type FieldErrors = Partial<Record<keyof FormState | "location", string>>;
 
-  const res = await fetch("/api/upload-photo", {
-    method: "POST",
-    body: formData,
-  });
-
-  if (!res.ok) return null;
-  const result = await res.json();
-  return result.url ?? null;
+function ErrorText({
+  field,
+  touched,
+  errors,
+}: {
+  field: keyof FormState | "location";
+  touched: Partial<Record<keyof FormState | "location", boolean>>;
+  errors: FieldErrors;
+}) {
+  if (!touched[field] || !errors[field]) return null;
+  return (
+    <p role="alert" className="mt-1 text-xs font-medium text-bordo">
+      {errors[field]}
+    </p>
+  );
 }
 
-interface FaqDraft {
-  question: string;
-  answer: string;
+function hasMeaningfulInput(form: FormState): boolean {
+  return !!(
+    form.businessName.trim() ||
+    form.applicantName.trim() ||
+    form.contactPhone.trim() ||
+    form.address.trim() ||
+    form.mapsUrl.trim() ||
+    form.instagram.trim()
+  );
 }
 
-const STEPS = [
-  { n: 1, label: "Temel Bilgiler" },
-  { n: 2, label: "Detaylar" },
-  { n: 3, label: "Onay" },
-];
-
-const inputClass =
-  "w-full rounded-xl border border-line px-4 py-3 text-base outline-none focus:border-bordo";
-const labelClass = "mb-1.5 block text-sm font-semibold text-navy";
-
-export default function BusinessApplyForm({ categories }: { categories: Category[] }) {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
-  const [menuFiles, setMenuFiles] = useState<File[]>([]);
-  const [faqs, setFaqs] = useState<FaqDraft[]>([]);
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
-  const [openingHours, setOpeningHours] = useState<OpeningHours>(DEFAULT_OPENING_HOURS);
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+export default function BusinessApplyForm() {
+  const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [touched, setTouched] = useState<Partial<Record<keyof FormState | "location", boolean>>>({});
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [result, setResult] = useState<{ referenceCode: string; photoWarning: string | null } | null>(
+    null
+  );
 
-  const topLevelCategories = categories.filter((c) => !c.parent_id);
+  const fieldRefs = useRef<Partial<Record<keyof FormState | "location", HTMLElement | null>>>({});
+  const submissionIdRef = useRef<string>(generateSubmissionId());
+  const referenceCodeRef = useRef<string>(generateReferenceCode());
+  const formOpenedAtRef = useRef<number>(0);
+  const startedTrackedRef = useRef(false);
+  const submittedRef = useRef(false);
+  const lastFocusedFieldRef = useRef<string>("");
 
-  const [categoryId, setCategoryId] = useState(topLevelCategories[0]?.id ?? "");
-  const [subcategoryId, setSubcategoryId] = useState("");
+  useEffect(() => {
+    formOpenedAtRef.current = Date.now();
+    trackFormEvent("business_form_view");
+  }, []);
 
-  const subcategories = categories.filter((c) => c.parent_id === categoryId);
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (submittedRef.current) return;
+      if (!hasMeaningfulInput(form)) return;
+      trackFormEvent("business_form_abandon", { abandonField: lastFocusedFieldRef.current || undefined });
+      e.preventDefault();
+      e.returnValue = "";
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [form]);
 
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    short_description: "",
-    phone: "",
-    whatsapp: "",
-    address: "",
-    neighborhood: "",
-    instagram_url: "",
-    facebook_url: "",
-    tiktok_url: "",
-    owner_name: "",
-    owner_phone: "",
-    owner_email: "",
-  });
-
-  function update(field: string, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+  function trackStartOnce() {
+    if (!startedTrackedRef.current) {
+      startedTrackedRef.current = true;
+      trackFormEvent("business_form_start", { applicantType: form.applicantType || undefined });
+    }
   }
 
-  function handleCategoryChange(id: string) {
-    setCategoryId(id);
-    setSubcategoryId("");
-  }
-
-  function addFaq() {
-    setFaqs((prev) => [...prev, { question: "", answer: "" }]);
-  }
-
-  function updateFaq(index: number, field: keyof FaqDraft, value: string) {
-    setFaqs((prev) => prev.map((f, i) => (i === index ? { ...f, [field]: value } : f)));
-  }
-
-  function removeFaq(index: number) {
-    setFaqs((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  async function generateUniqueSlug(base: string): Promise<string> {
-    const { data } = await supabase.from("businesses").select("slug").ilike("slug", `${base}%`);
-    const existing = new Set((data ?? []).map((d) => d.slug));
-    if (!existing.has(base)) return base;
-    let i = 2;
-    while (existing.has(`${base}-${i}`)) i++;
-    return `${base}-${i}`;
-  }
-
-  function goNext() {
-    if (step === 1) {
-      if (!form.name.trim()) {
-        setError("İşletme adını girmeden devam edemezsin.");
-        return;
+  function update<K extends keyof FormState>(field: K, value: FormState[K]) {
+    trackStartOnce();
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      // İletişim numarası "public" işaretliyse işletme telefonuna otomatik aktar.
+      if (field === "contactPhone" && prev.contactIsPublic) {
+        next.businessPhone = value as string;
       }
-      if (!form.phone.trim()) {
-        setError("Telefon numarasını girmeden devam edemezsin.");
-        return;
+      if (field === "contactIsPublic") {
+        next.businessPhone = value ? prev.contactPhone : prev.businessPhone;
+      }
+      return next;
+    });
+  }
+
+  function markTouched(field: keyof FormState | "location") {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  }
+
+  function validate(current: FormState): FieldErrors {
+    const next: FieldErrors = {};
+    if (!current.applicantType) next.applicantType = "Lütfen bir seçenek belirtin.";
+    if (!current.businessName.trim()) next.businessName = "İşletme adını girmeden devam edemezsiniz.";
+    if (!current.applicantName.trim()) next.applicantName = "Adınızı girmeden devam edemezsiniz.";
+    if (!current.contactPhone.trim()) {
+      next.contactPhone = "Size ulaşabileceğimiz bir telefon numarası girin.";
+    } else if (!isValidTurkishPhone(current.contactPhone)) {
+      next.contactPhone = "Geçerli bir telefon numarası girin.";
+    }
+    if (!current.contactIsPublic && current.businessPhone.trim() && !isValidTurkishPhone(current.businessPhone)) {
+      next.businessPhone = "Geçerli bir telefon numarası girin.";
+    }
+    const hasLocation =
+      current.address.trim() || current.mapsUrl.trim() || current.instagram.trim();
+    if (!hasLocation) {
+      next.location =
+        "İşletmeyi bulabilmemiz için adres, Google Maps bağlantısı veya Instagram hesabından en az birini ekleyin.";
+    } else {
+      if (current.mapsUrl.trim() && !normalizeUrl(current.mapsUrl)) {
+        next.mapsUrl = "Geçerli bir bağlantı girin (https:// ile başlamalı).";
+      }
+      if (current.instagram.trim() && !normalizeInstagram(current.instagram)) {
+        next.instagram = "Geçerli bir Instagram kullanıcı adı veya bağlantısı girin.";
       }
     }
-    setError(null);
-    setStep((s) => Math.min(3, s + 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (current.website.trim() && !normalizeUrl(current.website)) {
+      next.website = "Geçerli bir web sitesi bağlantısı girin (https:// ile başlamalı).";
+    }
+    if (!current.kvkkAccepted) {
+      next.kvkkAccepted = "Devam etmek için bu kutuyu işaretlemelisiniz.";
+    }
+    return next;
   }
 
-  function goBack() {
-    setStep((s) => Math.max(1, s - 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const FIELD_ORDER: (keyof FormState | "location")[] = [
+    "applicantType",
+    "businessName",
+    "applicantName",
+    "contactPhone",
+    "businessPhone",
+    "location",
+    "mapsUrl",
+    "instagram",
+    "website",
+    "kvkkAccepted",
+  ];
+
+  function focusFirstError(fieldErrors: FieldErrors) {
+    const firstKey = FIELD_ORDER.find((key) => fieldErrors[key]);
+    if (firstKey) {
+      const el = fieldRefs.current[firstKey];
+      const prefersReducedMotion =
+        typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      el?.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "center" });
+      el?.focus?.();
+    }
+  }
+
+  function handlePhotoSelect(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setPhotoError(null);
+    const incoming = Array.from(files);
+    const combined = [...photos];
+
+    for (const file of incoming) {
+      if (combined.length >= MAX_PHOTOS) {
+        setPhotoError(`En fazla ${MAX_PHOTOS} fotoğraf ekleyebilirsiniz.`);
+        break;
+      }
+      if (!ACCEPTED_PHOTO_TYPES.includes(file.type)) {
+        setPhotoError("Yalnızca JPG, PNG veya WebP dosyaları kabul edilir.");
+        continue;
+      }
+      if (file.size > MAX_PHOTO_SIZE) {
+        setPhotoError("Her dosya en fazla 5 MB olabilir.");
+        continue;
+      }
+      combined.push(file);
+    }
+    setPhotos(combined);
+  }
+
+  function removePhoto(index: number) {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function uploadPhotos(submissionId: string): Promise<{ uploaded: number; failed: number }> {
+    let uploaded = 0;
+    let failed = 0;
+    for (const file of photos) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("submissionId", submissionId);
+        const res = await fetch("/api/submissions/upload-photo", { method: "POST", body: formData });
+        if (res.ok) {
+          uploaded++;
+          trackFormEvent("business_photo_upload", { hasPhoto: true });
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+    return { uploaded, failed };
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
+    if (honeypot.trim() !== "") return; // bot tuzağı — sessizce yut
 
-    if (step !== 3) return;
+    const fieldErrors = validate(form);
+    setErrors(fieldErrors);
+    setTouched((prev) => ({
+      ...prev,
+      applicantType: true,
+      businessName: true,
+      applicantName: true,
+      contactPhone: true,
+      location: true,
+      kvkkAccepted: true,
+    }));
 
-    if (honeypot.trim() !== "") {
+    if (Object.keys(fieldErrors).length > 0) {
+      focusFirstError(fieldErrors);
+      trackFormEvent("business_form_error", { errorCategory: "validation" });
       return;
     }
 
-    setLoading(true);
-    setError(null);
-    setUploading(true);
+    setSubmitting(true);
+    setGeneralError(null);
+    trackFormEvent("business_form_submit", {
+      applicantType: form.applicantType || undefined,
+      formDurationMs: Date.now() - formOpenedAtRef.current,
+    });
 
-    let coverUrl: string | null = null;
-    if (coverFile) {
-      coverUrl = await uploadFile(coverFile);
-      if (!coverUrl) {
-        setUploading(false);
-        setLoading(false);
-        setError("Kapak fotoğrafı yüklenemedi, lütfen tekrar dene.");
-        return;
+    const attribution = readAttributionParams();
+    const submissionId = submissionIdRef.current;
+
+    const payload = {
+      id: submissionId,
+      reference_code: referenceCodeRef.current,
+      applicant_type: form.applicantType,
+      business_name: form.businessName.trim(),
+      applicant_name: form.applicantName.trim(),
+      contact_phone: form.contactPhone.trim(),
+      contact_is_public: form.contactIsPublic,
+      business_phone: (form.contactIsPublic ? form.contactPhone : form.businessPhone).trim() || null,
+      address: form.address.trim() || null,
+      maps_url: normalizeUrl(form.mapsUrl) ?? null,
+      instagram_url: normalizeInstagram(form.instagram) ?? null,
+      website_url: normalizeUrl(form.website) ?? null,
+      note: form.note.trim() || null,
+      kvkk_accepted: form.kvkkAccepted,
+      utm_source: attribution.utm_source,
+      utm_medium: attribution.utm_medium,
+      utm_campaign: attribution.utm_campaign,
+      referrer: attribution.referrer,
+      device: detectDeviceGroup(),
+    };
+
+    const { error: insertError } = await supabase.from("business_submissions").insert(payload);
+
+    // Aynı submissionId ile daha önce bu istek başarıyla ulaşmış ama yanıt
+    // ağ hatasıyla kaybolmuşsa (kullanıcı tekrar denedi): unique-violation
+    // burada BAŞARI olarak ele alınır — mükerrer başvuru oluşturulmaz.
+    const isIdempotentReplay = insertError?.code === "23505";
+
+    if (insertError && !isIdempotentReplay) {
+      setSubmitting(false);
+      if (insertError.message?.includes("RATE_LIMITED")) {
+        setGeneralError("Kısa süre içinde birden fazla başvuru gönderildi. Lütfen birkaç dakika sonra tekrar deneyin.");
+        trackFormEvent("business_form_error", { errorCategory: "rate_limited" });
+      } else {
+        setGeneralError("Başvurunuz gönderilemedi, lütfen tekrar deneyin. Bilgileriniz kayboldu, tekrar yazmanız gerekmez.");
+        trackFormEvent("business_form_error", { errorCategory: "network_or_server" });
       }
-    }
-
-    const galleryUrls: string[] = [];
-    for (const file of galleryFiles) {
-      const url = await uploadFile(file);
-      if (url) galleryUrls.push(url);
-    }
-
-    const menuUploads: { url: string; file_type: string }[] = [];
-    for (const file of menuFiles) {
-      const url = await uploadFile(file);
-      if (url) {
-        menuUploads.push({ url, file_type: file.type === "application/pdf" ? "pdf" : "image" });
-      }
-    }
-
-    setUploading(false);
-
-    const finalCategoryId = subcategoryId || categoryId;
-    const baseSlug = slugify(form.name);
-    const slug = await generateUniqueSlug(baseSlug);
-
-    const { data: inserted, error: insertError } = await supabase
-      .from("businesses")
-      .insert({
-        name: form.name,
-        slug,
-        category_id: finalCategoryId,
-        description: form.description || null,
-        short_description: form.short_description.trim() || null,
-        phone: form.phone || null,
-        whatsapp: form.whatsapp || null,
-        address: form.address || null,
-        neighborhood: form.neighborhood || null,
-        instagram_url: form.instagram_url || null,
-        facebook_url: form.facebook_url || null,
-        tiktok_url: form.tiktok_url || null,
-        cover_image_url: coverUrl,
-        lat,
-        lng,
-        opening_hours: openingHours,
-        tier: "basic",
-        status: "pending"
-      })
-      .select()
-      .single();
-
-    if (insertError || !inserted) {
-      setLoading(false);
-      setError("Bir şeyler ters gitti, lütfen tekrar dene: " + insertError?.message);
       return;
     }
 
-    if (galleryUrls.length > 0) {
-      const rows = galleryUrls.map((url, i) => ({ business_id: inserted.id, url, display_order: i }));
-      await supabase.from("business_photos").insert(rows);
+    submittedRef.current = true;
+
+    let photoWarning: string | null = null;
+    if (photos.length > 0) {
+      setUploadingPhotos(true);
+      const { uploaded, failed } = await uploadPhotos(submissionId);
+      setUploadingPhotos(false);
+      if (failed > 0) {
+        photoWarning =
+          uploaded > 0
+            ? `${uploaded} fotoğraf yüklendi, ${failed} fotoğraf yüklenemedi. Başvurunuz kaydedildi, dilerseniz fotoğrafları WhatsApp'tan iletebilirsiniz.`
+            : "Fotoğraflar yüklenemedi, ancak başvurunuz kaydedildi. Dilerseniz WhatsApp'tan iletebilirsiniz.";
+      }
     }
 
-    if (selectedFeatures.length > 0) {
-      const featureRows = selectedFeatures.map((feature_id) => ({ business_id: inserted.id, feature_id }));
-      await supabase.from("business_features").insert(featureRows);
-    }
+    setSubmitting(false);
+    setResult({ referenceCode: referenceCodeRef.current, photoWarning });
+    trackFormEvent("business_form_success", {
+      applicantType: form.applicantType || undefined,
+      hasPhoto: photos.length > 0,
+      formDurationMs: Date.now() - formOpenedAtRef.current,
+    });
+  }
 
-    if (menuUploads.length > 0) {
-      const rows = menuUploads.map((m, i) => ({
-        business_id: inserted.id,
-        url: m.url,
-        file_type: m.file_type,
-        display_order: i,
-      }));
-      await supabase.from("business_menu_items").insert(rows);
-    }
+  if (result) {
+    const whatsappHref = WHATSAPP_NUMBER
+      ? formatWhatsappUrl(
+          WHATSAPP_NUMBER,
+          `Merhaba, ${result.referenceCode} numaralı işletme başvurum için fotoğraf göndermek istiyorum.`
+        )
+      : null;
 
-    const validFaqs = faqs.filter((f) => f.question.trim() && f.answer.trim());
-    if (validFaqs.length > 0) {
-      const rows = validFaqs.map((f, i) => ({
-        business_id: inserted.id,
-        question: f.question.trim(),
-        answer: f.answer.trim(),
-        display_order: i,
-      }));
-      await supabase.from("business_faqs").insert(rows);
-    }
+    return (
+      <div className="flex flex-col items-center py-6 text-center">
+        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+          <CheckCircle2 className="h-7 w-7 text-green-600" />
+        </span>
+        <h2 className="font-display text-2xl font-bold text-navy">Başvurunuz alındı</h2>
+        <p className="mt-2 max-w-sm text-sm leading-relaxed text-ink/60">
+          Ekibimiz işletme bilgilerini kontrol ederek profilinizi hazırlayacak. Eksik bilgi
+          bulunursa verdiğiniz iletişim numarası üzerinden sizinle iletişime geçeceğiz.
+        </p>
 
-    if (form.owner_name.trim() || form.owner_phone.trim() || form.owner_email.trim()) {
-      await supabase.from("business_owner_info").insert({
-        business_id: inserted.id,
-        owner_name: form.owner_name.trim() || null,
-        owner_phone: form.owner_phone.trim() || null,
-        owner_email: form.owner_email.trim() || null,
-      });
-    }
+        <div className="mt-5 flex flex-col items-center gap-1 rounded-xl border border-line bg-offwhite px-6 py-4">
+          <span className="text-xs font-semibold uppercase tracking-wide text-ink/40">
+            Başvuru referansınız
+          </span>
+          <span className="font-mono text-xl font-bold text-navy">{result.referenceCode}</span>
+          <span className="text-xs text-ink/50">Durum: Yeni · En kısa sürede incelenecektir</span>
+        </div>
 
-    setLoading(false);
-    router.push("/isletme-ekle/tesekkurler");
+        {result.photoWarning && (
+          <p className="mt-4 max-w-sm rounded-lg bg-gold/10 px-4 py-3 text-xs leading-relaxed text-navy/80">
+            {result.photoWarning}
+          </p>
+        )}
+
+        <div className="mt-6 flex w-full max-w-sm flex-col gap-2.5">
+          {whatsappHref && (
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackFormEvent("business_whatsapp_continue")}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white hover:opacity-90"
+            >
+              <MessageCircle className="h-4 w-4" /> WhatsApp&apos;tan Fotoğraf Gönder
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              submissionIdRef.current = generateSubmissionId();
+              referenceCodeRef.current = generateReferenceCode();
+              submittedRef.current = false;
+              startedTrackedRef.current = false;
+              setForm(INITIAL_FORM);
+              setPhotos([]);
+              setTouched({});
+              setErrors({});
+              setResult(null);
+            }}
+            className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-line px-5 py-3 text-sm font-bold text-navy hover:bg-offwhite"
+          >
+            <Plus className="h-4 w-4" /> Başka İşletme Öner
+          </button>
+          <Link
+            href="/"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-ink/60 hover:text-navy"
+          >
+            <Home className="h-4 w-4" /> Ana Sayfaya Dön
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const inputClass =
+    "w-full min-h-11 rounded-xl border border-line px-4 py-3 text-base outline-none transition-colors focus:border-bordo";
+  const errorInputClass = "border-bordo focus:border-bordo";
+  const labelClass = "mb-1.5 block text-sm font-semibold text-navy";
+
+  function errClass(field: keyof FormState | "location") {
+    return touched[field] && errors[field] ? errorInputClass : "";
   }
 
   return (
-    <div className="pb-24">
-      {/* Adım göstergesi */}
-      <div className="mb-6 flex items-center">
-        {STEPS.map((s, i) => (
-          <div key={s.n} className="flex flex-1 items-center last:flex-none">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
-                  step > s.n ? "bg-bordo text-white" : step === s.n ? "bg-bordo text-white ring-4 ring-bordo/15" : "bg-navy/5 text-ink/40"
-                }`}
-              >
-                {step > s.n ? <Check className="h-4 w-4" /> : s.n}
-              </div>
-              <span className={`text-[11px] font-semibold ${step >= s.n ? "text-navy" : "text-ink/40"}`}>
-                {s.label}
-              </span>
-            </div>
-            {i < STEPS.length - 1 && (
-              <div className={`mx-2 h-0.5 flex-1 rounded ${step > s.n ? "bg-bordo" : "bg-navy/10"}`} />
-            )}
-          </div>
-        ))}
+    <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-5 motion-reduce:transition-none">
+      <input
+        type="text"
+        value={honeypot}
+        onChange={(e) => setHoneypot(e.target.value)}
+        tabIndex={-1}
+        autoComplete="off"
+        className="absolute left-[-9999px] h-0 w-0 opacity-0"
+        aria-hidden="true"
+      />
+
+      <p className="rounded-xl bg-bordo/5 px-4 py-3 text-sm font-semibold text-bordo">
+        Sen işletmeni gönder, profilini biz hazırlayalım.
+      </p>
+
+      {/* Başvuru türü */}
+      <fieldset
+        ref={(el) => {
+          fieldRefs.current.applicantType = el;
+        }}
+      >
+        <legend className={labelClass}>Bu işletmeyi hangi amaçla gönderiyorsunuz? *</legend>
+        <div className="flex flex-col gap-2">
+          {(Object.keys(APPLICANT_TYPE_LABELS) as ApplicantType[]).map((type) => (
+            <label
+              key={type}
+              className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
+                form.applicantType === type
+                  ? "border-bordo bg-bordo/5 text-bordo"
+                  : "border-line text-navy hover:border-bordo/40"
+              }`}
+            >
+              <input
+                type="radio"
+                name="applicantType"
+                value={type}
+                checked={form.applicantType === type}
+                onChange={() => update("applicantType", type)}
+                onBlur={() => markTouched("applicantType")}
+                className="h-4 w-4 accent-bordo"
+              />
+              {APPLICANT_TYPE_LABELS[type]}
+            </label>
+          ))}
+        </div>
+        <ErrorText field="applicantType" touched={touched} errors={errors} />
+      </fieldset>
+
+      <div>
+        <label className={labelClass} htmlFor="businessName">
+          İşletme adı *
+        </label>
+        <div className="relative">
+          <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
+          <input
+            id="businessName"
+            ref={(el) => {
+              fieldRefs.current.businessName = el;
+            }}
+            value={form.businessName}
+            onChange={(e) => update("businessName", e.target.value)}
+            onFocus={() => (lastFocusedFieldRef.current = "businessName")}
+            onBlur={() => markTouched("businessName")}
+            className={`${inputClass} pl-10 ${errClass("businessName")}`}
+            placeholder="Örn. Cansu Kuaför"
+            aria-invalid={touched.businessName && !!errors.businessName}
+          />
+        </div>
+        <ErrorText field="businessName" touched={touched} errors={errors} />
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          value={honeypot}
-          onChange={(e) => setHoneypot(e.target.value)}
-          tabIndex={-1}
-          autoComplete="off"
-          className="absolute left-[-9999px] h-0 w-0 opacity-0"
-          aria-hidden="true"
-        />
-
-        {/* ADIM 1: Temel Bilgiler (sade, hızlı doldurulabilir) */}
-        {step === 1 && (
-          <>
-            <div>
-              <label className={labelClass}>İşletme adı *</label>
-              <input
-                required
-                autoFocus
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-                className={inputClass}
-                placeholder="Örn. Cansu Kuaför"
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Kategori *</label>
-              <select
-                required
-                value={categoryId}
-                onChange={(e) => handleCategoryChange(e.target.value)}
-                className={inputClass}
-              >
-                {topLevelCategories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {subcategories.length > 0 && (
-              <div>
-                <label className={labelClass}>Alt kategori</label>
-                <select
-                  value={subcategoryId}
-                  onChange={(e) => setSubcategoryId(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">
-                    Genel ({topLevelCategories.find((c) => c.id === categoryId)?.name})
-                  </option>
-                  {subcategories.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div>
-              <label className={labelClass}>Telefon *</label>
-              <input
-                required
-                type="tel"
-                inputMode="tel"
-                value={form.phone}
-                onChange={(e) => update("phone", e.target.value)}
-                className={inputClass}
-                placeholder="0555 123 45 67"
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>WhatsApp <span className="font-normal text-ink/40">(isteğe bağlı)</span></label>
-              <input
-                type="tel"
-                inputMode="tel"
-                value={form.whatsapp}
-                onChange={(e) => update("whatsapp", e.target.value)}
-                className={inputClass}
-                placeholder="905551234567"
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Mahalle</label>
-              <input
-                value={form.neighborhood}
-                onChange={(e) => update("neighborhood", e.target.value)}
-                className={inputClass}
-                placeholder="Örn. Bahçelievler"
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Açıklama</label>
-              <textarea
-                value={form.description}
-                onChange={(e) => update("description", e.target.value)}
-                rows={3}
-                className={inputClass}
-                placeholder="İşletmeni tanıt"
-              />
-            </div>
-
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label className={labelClass}>
-                  Kısa Açıklama <span className="font-normal text-ink/40">(isteğe bağlı)</span>
-                </label>
-                <span
-                  className={`text-xs font-semibold ${
-                    form.short_description.length > SHORT_DESCRIPTION_IDEAL_LENGTH
-                      ? "text-gold-dark"
-                      : "text-ink/40"
-                  }`}
-                >
-                  {form.short_description.length}/{SHORT_DESCRIPTION_MAX_LENGTH}
-                </span>
-              </div>
-              <textarea
-                value={form.short_description}
-                onChange={(e) =>
-                  update("short_description", e.target.value.slice(0, SHORT_DESCRIPTION_MAX_LENGTH))
-                }
-                rows={2}
-                maxLength={SHORT_DESCRIPTION_MAX_LENGTH}
-                className={inputClass}
-                placeholder="Kartlarda gösterilecek 1-2 cümlelik kısa özet"
-              />
-              <p className="mt-1 text-xs text-ink/40">
-                Boş bırakırsan, açıklamanın ilk cümlesinden otomatik bir özet gösteririz.
-              </p>
-            </div>
-
-            <p className="text-center text-xs text-ink/40">
-              Adres, harita konumu, çalışma saatleri ve fotoğraflar gibi detayları bir sonraki adımda ekleyebilirsin.
-            </p>
-          </>
-        )}
-
-        {/* ADIM 2: Detaylar (katlanır bölümler) */}
-        {step === 2 && (
-          <>
-            <AccordionSection title="Adres & Konum" subtitle="İsteğe bağlı">
-              <div>
-                <label className={labelClass}>Adres</label>
-                <input
-                  value={form.address}
-                  onChange={(e) => update("address", e.target.value)}
-                  className={inputClass}
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Harita konumu</label>
-                <p className="mb-2 text-xs text-ink/50">Haritada işletmenin bulunduğu noktaya dokun.</p>
-                <LocationPicker
-                  lat={lat}
-                  lng={lng}
-                  onChange={(newLat, newLng) => {
-                    setLat(newLat);
-                    setLng(newLng);
-                  }}
-                />
-              </div>
-            </AccordionSection>
-
-            <AccordionSection title="Çalışma Saatleri" subtitle="İsteğe bağlı">
-              <OpeningHoursEditor value={openingHours} onChange={setOpeningHours} />
-            </AccordionSection>
-
-            <AccordionSection title="Özellikler" subtitle="İsteğe bağlı">
-              <FeaturesSelector value={selectedFeatures} onChange={setSelectedFeatures} />
-            </AccordionSection>
-
-            <AccordionSection title="Sosyal Medya" subtitle="İsteğe bağlı">
-              <div>
-                <label className={labelClass}>Instagram linki</label>
-                <input
-                  value={form.instagram_url}
-                  onChange={(e) => update("instagram_url", e.target.value)}
-                  className={inputClass}
-                  placeholder="https://instagram.com/..."
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Facebook linki</label>
-                <input
-                  value={form.facebook_url}
-                  onChange={(e) => update("facebook_url", e.target.value)}
-                  className={inputClass}
-                  placeholder="https://facebook.com/..."
-                />
-              </div>
-              <div>
-                <label className={labelClass}>TikTok linki</label>
-                <input
-                  value={form.tiktok_url}
-                  onChange={(e) => update("tiktok_url", e.target.value)}
-                  className={inputClass}
-                  placeholder="https://tiktok.com/@..."
-                />
-              </div>
-            </AccordionSection>
-
-            <AccordionSection title="Fotoğraflar" subtitle="İsteğe bağlı, önerilir">
-              <div>
-                <label className={labelClass}>Kapak fotoğrafı</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
-                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-offwhite file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-navy"
-                />
-              </div>
-              <div>
-                <label className={labelClass}>Galeri fotoğrafları</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => setGalleryFiles(Array.from(e.target.files ?? []))}
-                  className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-offwhite file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-navy"
-                />
-              </div>
-            </AccordionSection>
-
-            <AccordionSection title="Menü / Fiyat Listesi" subtitle="İsteğe bağlı">
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                multiple
-                onChange={(e) => setMenuFiles(Array.from(e.target.files ?? []))}
-                className="w-full rounded-lg border border-line px-3 py-2.5 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-offwhite file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-navy"
-              />
-              <p className="text-xs text-ink/50">Fotoğraf veya PDF olarak yükleyebilirsin.</p>
-            </AccordionSection>
-
-            <AccordionSection title="Sıkça Sorulan Sorular" subtitle="İsteğe bağlı">
-              <button
-                type="button"
-                onClick={addFaq}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-line py-3 text-sm font-semibold text-bordo hover:bg-offwhite"
-              >
-                <Plus className="h-4 w-4" /> Soru ekle
-              </button>
-              <div className="flex flex-col gap-3">
-                {faqs.map((faq, i) => (
-                  <div key={i} className="rounded-lg border border-line p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-ink/50">Soru {i + 1}</span>
-                      <button type="button" onClick={() => removeFaq(i)} className="text-ink/40 hover:text-bordo">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <input
-                      value={faq.question}
-                      onChange={(e) => updateFaq(i, "question", e.target.value)}
-                      placeholder="Soru (örn. Rezervasyon gerekli mi?)"
-                      className="mb-2 w-full rounded-lg border border-line px-3 py-2.5 text-base outline-none focus:border-bordo"
-                    />
-                    <textarea
-                      value={faq.answer}
-                      onChange={(e) => updateFaq(i, "answer", e.target.value)}
-                      placeholder="Cevap"
-                      rows={2}
-                      className="w-full rounded-lg border border-line px-3 py-2.5 text-base outline-none focus:border-bordo"
-                    />
-                  </div>
-                ))}
-              </div>
-            </AccordionSection>
-          </>
-        )}
-
-        {/* ADIM 3: Sahiplik & Onay */}
-        {step === 3 && (
-          <>
-            <div className="rounded-xl border border-line bg-offwhite p-4">
-              <div className="mb-2 flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-navy" />
-                <p className="text-sm font-semibold text-navy">Bu bilgiler gizli tutulur</p>
-              </div>
-              <p className="text-xs leading-relaxed text-ink/60">
-                Aşağıdaki bilgiler sitede yayınlanmaz, ziyaretçiler göremez. Sadece işletmeni onaylarken ve gerektiğinde seninle iletişime geçmek için kullanılır.
-              </p>
-            </div>
-
-            <div>
-              <label className={labelClass}>İşletme sahibinin adı</label>
-              <input
-                value={form.owner_name}
-                onChange={(e) => update("owner_name", e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Sahibinin telefonu</label>
-              <input
-                type="tel"
-                inputMode="tel"
-                value={form.owner_phone}
-                onChange={(e) => update("owner_phone", e.target.value)}
-                className={inputClass}
-                placeholder="0555 123 45 67"
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Sahibinin e-postası</label>
-              <input
-                type="email"
-                inputMode="email"
-                value={form.owner_email}
-                onChange={(e) => update("owner_email", e.target.value)}
-                className={inputClass}
-              />
-            </div>
-
-            <div className="rounded-xl border border-line p-4">
-              <p className="mb-2 text-sm font-semibold text-navy">Özet</p>
-              <div className="flex flex-col gap-1 text-xs text-ink/60">
-                <p><span className="font-semibold text-ink/80">İşletme:</span> {form.name || "—"}</p>
-                <p>
-                  <span className="font-semibold text-ink/80">Kategori:</span>{" "}
-                  {subcategoryId
-                    ? categories.find((c) => c.id === subcategoryId)?.name
-                    : topLevelCategories.find((c) => c.id === categoryId)?.name ?? "—"}
-                </p>
-                <p><span className="font-semibold text-ink/80">Telefon:</span> {form.phone || "—"}</p>
-                <p><span className="font-semibold text-ink/80">Fotoğraf:</span> {coverFile ? "1 kapak" : "yok"} {galleryFiles.length > 0 && `+ ${galleryFiles.length} galeri`}</p>
-                <p><span className="font-semibold text-ink/80">SSS:</span> {faqs.filter((f) => f.question.trim()).length} soru</p>
-              </div>
-            </div>
-          </>
-        )}
-
-        {error && <p className="text-sm text-bordo">{error}</p>}
-
-        {/* Sabit alt buton çubuğu */}
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white px-4 py-3 shadow-[0_-4px_20px_rgba(20,33,61,0.08)]">
-          <div className="mx-auto flex max-w-2xl items-center justify-between gap-3">
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={goBack}
-                className="rounded-xl border border-line px-5 py-3 text-sm font-semibold text-ink/60 hover:bg-offwhite"
-              >
-                Geri
-              </button>
-            ) : (
-              <span />
-            )}
-
-            {step < 3 ? (
-              <button
-                type="button"
-                onClick={goNext}
-                className="ml-auto rounded-xl bg-bordo px-6 py-3 text-sm font-bold text-white hover:bg-bordo-dark"
-              >
-                Devam Et →
-              </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={loading}
-                className="ml-auto rounded-xl bg-bordo px-6 py-3 text-sm font-bold text-white hover:bg-bordo-dark disabled:opacity-60"
-              >
-                {uploading ? "Dosyalar yükleniyor..." : loading ? "Gönderiliyor..." : "Başvuruyu Gönder"}
-              </button>
-            )}
-          </div>
+      <div>
+        <label className={labelClass} htmlFor="applicantName">
+          Başvuran kişinin adı *
+        </label>
+        <div className="relative">
+          <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
+          <input
+            id="applicantName"
+            ref={(el) => {
+              fieldRefs.current.applicantName = el;
+            }}
+            value={form.applicantName}
+            onChange={(e) => update("applicantName", e.target.value)}
+            onFocus={() => (lastFocusedFieldRef.current = "applicantName")}
+            onBlur={() => markTouched("applicantName")}
+            className={`${inputClass} pl-10 ${errClass("applicantName")}`}
+            placeholder="Adınız Soyadınız"
+            aria-invalid={touched.applicantName && !!errors.applicantName}
+          />
         </div>
-      </form>
-    </div>
+        <ErrorText field="applicantName" touched={touched} errors={errors} />
+      </div>
+
+      <div>
+        <label className={labelClass} htmlFor="contactPhone">
+          Size ulaşabileceğimiz telefon / WhatsApp *
+        </label>
+        <div className="relative">
+          <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
+          <input
+            id="contactPhone"
+            ref={(el) => {
+              fieldRefs.current.contactPhone = el;
+            }}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            value={form.contactPhone}
+            onChange={(e) => update("contactPhone", formatPhoneInput(e.target.value))}
+            onFocus={() => (lastFocusedFieldRef.current = "contactPhone")}
+            onBlur={() => markTouched("contactPhone")}
+            className={`${inputClass} pl-10 ${errClass("contactPhone")}`}
+            placeholder="0555 123 45 67"
+            aria-invalid={touched.contactPhone && !!errors.contactPhone}
+          />
+        </div>
+        <ErrorText field="contactPhone" touched={touched} errors={errors} />
+
+        <label className="mt-2.5 flex cursor-pointer items-center gap-2.5 text-sm text-ink/70">
+          <input
+            type="checkbox"
+            checked={form.contactIsPublic}
+            onChange={(e) => update("contactIsPublic", e.target.checked)}
+            className="h-4 w-4 shrink-0 accent-bordo"
+          />
+          Bu numara aynı zamanda işletmenin müşterilere açık numarasıdır
+        </label>
+      </div>
+
+      {!form.contactIsPublic && (
+        <div>
+          <label className={labelClass} htmlFor="businessPhone">
+            İşletmenin herkese açık telefon numarası{" "}
+            <span className="font-normal text-ink/40">(isteğe bağlı)</span>
+          </label>
+          <div className="relative">
+            <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
+            <input
+              id="businessPhone"
+              ref={(el) => {
+                fieldRefs.current.businessPhone = el;
+              }}
+              type="tel"
+              inputMode="tel"
+              value={form.businessPhone}
+              onChange={(e) => update("businessPhone", formatPhoneInput(e.target.value))}
+              onBlur={() => markTouched("businessPhone")}
+              className={`${inputClass} pl-10 ${errClass("businessPhone")}`}
+              placeholder="0312 123 45 67"
+            />
+          </div>
+          <ErrorText field="businessPhone" touched={touched} errors={errors} />
+        </div>
+      )}
+
+      {/* Konum kaynağı: adres / maps / instagram — en az biri zorunlu */}
+      <div
+        ref={(el) => {
+          fieldRefs.current.location = el;
+        }}
+        className="flex flex-col gap-3 rounded-xl border border-line p-4"
+      >
+        <p className="text-sm font-semibold text-navy">
+          Adres, Google Maps bağlantısı veya Instagram — en az biri *
+        </p>
+
+        <div>
+          <label className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-ink/60" htmlFor="address">
+            <MapPin className="h-3.5 w-3.5" /> Açık adres
+          </label>
+          <input
+            id="address"
+            value={form.address}
+            onChange={(e) => update("address", e.target.value)}
+            onFocus={() => (lastFocusedFieldRef.current = "address")}
+            onBlur={() => markTouched("location")}
+            className={inputClass}
+            placeholder="Mahalle, cadde/sokak, no"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-ink/60" htmlFor="mapsUrl">
+            <Link2 className="h-3.5 w-3.5" /> Google Maps bağlantısı
+          </label>
+          <input
+            id="mapsUrl"
+            ref={(el) => {
+              fieldRefs.current.mapsUrl = el;
+            }}
+            value={form.mapsUrl}
+            onChange={(e) => update("mapsUrl", e.target.value)}
+            onFocus={() => (lastFocusedFieldRef.current = "mapsUrl")}
+            onBlur={() => {
+              markTouched("location");
+              markTouched("mapsUrl");
+            }}
+            inputMode="url"
+            className={`${inputClass} ${errClass("mapsUrl")}`}
+            placeholder="https://maps.app.goo.gl/..."
+          />
+          <ErrorText field="mapsUrl" touched={touched} errors={errors} />
+        </div>
+
+        <div>
+          <label className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-ink/60" htmlFor="instagram">
+            <AtSign className="h-3.5 w-3.5" /> Instagram hesabı
+          </label>
+          <input
+            id="instagram"
+            ref={(el) => {
+              fieldRefs.current.instagram = el;
+            }}
+            value={form.instagram}
+            onChange={(e) => update("instagram", e.target.value)}
+            onFocus={() => (lastFocusedFieldRef.current = "instagram")}
+            onBlur={() => {
+              markTouched("location");
+              markTouched("instagram");
+            }}
+            className={`${inputClass} ${errClass("instagram")}`}
+            placeholder="@kullaniciadi"
+          />
+          <ErrorText field="instagram" touched={touched} errors={errors} />
+        </div>
+
+        <ErrorText field="location" touched={touched} errors={errors} />
+      </div>
+
+      <div>
+        <label className={labelClass} htmlFor="website">
+          Web sitesi <span className="font-normal text-ink/40">(isteğe bağlı)</span>
+        </label>
+        <div className="relative">
+          <Globe className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/30" />
+          <input
+            id="website"
+            value={form.website}
+            onChange={(e) => update("website", e.target.value)}
+            onBlur={() => markTouched("website")}
+            inputMode="url"
+            className={`${inputClass} pl-10 ${errClass("website")}`}
+            placeholder="https://www.example.com"
+          />
+        </div>
+        <ErrorText field="website" touched={touched} errors={errors} />
+      </div>
+
+      {/* Fotoğraflar */}
+      <div>
+        <label className={labelClass}>
+          Logo / işletme fotoğrafları <span className="font-normal text-ink/40">(isteğe bağlı)</span>
+        </label>
+        {photos.length > 0 && (
+          <div className="mb-2 grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {photos.map((file, i) => {
+              const url = URL.createObjectURL(file);
+              return (
+                <div key={i} className="group relative aspect-square overflow-hidden rounded-lg border border-line bg-offwhite">
+                  <Image src={url} alt="" fill unoptimized className="object-cover" onLoad={() => URL.revokeObjectURL(url)} />
+                  <button
+                    type="button"
+                    onClick={() => removePhoto(i)}
+                    aria-label="Fotoğrafı kaldır"
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-navy-dark/70 text-white opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {photos.length < MAX_PHOTOS && (
+          <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-line px-3 py-3 text-sm font-semibold text-ink/60 hover:border-bordo hover:text-bordo">
+            <Upload className="h-4 w-4" /> Fotoğraf Ekle
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={(e) => {
+                handlePhotoSelect(e.target.files);
+                e.target.value = "";
+              }}
+              className="hidden"
+            />
+          </label>
+        )}
+        <p className="mt-1 text-xs text-ink/40">JPG, PNG veya WebP · dosya başına en fazla 5 MB · en fazla {MAX_PHOTOS} fotoğraf</p>
+        {photoError && <p className="mt-1 text-xs font-medium text-bordo">{photoError}</p>}
+        {uploadingPhotos && <p className="mt-1 text-xs font-semibold text-navy">Fotoğraflar yükleniyor…</p>}
+      </div>
+
+      <div>
+        <label className={labelClass} htmlFor="note">
+          Eklemek istediğiniz bir not var mı? <span className="font-normal text-ink/40">(isteğe bağlı)</span>
+        </label>
+        <textarea
+          id="note"
+          value={form.note}
+          onChange={(e) => update("note", e.target.value)}
+          rows={3}
+          className="w-full rounded-xl border border-line px-4 py-3 text-base outline-none focus:border-bordo"
+        />
+      </div>
+
+      <div className="rounded-xl border border-gold/30 bg-gold/5 p-4 text-xs leading-relaxed text-navy/80">
+        Ücretsiz Temel kaydın ardından dilerseniz gelişmiş profil, galeri, WhatsApp, analitik ve
+        öne çıkarma özellikleri sunan RehberGölbaşı Plus&apos;a geçebilirsiniz. Plus ilk 30 gün
+        ücretsiz, sonrasında aylık 360 TL&apos;dir. Ödeme yapılmazsa profil silinmez; ücretsiz
+        Temel pakette kalır.
+      </div>
+
+      <label
+        ref={(el) => {
+          fieldRefs.current.kvkkAccepted = el as unknown as HTMLElement;
+        }}
+        className="flex cursor-pointer items-start gap-2.5 text-sm text-ink/70"
+      >
+        <input
+          type="checkbox"
+          checked={form.kvkkAccepted}
+          onChange={(e) => update("kvkkAccepted", e.target.checked)}
+          onBlur={() => markTouched("kvkkAccepted")}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-bordo"
+          aria-invalid={touched.kvkkAccepted && !!errors.kvkkAccepted}
+        />
+        <span>
+          <a href="/kvkk" target="_blank" className="font-semibold text-bordo hover:underline">
+            KVKK Aydınlatma Metni
+          </a>
+          &apos;ni okudum, verdiğim bilgilerin doğru olduğunu kabul ediyorum. *
+        </span>
+      </label>
+      <ErrorText field="kvkkAccepted" touched={touched} errors={errors} />
+
+      {generalError && (
+        <p role="alert" className="rounded-lg bg-bordo/5 px-4 py-3 text-sm font-medium text-bordo">
+          {generalError}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-bordo px-6 py-3.5 text-base font-bold text-white transition hover:bg-bordo-dark disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <ShieldCheck className="h-4 w-4" />
+        {uploadingPhotos ? "Fotoğraflar yükleniyor…" : submitting ? "Gönderiliyor…" : "Başvuruyu Gönder"}
+      </button>
+    </form>
   );
 }

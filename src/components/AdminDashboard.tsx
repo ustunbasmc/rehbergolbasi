@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Category } from "@/lib/types";
 import PendingList from "@/components/admin/PendingList";
+import SubmissionsList from "@/components/admin/SubmissionsList";
 import ApprovedList from "@/components/admin/ApprovedList";
 import RejectedList from "@/components/admin/RejectedList";
 import CategoryManager from "@/components/admin/CategoryManager";
@@ -46,10 +47,12 @@ import {
   PlusCircle,
   BarChart2,
   Megaphone,
+  Inbox,
 } from "lucide-react";
 
 type Tab =
   | "overview"
+  | "submissions"
   | "pending"
   | "approved"
   | "rejected"
@@ -76,6 +79,7 @@ interface Stats {
   reports: number;
   requests: number;
   expiryAlerts: number;
+  newSubmissions: number;
 }
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
@@ -90,6 +94,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     reports: 0,
     requests: 0,
     expiryAlerts: 0,
+    newSubmissions: 0,
   });
 
   const loadCategories = useCallback(async () => {
@@ -101,15 +106,17 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   const loadStats = useCallback(async () => {
-    const [total, pending, approved, rejected, reports, requests, expiryAlerts] = await Promise.all([
-      supabase.from("businesses").select("id", { count: "exact", head: true }),
-      supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "approved"),
-      supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "rejected"),
-      supabase.from("listing_reports").select("id", { count: "exact", head: true }),
-      supabase.from("contact_requests").select("id", { count: "exact", head: true }),
-      supabase.from("expiry_alerts").select("id", { count: "exact", head: true }),
-    ]);
+    const [total, pending, approved, rejected, reports, requests, expiryAlerts, newSubmissions] =
+      await Promise.all([
+        supabase.from("businesses").select("id", { count: "exact", head: true }),
+        supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "approved"),
+        supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "rejected"),
+        supabase.from("listing_reports").select("id", { count: "exact", head: true }),
+        supabase.from("contact_requests").select("id", { count: "exact", head: true }),
+        supabase.from("expiry_alerts").select("id", { count: "exact", head: true }),
+        supabase.from("business_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
+      ]);
     setStats({
       total: total.count ?? 0,
       pending: pending.count ?? 0,
@@ -118,6 +125,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       reports: reports.count ?? 0,
       requests: requests.count ?? 0,
       expiryAlerts: expiryAlerts.count ?? 0,
+      newSubmissions: newSubmissions.count ?? 0,
     });
   }, []);
 
@@ -154,6 +162,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     {
       title: "Başvurular",
       items: [
+        { key: "submissions", label: "İşletme Başvuruları", icon: Inbox, badge: stats.newSubmissions },
         { key: "new-business", label: "Yeni İşletme Ekle", icon: PlusCircle },
         { key: "pending", label: "Bekleyenler", icon: Clock, badge: stats.pending },
         { key: "approved", label: "Onaylılar", icon: CheckCircle2 },
@@ -280,6 +289,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </>
           )}
           {tab === "templates" && <MessageTemplates />}
+          {tab === "submissions" && <SubmissionsList />}
           {tab === "new-business" && <NewBusinessForm />}
           {tab === "pending" && <PendingList />}
           {tab === "approved" && <ApprovedList categories={categories} />}

@@ -79,7 +79,24 @@ function SectionCard({
   );
 }
 
-export default function NewBusinessForm() {
+export interface NewBusinessPrefill {
+  name?: string;
+  phone?: string;
+  whatsapp?: string;
+  address?: string;
+  instagram_url?: string;
+  website_url?: string;
+}
+
+export default function NewBusinessForm({
+  prefill,
+  initialGalleryUrls,
+  onCreated,
+}: {
+  prefill?: NewBusinessPrefill;
+  initialGalleryUrls?: string[];
+  onCreated?: (business: { id: string; slug: string; name: string }) => void;
+}) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -91,26 +108,29 @@ export default function NewBusinessForm() {
   const [subcategoryId, setSubcategoryId] = useState("");
   const subcategories = categories.filter((c) => c.parent_id === categoryId);
 
-  const [form, setForm] = useState({
-    name: "",
-    slug: "",
+  const [form, setForm] = useState(() => ({
+    name: prefill?.name ?? "",
+    slug: prefill?.name ? slugify(prefill.name) : "",
     description: "",
     short_description: "",
-    phone: "",
-    whatsapp: "",
-    address: "",
+    phone: prefill?.phone ?? "",
+    whatsapp: prefill?.whatsapp ?? "",
+    address: prefill?.address ?? "",
     neighborhood: "",
-    instagram_url: "",
+    instagram_url: prefill?.instagram_url ?? "",
     facebook_url: "",
     tiktok_url: "",
     owner_name: "",
     owner_phone: "",
     owner_email: "",
-  });
+    website: prefill?.website_url ?? "",
+  }));
 
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [promotedGalleryUrls, setPromotedGalleryUrls] = useState<string[]>(initialGalleryUrls ?? []);
+  const [coverUrlOverride, setCoverUrlOverride] = useState<string | null>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [faqs, setFaqs] = useState<FaqDraft[]>([]);
@@ -145,6 +165,7 @@ export default function NewBusinessForm() {
   function handleCoverChange(file: File | null) {
     setCoverFile(file);
     setCoverPreview(file ? URL.createObjectURL(file) : null);
+    if (file) setCoverUrlOverride(null);
   }
 
   function addFaq() {
@@ -163,13 +184,15 @@ export default function NewBusinessForm() {
     setForm({
       name: "", slug: "", description: "", short_description: "", phone: "", whatsapp: "",
       address: "", neighborhood: "", instagram_url: "", facebook_url: "", tiktok_url: "",
-      owner_name: "", owner_phone: "", owner_email: "",
+      owner_name: "", owner_phone: "", owner_email: "", website: "",
     });
     setCategoryId("");
     setSubcategoryId("");
     setCoverFile(null);
     setCoverPreview(null);
     setGalleryFiles([]);
+    setPromotedGalleryUrls(initialGalleryUrls ?? []);
+    setCoverUrlOverride(null);
     setSelectedFeatures([]);
     setSelectedTags([]);
     setFaqs([]);
@@ -206,12 +229,12 @@ const completionScore = Math.round(
     setLoading(true);
     setUploading(true);
 
-    let coverUrl: string | null = null;
+    let coverUrl: string | null = coverUrlOverride;
     if (coverFile) {
       coverUrl = await uploadFile(coverFile);
     }
 
-    const galleryUrls: string[] = [];
+    const galleryUrls: string[] = [...promotedGalleryUrls];
     for (const file of galleryFiles) {
       const url = await uploadFile(file);
       if (url) galleryUrls.push(url);
@@ -244,6 +267,7 @@ const completionScore = Math.round(
         instagram_url: form.instagram_url.trim() || null,
         facebook_url: form.facebook_url.trim() || null,
         tiktok_url: form.tiktok_url.trim() || null,
+        website: form.website.trim() || null,
         cover_image_url: coverUrl,
         tier,
         is_featured: isFeatured,
@@ -302,6 +326,7 @@ const completionScore = Math.round(
 
     setLoading(false);
     setSuccess(`"${inserted.name}" başarıyla oluşturuldu ve yayına alındı! → rehbergolbasi.com/isletme/${inserted.slug}`);
+    onCreated?.({ id: inserted.id, slug: inserted.slug, name: inserted.name });
     resetForm();
   }
 
@@ -518,6 +543,15 @@ const completionScore = Math.round(
               className={inputClass}
             />
           </div>
+          <div>
+            <label className={labelClass}>Web sitesi</label>
+            <input
+              value={form.website}
+              onChange={(e) => update("website", e.target.value)}
+              className={inputClass}
+              placeholder="https://www.example.com"
+            />
+          </div>
         </div>
       </SectionCard>
 
@@ -525,12 +559,15 @@ const completionScore = Math.round(
       <SectionCard icon={Upload} title="Fotoğraflar" subtitle="İsteğe bağlı, önerilir">
         <div>
           <label className={labelClass}>Kapak fotoğrafı</label>
-          {coverPreview ? (
+          {coverPreview || coverUrlOverride ? (
             <div className="group relative mb-2 h-40 w-full overflow-hidden rounded-xl border border-line bg-offwhite">
-              <Image src={coverPreview} alt="Kapak önizleme" fill className="object-cover" unoptimized />
+              <Image src={(coverPreview ?? coverUrlOverride)!} alt="Kapak önizleme" fill className="object-cover" unoptimized />
               <button
                 type="button"
-                onClick={() => handleCoverChange(null)}
+                onClick={() => {
+                  handleCoverChange(null);
+                  setCoverUrlOverride(null);
+                }}
                 className="absolute right-2 top-2 rounded-full bg-bordo p-1.5 text-white opacity-0 transition group-hover:opacity-100"
               >
                 <X className="h-3.5 w-3.5" />
@@ -554,6 +591,40 @@ const completionScore = Math.round(
 
         <div>
           <label className={labelClass}>Galeri fotoğrafları</label>
+          {promotedGalleryUrls.length > 0 && (
+            <div className="mb-2">
+              <p className="mb-1 text-xs font-semibold text-ink/50">Başvurudan aktarılan fotoğraflar</p>
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+                {promotedGalleryUrls.map((url, i) => (
+                  <div key={url} className="group relative h-16 overflow-hidden rounded-lg border border-line bg-offwhite">
+                    <Image src={url} alt="" fill className="object-cover" unoptimized />
+                    <div className="absolute inset-0 flex items-center justify-center gap-1 bg-navy-dark/0 opacity-0 transition group-hover:bg-navy-dark/40 group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCoverFile(null);
+                          setCoverPreview(null);
+                          setCoverUrlOverride(url);
+                        }}
+                        title="Kapak yap"
+                        className="rounded-full bg-white/90 p-1 text-navy hover:bg-white"
+                      >
+                        <Star className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPromotedGalleryUrls((prev) => prev.filter((_, idx) => idx !== i))}
+                        title="Kaldır"
+                        className="rounded-full bg-bordo p-1 text-white hover:bg-bordo-dark"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {galleryFiles.length > 0 && (
             <div className="mb-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
               {galleryFiles.map((file, i) => (

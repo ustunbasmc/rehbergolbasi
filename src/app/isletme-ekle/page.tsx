@@ -1,20 +1,22 @@
-import { supabase } from "@/lib/supabase";
+import type { Metadata } from "next";
 import BusinessApplyForm from "@/components/BusinessApplyForm";
-import { Sparkles, Clock, MessageCircle, ShieldCheck, TrendingUp } from "lucide-react";
+import { Sparkles, ShieldCheck, Clock, CreditCard } from "lucide-react";
 
-export const revalidate = 60;
+export const metadata: Metadata = {
+  title: "İşletmeni Ücretsiz Ekle",
+  description:
+    "Gölbaşı'ndaki işletmeni 60 saniyede ücretsiz gönder. Tanıtım yazısını, kategorileri ve işletme profilini RehberGölbaşı ekibi hazırlasın.",
+  alternates: { canonical: "https://rehbergolbasi.com/isletme-ekle" },
+};
 
-async function getCategories() {
-  const { data } = await supabase
-    .from("categories")
-    .select("*")
-    .order("display_order", { ascending: true });
-  return data ?? [];
-}
+const TRUST_BADGES = [
+  { icon: CreditCard, text: "Temel işletme kaydı süresiz ücretsiz" },
+  { icon: ShieldCheck, text: "Kredi kartı gerekmez" },
+  { icon: Sparkles, text: "Profilinizi ekibimiz hazırlıyor" },
+  { icon: Clock, text: "Bilgiler yayınlanmadan önce kontrol edilir" },
+];
 
-export default async function IsletmeEklePage() {
-  const categories = await getCategories();
-
+export default function IsletmeEklePage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
       {/* Hero banner */}
@@ -31,72 +33,57 @@ export default async function IsletmeEklePage() {
             <Sparkles className="h-3.5 w-3.5 text-gold" /> Gölbaşı&apos;nın işletme rehberi
           </span>
           <h1 className="max-w-xl font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">
-            İşletmeni Gölbaşı&apos;nın dijital vitrinine taşı
+            İşletmeni 60 saniyede gönder
           </h1>
           <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/70 sm:text-base">
-            Komşularının işletmeni bulmasını kolaylaştır. Formu doldur, birkaç dakika
-            içinde tamamla, ekibimiz kontrol edip yayına alsın.
+            Bize yalnızca temel bilgileri ilet. Tanıtım yazısını, kategorileri ve işletme
+            profilinin tamamını ekibimiz hazırlasın.
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 rounded-full bg-gold/20 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
-              <TrendingUp className="h-4 w-4 text-gold" /> Temel kayıt süresiz ücretsiz
-            </div>
-            <div className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
-              <Clock className="h-4 w-4 text-gold" /> Hızlı onay süreci
-            </div>
-            <div className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm">
-              <MessageCircle className="h-4 w-4 text-gold" /> Direkt WhatsApp/telefon talebi
-            </div>
-          </div>
-
-          <div className="mt-6 flex items-center gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gold text-2xl">
-              🎉
-            </div>
-            <div>
-              <p className="font-display text-lg font-bold text-white">Temel İşletme Kaydı Ücretsizdir</p>
-              <p className="text-xs text-white/70 leading-relaxed">
-                Gelişmiş profil, WhatsApp, galeri, analitik ve öne çıkarma özellikleri için
-                RehberGölbaşı Plus'a geçebilirsiniz. Plus üyelik aylık 360 TL'dir ve ilk 30 gün
-                ücretsizdir; ödeme yapmazsanız profiliniz kaldırılmaz, ücretsiz Temel pakete döner.
-              </p>
-            </div>
+            {TRUST_BADGES.map((badge) => (
+              <div
+                key={badge.text}
+                className="flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white backdrop-blur-sm sm:text-sm"
+              >
+                <badge.icon className="h-4 w-4 text-gold" /> {badge.text}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="lg:flex-1">
+        <div className="lg:flex-1 lg:max-w-2xl">
           <div className="card-shadow rounded-2xl border border-line bg-white p-6 sm:p-8">
-            <BusinessApplyForm categories={categories} />
+            <BusinessApplyForm />
           </div>
         </div>
 
         <div className="flex flex-col gap-4 lg:w-80">
           <div className="card-shadow rounded-2xl border border-line bg-white p-6">
             <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">
-              Neden RehberGölbaşı?
+              Şimdi ne oluyor?
             </h2>
             <ul className="flex flex-col gap-3 text-sm text-ink/70">
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-bordo">
-                  <Sparkles className="h-3 w-3" />
+                  1
                 </span>
-                Gölbaşı&apos;na özel, karışık ilan sitelerinden arınmış bir dizin
+                Başvurunu gönderirsin, birkaç dakika sürer.
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-bordo">
-                  <MessageCircle className="h-3 w-3" />
+                  2
                 </span>
-                Müşteriler seni doğrudan arayabilir ya da WhatsApp&apos;tan yazabilir
+                Ekibimiz bilgilerini kontrol edip profilini hazırlar.
               </li>
               <li className="flex items-start gap-2">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-bordo">
-                  <Clock className="h-3 w-3" />
+                  3
                 </span>
-                Çalışma saatleri, menü, SSS gibi detayları tek sayfada topla
+                Eksik bir şey olursa verdiğin numaradan seninle iletişime geçeriz.
               </li>
             </ul>
           </div>
@@ -107,8 +94,9 @@ export default async function IsletmeEklePage() {
               <p className="text-sm font-semibold text-navy">Bilgilerin güvende</p>
             </div>
             <p className="text-xs leading-relaxed text-ink/60">
-              Son adımda istersen bıraktığın sahiplik bilgileri sitede hiç yayınlanmaz,
-              yalnızca doğrulama amacıyla kullanılır.
+              Başvuran kişi bilgilerin sitede yayınlanmaz, yalnızca doğrulama ve iletişim amacıyla
+              kullanılır. Fotoğrafların yalnızca profilin onaylanmadan önce ekibimiz tarafından
+              görülür.
             </p>
           </div>
         </div>

@@ -151,3 +151,79 @@ export interface Tag {
   seo_intro: string | null;
   display_order: number;
 }
+
+export type ApplicantType = "owner" | "employee" | "recommendation";
+
+export const APPLICANT_TYPE_LABELS: Record<ApplicantType, string> = {
+  owner: "İşletmemi eklemek istiyorum",
+  employee: "Çalıştığım işletmeyi ekliyorum",
+  recommendation: "Bir işletme öneriyorum",
+};
+
+export type SubmissionStatus =
+  | "new"
+  | "information_requested"
+  | "preparing"
+  | "pending_approval"
+  | "published"
+  | "rejected"
+  | "duplicate";
+
+export const SUBMISSION_STATUS_LABELS: Record<SubmissionStatus, string> = {
+  new: "Yeni",
+  information_requested: "Bilgi istendi",
+  preparing: "Hazırlanıyor",
+  pending_approval: "Onay bekliyor",
+  published: "Yayınlandı",
+  rejected: "Reddedildi",
+  duplicate: "Mükerrer",
+};
+
+export interface BusinessSubmission {
+  id: string;
+  reference_code: string;
+  applicant_type: ApplicantType;
+  business_name: string;
+  applicant_name: string;
+  contact_phone: string;
+  contact_phone_normalized: string | null;
+  contact_is_public: boolean;
+  business_phone: string | null;
+  address: string | null;
+  maps_url: string | null;
+  instagram_url: string | null;
+  website_url: string | null;
+  note: string | null;
+  kvkk_accepted: boolean;
+  status: SubmissionStatus;
+  admin_note: string | null;
+  possible_duplicate: boolean;
+  business_id: string | null;
+  converted_at: string | null;
+  reviewed_by: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  referrer: string | null;
+  device: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessSubmissionPhoto {
+  id: string;
+  submission_id: string;
+  storage_path: string;
+  display_order: number;
+  created_at: string;
+}
+
+export interface BusinessSubmissionStatusHistoryEntry {
+  id: string;
+  submission_id: string;
+  old_status: SubmissionStatus | null;
+  new_status: SubmissionStatus;
+  changed_by: string | null;
+  note: string | null;
+  changed_at: string;
+}

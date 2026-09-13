@@ -5,6 +5,8 @@ import {
   CheckCircle2, ArrowRight, Phone, Building2, Globe,
 } from "lucide-react";
 import { getPublishedBusinessCount } from "@/lib/businessStats";
+import { WHATSAPP_NUMBER } from "@/lib/constants";
+import { formatWhatsappUrl } from "@/lib/analytics";
 
 export const metadata: Metadata = {
   title: "İşletmenizi Gölbaşı'nda Görünür Yapın",
@@ -309,7 +311,7 @@ export default async function IsletmelerIcinPage() {
                 ))}
               </ul>
               <Link
-                href={`https://wa.me/905396394206?text=${encodeURIComponent("Merhaba, Öne Çıkan paket hakkında bilgi almak istiyorum.")}`}
+                href={formatWhatsappUrl(WHATSAPP_NUMBER!, "Merhaba, Öne Çıkan paket hakkında bilgi almak istiyorum.")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-bold text-white transition hover:bg-navy-dark"
@@ -356,7 +358,7 @@ export default async function IsletmelerIcinPage() {
               Hemen Başvur <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href={`https://wa.me/905396394206?text=${encodeURIComponent("Merhaba, RehberGölbaşı hakkında bilgi almak istiyorum.")}`}
+              href={formatWhatsappUrl(WHATSAPP_NUMBER!, "Merhaba, RehberGölbaşı hakkında bilgi almak istiyorum.")}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 rounded-full border border-white/30 px-8 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
