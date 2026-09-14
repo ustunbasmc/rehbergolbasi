@@ -238,3 +238,131 @@ export interface BusinessSubmissionStatusHistoryEntry {
   note: string | null;
   changed_at: string;
 }
+
+// ---------------------------------------------------------------------------
+// Gölbaşı Gündem (/gundem)
+// ---------------------------------------------------------------------------
+
+export interface GundemCategory {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  color: string | null;
+  display_order: number;
+  is_active: boolean;
+  seo_title: string | null;
+  meta_description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type GundemPostStatus = "draft" | "scheduled" | "published" | "archived";
+
+export type GundemSourceType = "original" | "official" | "third_party" | "field_report" | "business_submission";
+
+export const GUNDEM_SOURCE_TYPE_LABELS: Record<GundemSourceType, string> = {
+  original: "Özgün Haber",
+  official: "Resmî Kaynak",
+  third_party: "Üçüncü Taraf Kaynak",
+  field_report: "Saha Bilgisi",
+  business_submission: "İşletme Bildirimi",
+};
+
+export type GundemStatusLabel = Record<GundemPostStatus, string>;
+
+export const GUNDEM_STATUS_LABELS: GundemStatusLabel = {
+  draft: "Taslak",
+  scheduled: "Zamanlandı",
+  published: "Yayında",
+  archived: "Arşivlendi",
+};
+
+export interface GundemPost {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  content_markdown: string;
+  content_html: string;
+  cover_image_url: string | null;
+  cover_image_alt: string | null;
+  cover_image_caption: string | null;
+  image_source: string | null;
+  category_id: string | null;
+  neighborhoods: string[];
+  source_type: GundemSourceType;
+  source_name: string | null;
+  source_url: string | null;
+  author: string;
+  status: GundemPostStatus;
+  published_at: string | null;
+  is_featured: boolean;
+  is_breaking: boolean;
+  breaking_until: string | null;
+  is_sponsored: boolean;
+  sponsor_name: string | null;
+  sponsor_description: string | null;
+  sponsor_url: string | null;
+  seo_title: string | null;
+  meta_description: string | null;
+  canonical_override: string | null;
+  og_image_url: string | null;
+  view_count: number;
+  correction_note: string | null;
+  corrected_at: string | null;
+  corrected_by: string | null;
+  search_text: string;
+  archived_at: string | null;
+  deleted_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  category?: GundemCategory | null;
+}
+
+export type GundemPostWithRelations = GundemPost & {
+  tags: Tag[];
+  businesses: Pick<Business, "id" | "name" | "slug" | "cover_image_url" | "category_id">[];
+};
+
+export type GundemReportReason =
+  | "yanlis_bilgi"
+  | "guncelligini_yitirmis"
+  | "gorsel_telif"
+  | "kisisel_veri"
+  | "yazim_hatasi"
+  | "diger";
+
+export const GUNDEM_REPORT_REASON_LABELS: Record<GundemReportReason, string> = {
+  yanlis_bilgi: "Yanlış bilgi",
+  guncelligini_yitirmis: "Güncelliğini yitirmiş bilgi",
+  gorsel_telif: "Görsel veya telif bildirimi",
+  kisisel_veri: "Kişisel veri",
+  yazim_hatasi: "Yazım hatası",
+  diger: "Diğer",
+};
+
+export type GundemReportStatus = "yeni" | "inceleniyor" | "duzeltildi" | "reddedildi" | "kapatildi";
+
+export const GUNDEM_REPORT_STATUS_LABELS: Record<GundemReportStatus, string> = {
+  yeni: "Yeni",
+  inceleniyor: "İnceleniyor",
+  duzeltildi: "Düzeltildi",
+  reddedildi: "Reddedildi",
+  kapatildi: "Kapatıldı",
+};
+
+export interface GundemReport {
+  id: string;
+  post_id: string;
+  reason: GundemReportReason;
+  detail: string | null;
+  contact_info: string | null;
+  status: GundemReportStatus;
+  admin_note: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}

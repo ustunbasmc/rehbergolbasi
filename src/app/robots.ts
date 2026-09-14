@@ -7,6 +7,9 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/isletme-ekle/tesekkurler"],
     },
-    sitemap: "https://rehbergolbasi.com/sitemap.xml",
+    sitemap: [
+      "https://rehbergolbasi.com/sitemap.xml",
+      "https://rehbergolbasi.com/news-sitemap.xml",
+    ],
   };
 }

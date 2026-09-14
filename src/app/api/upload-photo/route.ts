@@ -54,8 +54,12 @@ export async function POST(req: NextRequest) {
     // sharp'ın ürettiği çıktının GERÇEKTEN geçerli bir görsel olduğunu
     // upload etmeden önce kendi kendine doğrula — bozuk dosyayı sessizce
     // storage'a yazıp "başarılı" dönmek yerine burada yakala.
+    let verifiedWidth: number | undefined;
+    let verifiedHeight: number | undefined;
     try {
       const verifyMeta = await sharp(outputBuffer).metadata();
+      verifiedWidth = verifyMeta.width;
+      verifiedHeight = verifyMeta.height;
       console.log(`[upload-photo] doğrulama OK: ${verifyMeta.width}x${verifyMeta.height} ${verifyMeta.format}`);
     } catch (verifyErr) {
       console.error("[upload-photo] Üretilen görsel geçersiz çıktı, upload iptal:", verifyErr);
@@ -101,7 +105,7 @@ export async function POST(req: NextRequest) {
       console.error("[upload-photo] Yükleme sonrası doğrulama isteği başarısız:", fetchBackErr);
     }
 
-    return NextResponse.json({ url: publicUrlData.publicUrl });
+    return NextResponse.json({ url: publicUrlData.publicUrl, width: verifiedWidth, height: verifiedHeight });
   } catch (err) {
     console.error("[upload-photo] Beklenmeyen hata:", err);
     return NextResponse.json({ error: "Görsel işlenemedi" }, { status: 500 });

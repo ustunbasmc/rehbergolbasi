@@ -136,6 +136,54 @@ export async function trackTaxiEvent(eventType: TaxiPageEventType, meta?: TaxiPa
   }
 }
 
+export type GundemEventType =
+  | "news_list_view"
+  | "news_article_view"
+  | "news_category_click"
+  | "news_search"
+  | "news_share_click"
+  | "news_source_click"
+  | "news_related_article_click"
+  | "news_related_business_click"
+  | "news_correction_report"
+  | "news_load_more"
+  | "breaking_news_click";
+
+interface GundemEventMeta {
+  category?: string;
+  postSlug?: string;
+  shareChannel?: string;
+  resultCount?: number;
+  page?: number;
+}
+
+/**
+ * "Gölbaşı Gündem" (/gundem) huni event'leri. Kişisel veri ASLA gönderilmez.
+ * Mevcut `business_events` tablosu yeniden kullanılır (business_id: null,
+ * meta.source: "gundem") — taksi/form event'leriyle aynı desen, ikinci bir
+ * analytics tablosu kurulmadı. Çerez onayı gerektirir; sayfa görüntüleme,
+ * arama, paylaşım ve kaynak bağlantıları bu izinden BAĞIMSIZ çalışmaya
+ * devam eder (yalnızca ölçüm event'i atlanır, işlevsellik etkilenmez).
+ */
+export async function trackGundemEvent(eventType: GundemEventType, meta?: GundemEventMeta) {
+  if (typeof window === "undefined") return;
+  try {
+    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+    if (consent !== "accepted") return;
+
+    const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+    await supabase.from("business_events").insert({
+      business_id: null,
+      event_type: eventType,
+      referrer: document.referrer || null,
+      device: isMobile ? "mobile" : "desktop",
+      meta: meta ? { source: "gundem", ...meta } : { source: "gundem" },
+    });
+  } catch {
+    // Olay kaydı sessizce başarısız olsun, kullanıcı deneyimini etkilemesin.
+  }
+}
+
 /**
  * Bir metnin gerçek bir telefon numarasına benzeyip benzemediğini doğrular
  * (ör. `whatsapp` alanına yanlışlıkla mahalle adı girilmiş kayıtları

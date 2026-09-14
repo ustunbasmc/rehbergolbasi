@@ -121,6 +121,20 @@ export default function Header() {
               );
             })}
 
+            <Link
+              href="/gundem"
+              className={`group relative py-1 transition-colors hover:text-bordo ${
+                isActive("/gundem", false) ? "text-bordo" : ""
+              }`}
+            >
+              Gündem
+              <span
+                className={`absolute inset-x-0 -bottom-0.5 h-0.5 origin-left bg-bordo transition-transform duration-200 ${
+                  isActive("/gundem", false) ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                }`}
+              />
+            </Link>
+
             <div ref={dropdownRef} className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -228,6 +242,16 @@ export default function Header() {
             }`}
           >
             İşletmeler
+          </Link>
+
+          <Link
+            href="/gundem"
+            onClick={() => setOpen(false)}
+            className={`rounded-lg px-3 py-3 font-semibold hover:bg-offwhite ${
+              isActive("/gundem", false) ? "bg-bordo/5 text-bordo" : "text-ink"
+            }`}
+          >
+            Gündem
           </Link>
 
           <button

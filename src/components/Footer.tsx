@@ -60,6 +60,12 @@ export default function Footer() {
                   Tüm İşletmeler
                 </Link>
                 <Link
+                  href="/gundem"
+                  className="text-white/75 transition-colors hover:text-white"
+                >
+                  Gölbaşı Gündem
+                </Link>
+                <Link
                   href="/isletme-ekle"
                   className="text-white/75 transition-colors hover:text-white"
                 >

@@ -23,10 +23,12 @@ import {
   Landmark,
   Plus,
   Car,
+  Newspaper,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CategoryGrid, { type CategoryWithBusinesses } from "@/components/CategoryGrid";
 import BusinessCard from "@/components/BusinessCard";
+import GundemCard, { type GundemCardData } from "@/components/GundemCard";
 import { getOpenStatus } from "@/lib/openingHours";
 import type { OpeningHours } from "@/lib/types";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
@@ -70,6 +72,19 @@ async function getLatestGuides() {
     .limit(3);
   return data ?? [];
 }
+async function getLatestGundemPosts(): Promise<GundemCardData[]> {
+  const { data } = await supabase
+    .from("gundem_posts")
+    .select("slug, title, summary, cover_image_url, cover_image_alt, published_at, corrected_at, neighborhoods, is_sponsored, is_breaking, breaking_until, category:gundem_categories(*)")
+    .is("deleted_at", null)
+    .in("status", ["scheduled", "published"])
+    .lte("published_at", new Date().toISOString())
+    .order("is_featured", { ascending: false })
+    .order("published_at", { ascending: false })
+    .limit(4);
+  return (data ?? []) as unknown as GundemCardData[];
+}
+
 async function getData() {
   const [{ data: allCategories }, { data: allBusinesses }, { data: featured }, { data: recent }, { data: tagLinks }] =
     await Promise.all([
@@ -232,8 +247,10 @@ export default async function HomePage() {
   const latestGuides = await getLatestGuides();
   const nobetciEczaneler = await getNobetciEczaneler();
   const announcements = await getAnnouncements();
+  const latestGundemPosts = await getLatestGundemPosts();
   const { categories, featured, recent, neighborhoods, popularTags, openNowRestaurants, stats } =
     await getData();
+  const [gundemHero, ...gundemHelpers] = latestGundemPosts;
 
   return (
     <div>
@@ -419,6 +436,35 @@ export default async function HomePage() {
               {recent.map((b) => (
                 <BusinessCard key={b.id} business={b} />
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Gölbaşı Gündem */}
+        {gundemHero && (
+          <section className="mb-20">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <div className="mb-1 flex items-center gap-1.5">
+                  <Newspaper className="h-4 w-4 text-bordo" />
+                  <span className="text-xs font-bold uppercase tracking-wide text-bordo">Gölbaşı Gündem</span>
+                </div>
+                <h2 className="font-display text-2xl font-bold text-navy">Gölbaşı&apos;ndan Son Dakika</h2>
+                <p className="text-sm text-ink/60">Haberler, belediye duyuruları ve yerel yaşamdan gelişmeler.</p>
+              </div>
+              <Link href="/gundem" className="text-sm font-semibold text-bordo hover:underline">
+                Tüm Gündemi Gör →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+              <GundemCard post={gundemHero} variant="hero" />
+              {gundemHelpers.length > 0 && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-1">
+                  {gundemHelpers.map((post) => (
+                    <GundemCard key={post.slug} post={post} variant="compact" />
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}

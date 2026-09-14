@@ -25,6 +25,8 @@ import EditBusinessModal from "@/components/admin/EditBusinessModal";
 import type { Business } from "@/lib/types";
 import MessageTemplates from "@/components/admin/MessageTemplates";
 import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
+import GundemList from "@/components/admin/GundemList";
+import GundemReportsList from "@/components/admin/GundemReportsList";
 import {
   Clock,
   MessageSquareText,
@@ -48,6 +50,7 @@ import {
   BarChart2,
   Megaphone,
   Inbox,
+  Newspaper,
 } from "lucide-react";
 
 type Tab =
@@ -69,7 +72,9 @@ type Tab =
   | "analytics"
   | "templates"
   | "new-business"
-  | "announcements";
+  | "announcements"
+  | "gundem"
+  | "gundem-reports";
 
 interface Stats {
   total: number;
@@ -181,6 +186,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "features", label: "Özellikler", icon: TagsIcon },
         { key: "guides", label: "Rehberler", icon: BookOpen },
         { key: "announcements", label: "Duyurular", icon: Megaphone },
+        { key: "gundem", label: "Gölbaşı Gündem", icon: Newspaper },
+        { key: "gundem-reports", label: "Gündem Bildirimleri", icon: Flag },
         { key: "templates", label: "Mesaj Şablonları", icon: MessageSquareText },
         { key: "requests", label: "Talepler", icon: PhoneCall, badge: stats.requests },
         { key: "reports", label: "Bildirimler", icon: Flag, badge: stats.reports },
@@ -302,6 +309,8 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "features" && <FeatureManager />}
           {tab === "guides" && <GuidesList />}
           {tab === "announcements" && <AnnouncementsManager />}
+          {tab === "gundem" && <GundemList />}
+          {tab === "gundem-reports" && <GundemReportsList />}
           {tab === "requests" && <ContactRequestsList />}
           {tab === "reports" && <ReportsList />}
           {tab === "analytics" && <BusinessAnalytics />}

@@ -4,23 +4,37 @@ import { supabase } from "@/lib/supabase";
 const BASE_URL = "https://rehbergolbasi.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ data: categories }, { data: businesses }, { data: tags }, { data: guides }] =
+  const [{ data: categories }, { data: businesses }, { data: tags }, { data: guides }, { data: gundemPosts }] =
     await Promise.all([
       supabase.from("categories").select("slug"),
       supabase.from("businesses").select("slug, created_at").eq("status", "approved"),
       supabase.from("tags").select("slug"),
       supabase.from("guides").select("slug, updated_at").eq("published", true),
+      supabase
+        .from("gundem_posts")
+        .select("slug, published_at, updated_at")
+        .is("deleted_at", null)
+        .in("status", ["scheduled", "published"])
+        .lte("published_at", new Date().toISOString()),
     ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: "daily", priority: 1 },
     { url: `${BASE_URL}/isletmeler`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE_URL}/gundem`, changeFrequency: "hourly", priority: 0.9 },
     { url: `${BASE_URL}/taksi`, changeFrequency: "daily", priority: 0.85 },
     { url: `${BASE_URL}/rehberler`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/nobetci-eczane`, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE_URL}/otobus-saatleri`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}/isletme-ekle`, changeFrequency: "monthly", priority: 0.5 },
   ];
+
+  const gundemRoutes: MetadataRoute.Sitemap = (gundemPosts ?? []).map((p) => ({
+    url: `${BASE_URL}/gundem/${p.slug}`,
+    lastModified: p.updated_at ? new Date(p.updated_at) : undefined,
+    changeFrequency: "daily",
+    priority: 0.75,
+  }));
 
   const categoryRoutes: MetadataRoute.Sitemap = (categories ?? []).map((c) => ({
     url: `${BASE_URL}/isletmeler/${c.slug}`,
@@ -54,5 +68,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...tagRoutes,
     ...businessRoutes,
     ...guideRoutes,
+    ...gundemRoutes,
   ];
 }

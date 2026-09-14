@@ -59,3 +59,99 @@ body {
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+/* Gündem haber gövdesi (renderGundemMarkdown çıktısı + admin önizlemesi).
+   Proje bir typography eklentisi kullanmıyor (rehberler sayfası da aynı
+   şekilde ham elemanları düz CSS ile biçimlendiriyor) — burada da aynı
+   yaklaşım izleniyor. */
+.gundem-article h2 {
+  font-family: var(--font-display);
+  color: var(--color-navy);
+  font-weight: 700;
+  font-size: 1.375rem;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.gundem-article h3 {
+  font-family: var(--font-display);
+  color: var(--color-navy);
+  font-weight: 700;
+  font-size: 1.125rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.gundem-article p {
+  color: rgba(27, 27, 31, 0.8);
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.gundem-article strong {
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+.gundem-article a {
+  color: var(--color-bordo);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.gundem-article ul,
+.gundem-article ol {
+  margin: 1rem 0;
+  padding-left: 1.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  color: rgba(27, 27, 31, 0.8);
+}
+
+.gundem-article ul {
+  list-style-type: disc;
+}
+
+.gundem-article ol {
+  list-style-type: decimal;
+}
+
+.gundem-article blockquote {
+  margin: 1.25rem 0;
+  border-left: 3px solid var(--color-gold);
+  background: var(--color-offwhite);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: rgba(27, 27, 31, 0.7);
+}
+
+.gundem-article img {
+  border-radius: 0.75rem;
+  margin: 1.25rem 0;
+  max-width: 100%;
+  height: auto;
+}
+
+.gundem-article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.875rem;
+}
+
+.gundem-article th,
+.gundem-article td {
+  border: 1px solid var(--color-line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.gundem-article th {
+  background: var(--color-offwhite);
+  color: var(--color-navy);
+  font-weight: 700;
+}
