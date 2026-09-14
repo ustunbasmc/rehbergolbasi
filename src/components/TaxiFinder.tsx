@@ -104,28 +104,35 @@ export default function TaxiFinder({
     if (next === "harita") trackTaxiEvent("taxi_map_open");
   }
 
-  const result = useMemo(() => {
+  const { result, usingFallback } = useMemo(() => {
     const q = normalizeForSearch(search.trim());
     const neighborhoodKey = neighborhoodFilter !== "all" ? normalizeNeighborhoodKey(neighborhoodFilter) : null;
 
-    const list = initialTaxis.filter((t) => {
-      if (onlyTwentyFourSeven && !t.taxi_service_24_7) return false;
+    // 7/24 filtresi gerçek bir veri filtresi olduğu için her zaman uygulanır.
+    const availableTaxis = initialTaxis.filter((t) => !onlyTwentyFourSeven || t.taxi_service_24_7);
 
-      if (neighborhoodKey) {
-        const ownMatch = t.neighborhood && normalizeNeighborhoodKey(t.neighborhood) === neighborhoodKey;
-        const areaMatch = t.serviceAreas.some((a) => normalizeNeighborhoodKey(a) === neighborhoodKey);
-        if (!ownMatch && !areaMatch) return false;
-      }
+    function matchesLocation(t: TaxiListing): boolean {
+      if (!neighborhoodKey) return true;
+      const ownMatch = t.neighborhood && normalizeNeighborhoodKey(t.neighborhood) === neighborhoodKey;
+      const areaMatch = t.serviceAreas.some((a) => normalizeNeighborhoodKey(a) === neighborhoodKey);
+      return Boolean(ownMatch || areaMatch);
+    }
 
-      if (q) {
-        const haystack = normalizeForSearch(
-          [t.name, t.neighborhood ?? "", ...t.serviceAreas].join(" ")
-        );
-        if (!haystack.includes(q)) return false;
-      }
+    function matchesSearch(t: TaxiListing): boolean {
+      if (!q) return true;
+      const haystack = normalizeForSearch([t.name, t.neighborhood ?? "", ...t.serviceAreas].join(" "));
+      return haystack.includes(q);
+    }
 
-      return true;
-    });
+    const narrowed = availableTaxis.filter((t) => matchesLocation(t) && matchesSearch(t));
+
+    // Bir mahalle/durak adına özel kayıtlı hizmet alanı olmayabilir, ama
+    // Gölbaşı'ndaki taksi durakları genellikle ilçenin genelinde hizmet
+    // verebilir. Bu yüzden özel eşleşme bulunamazsa listeyi tamamen boş
+    // göstermek yerine tüm durakları (fallback olduğunu belirterek) gösteriyoruz.
+    const hasActiveLocationOrSearchFilter = Boolean(neighborhoodKey) || q.length > 0;
+    const usingFallback = hasActiveLocationOrSearchFilter && narrowed.length === 0 && availableTaxis.length > 0;
+    const list = usingFallback ? availableTaxis : narrowed;
 
     const withDistance = list.map((t) => ({
       taxi: t,
@@ -144,7 +151,7 @@ export default function TaxiFinder({
         if (b.distanceKm != null) return 1;
         return a.taxi.name.localeCompare(b.taxi.name, "tr");
       });
-    } else if (neighborhoodKey) {
+    } else if (neighborhoodKey && !usingFallback) {
       withDistance.sort((a, b) => {
         if (a.ownNeighborhoodMatch !== b.ownNeighborhoodMatch) return a.ownNeighborhoodMatch ? -1 : 1;
         return a.taxi.name.localeCompare(b.taxi.name, "tr");
@@ -153,7 +160,7 @@ export default function TaxiFinder({
       withDistance.sort((a, b) => a.taxi.name.localeCompare(b.taxi.name, "tr"));
     }
 
-    return withDistance;
+    return { result: withDistance, usingFallback };
   }, [initialTaxis, search, neighborhoodFilter, onlyTwentyFourSeven, userLocation, nearestMode]);
 
   const locationError =
@@ -271,12 +278,30 @@ export default function TaxiFinder({
 
       <p aria-live="polite" className="sr-only">{liveMessage}</p>
 
-      <p className="mb-3 text-sm text-ink/50">{result.length} taksi durağı bulundu.</p>
+      {usingFallback && (
+        <p className="mb-3 flex items-start gap-1.5 rounded-xl border border-gold/30 bg-gold/5 px-4 py-3 text-sm leading-relaxed text-ink/70">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-gold-dark" />
+          <span>
+            {search.trim()
+              ? `"${search.trim()}"`
+              : neighborhoodFilter}{" "}
+            için özel olarak kayıtlı bir taksi durağı bulunamadı. Gölbaşı&apos;ndaki taksi
+            durakları genellikle ilçenin genelinde hizmet verebilir; aşağıdaki duraklardan
+            birini arayarak bu bölgeye gelip gelemeyeceklerini sorabilirsiniz.
+          </span>
+        </p>
+      )}
+
+      <p className="mb-3 text-sm text-ink/50">
+        {usingFallback
+          ? `${result.length} taksi durağının tümü listeleniyor.`
+          : `${result.length} taksi durağı bulundu.`}
+      </p>
 
       {result.length === 0 ? (
         <div className="rounded-2xl border border-line bg-offwhite p-8 text-center">
           <p className="text-sm text-ink/60">
-            Bu aramaya uygun taksi durağı bulunamadı. Farklı bir mahalle veya durak adı deneyebilirsiniz.
+            Bu filtrelere uygun taksi durağı bulunamadı. Farklı bir filtre deneyebilir veya tüm durakları görüntüleyebilirsiniz.
           </p>
           <button
             type="button"
