@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Menu, X, Plus, Search, ChevronDown } from "lucide-react";
 
 const FAYDALI_BILGILER = [
+  { href: "/taksi", label: "Taksi Çağır" },
   { href: "/nobetci-eczane", label: "Nöbetçi Eczane" },
   { href: "/isletmeler/resmi-kurumlar", label: "Resmi Kurumlar" },
   { href: "/otobus-saatleri", label: "Otobüs Saatleri" },

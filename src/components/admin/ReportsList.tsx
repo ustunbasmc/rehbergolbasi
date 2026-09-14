@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { Trash2, Flag, UserCheck } from "lucide-react";
+import { Trash2, Flag, UserCheck, Car } from "lucide-react";
 
 interface Report {
   id: string;
@@ -55,6 +55,7 @@ export default function ReportsList() {
     <div className="flex flex-col gap-3">
       {reports.map((report) => {
         const isClaim = report.type === "claim";
+        const isTaxi = report.type === "taxi_info";
         return (
           <div
             key={report.id}
@@ -65,12 +66,20 @@ export default function ReportsList() {
                 <div className="mb-0.5 flex items-center gap-2">
                   <span
                     className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      isClaim ? "bg-gold/15 text-gold-dark" : "bg-bordo/10 text-bordo"
+                      isClaim
+                        ? "bg-gold/15 text-gold-dark"
+                        : isTaxi
+                        ? "bg-navy/10 text-navy"
+                        : "bg-bordo/10 text-bordo"
                     }`}
                   >
                     {isClaim ? (
                       <>
                         <UserCheck className="h-2.5 w-2.5" /> Sahiplenme Talebi
+                      </>
+                    ) : isTaxi ? (
+                      <>
+                        <Car className="h-2.5 w-2.5" /> Taksi Bilgisi
                       </>
                     ) : (
                       <>

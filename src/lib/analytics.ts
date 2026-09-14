@@ -3,6 +3,7 @@ import { COOKIE_CONSENT_STORAGE_KEY } from "@/lib/constants";
 
 export type BusinessEventType =
   | "profile_view"
+  | "profile_click"
   | "phone_click"
   | "whatsapp_click"
   | "directions_click"
@@ -12,9 +13,16 @@ export type BusinessEventType =
  * İşletme etkileşim olayını `business_events` tablosuna kaydeder. Kart
  * hızlı işlemleri (arama sonuçları, anasayfa) ve profil sayfasındaki
  * QuickActions aynı mekanizmayı kullanır ki aynı tıklama iki farklı yerden
- * iki kere sayılmasın.
+ * iki kere sayılmasın. `source` verilirse (ör. "taxi_page") `meta.source`
+ * olarak kaydedilir — aynı event_type farklı bir kaynaktan geldiğinde bile
+ * işletmenin genel istatistiğine (ör. toplam phone_click) doğru şekilde
+ * tek sefer sayılır, yalnızca kaynağı ayrıca etiketlenir.
  */
-export async function trackBusinessEvent(businessId: string, eventType: BusinessEventType) {
+export async function trackBusinessEvent(
+  businessId: string,
+  eventType: BusinessEventType,
+  source?: string
+) {
   try {
     const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
     await supabase.from("business_events").insert({
@@ -22,6 +30,7 @@ export async function trackBusinessEvent(businessId: string, eventType: Business
       event_type: eventType,
       referrer: document.referrer || null,
       device: isMobile ? "mobile" : "desktop",
+      meta: source ? { source } : null,
     });
   } catch {
     // Olay kaydı sessizce başarısız olsun, kullanıcı deneyimini etkilemesin.
@@ -82,6 +91,61 @@ export async function trackFormEvent(eventType: BusinessFormEventType, meta?: Bu
   } catch {
     // Olay kaydı sessizce başarısız olsun, kullanıcı deneyimini etkilemesin.
   }
+}
+
+export type TaxiPageEventType =
+  | "taxi_page_view"
+  | "taxi_location_requested"
+  | "taxi_location_granted"
+  | "taxi_location_denied"
+  | "taxi_location_error"
+  | "taxi_search"
+  | "taxi_neighborhood_selected"
+  | "taxi_map_open"
+  | "taxi_incorrect_info_report";
+
+interface TaxiPageEventMeta {
+  neighborhood?: string;
+  resultCount?: number;
+  errorCategory?: string;
+}
+
+/**
+ * /taksi sayfasının huni event'leri. Kesin konum, telefon numarası veya
+ * başka kişisel veri ASLA gönderilmez — yalnızca sayaç/durum bilgisi.
+ * Çerez onayı gerektirir (madde 16); telefon/WhatsApp/yol tarifi
+ * butonlarının çalışması bu izne bağlı DEĞİLDİR (onlar trackBusinessEvent
+ * ile ayrı kaydedilir ve business_events zaten anon INSERT'e açık).
+ */
+export async function trackTaxiEvent(eventType: TaxiPageEventType, meta?: TaxiPageEventMeta) {
+  if (typeof window === "undefined") return;
+  try {
+    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+    if (consent !== "accepted") return;
+
+    const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+    await supabase.from("business_events").insert({
+      business_id: null,
+      event_type: eventType,
+      referrer: document.referrer || null,
+      device: isMobile ? "mobile" : "desktop",
+      meta: meta ? { source: "taxi_page", ...meta } : { source: "taxi_page" },
+    });
+  } catch {
+    // Olay kaydı sessizce başarısız olsun, kullanıcı deneyimini etkilemesin.
+  }
+}
+
+/**
+ * Bir metnin gerçek bir telefon numarasına benzeyip benzemediğini doğrular
+ * (ör. `whatsapp` alanına yanlışlıkla mahalle adı girilmiş kayıtları
+ * ayıklamak için — en az 10 rakam içermeli). WhatsApp/telefon butonlarını
+ * yalnızca GERÇEKTEN geçerli görünen bir numara varsa göstermek için
+ * kullanılır.
+ */
+export function isPhoneLike(value: string | null | undefined): value is string {
+  if (!value) return false;
+  return value.replace(/\D/g, "").length >= 10;
 }
 
 export function formatTelHref(phone: string): string {

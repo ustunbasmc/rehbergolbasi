@@ -2,10 +2,19 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CategoryResults from "@/components/CategoryResults";
-import { Hash } from "lucide-react";
+import { Hash, Car, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
+
+const TAXI_TAG_SLUGS = new Set([
+  "taksi-duragi",
+  "taksi-cagir",
+  "724-taksi",
+  "en-yakin-taksi",
+  "golbasi-taksi",
+  "gece-taksi",
+]);
 
 async function getData(slug: string) {
   const { data: tag } = await supabase
@@ -109,6 +118,24 @@ export default async function TagPage({
           )}
         </div>
       </div>
+
+      {TAXI_TAG_SLUGS.has(slug) && (
+        <Link
+          href="/taksi"
+          className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-gold/30 bg-gold/5 px-5 py-4 transition hover:border-gold/50"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold-dark">
+              <Car className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="font-display text-sm font-bold text-navy">Hızlı Taksi Çağır sayfasını dene</p>
+              <p className="text-xs text-ink/60">Konumuna yakın taksi duraklarını bul, tek dokunuşla ara.</p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 shrink-0 text-gold-dark" />
+        </Link>
+      )}
 
       <div className="mt-8">
         <CategoryResults businesses={businesses} />

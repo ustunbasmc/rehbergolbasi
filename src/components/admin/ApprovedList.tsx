@@ -3,22 +3,36 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Business, Category } from "@/lib/types";
-import { Star, ImageOff } from "lucide-react";
+import { Star, ImageOff, Car, ShieldAlert } from "lucide-react";
 import EditBusinessModal from "@/components/admin/EditBusinessModal";
+import { TAXI_PHONE_STALE_DAYS } from "@/lib/taxi";
+
+type BusinessWithCategory = Business & { category?: { name: string; slug: string } | null };
+
+function isTaxiBusiness(b: BusinessWithCategory): boolean {
+  return b.category?.slug === "taksi-duragi";
+}
+
+function isPhoneStale(b: Business): boolean {
+  if (!b.taxi_phone_verified_at) return true;
+  const days = Math.floor((Date.now() - new Date(b.taxi_phone_verified_at).getTime()) / (1000 * 60 * 60 * 24));
+  return days > TAXI_PHONE_STALE_DAYS;
+}
 
 export default function ApprovedList({ categories }: { categories: Category[] }) {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<BusinessWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [missingCoverOnly, setMissingCoverOnly] = useState(false);
+  const [taxiIssuesOnly, setTaxiIssuesOnly] = useState(false);
   const [editing, setEditing] = useState<Business | null>(null);
 
   const loadApproved = useCallback(async () => {
     setLoading(true);
     let query = supabase
       .from("businesses")
-      .select("*, category:categories(name)")
+      .select("*, category:categories(name, slug)")
       .eq("status", "approved")
       .order("created_at", { ascending: false });
 
@@ -34,12 +48,31 @@ export default function ApprovedList({ categories }: { categories: Category[] })
     setLoading(false);
   }, [search, categoryFilter]);
 
-  const visibleBusinesses = useMemo(
-    () => (missingCoverOnly ? businesses.filter((b) => !b.cover_image_url) : businesses),
-    [businesses, missingCoverOnly]
-  );
+  function hasTaxiIssue(b: BusinessWithCategory): boolean {
+    if (!isTaxiBusiness(b)) return false;
+    return (
+      !b.phone ||
+      !b.address ||
+      b.lat == null ||
+      b.lng == null ||
+      isPhoneStale(b) ||
+      b.taxi_temporarily_unavailable
+    );
+  }
+
+  const visibleBusinesses = useMemo(() => {
+    let list = businesses;
+    if (missingCoverOnly) list = list.filter((b) => !b.cover_image_url);
+    if (taxiIssuesOnly) list = list.filter(hasTaxiIssue);
+    return list;
+  }, [businesses, missingCoverOnly, taxiIssuesOnly]);
+
   const missingCoverCount = useMemo(
     () => businesses.filter((b) => !b.cover_image_url).length,
+    [businesses]
+  );
+  const taxiIssueCount = useMemo(
+    () => businesses.filter(hasTaxiIssue).length,
     [businesses]
   );
 
@@ -94,6 +127,19 @@ export default function ApprovedList({ categories }: { categories: Category[] })
         >
           <ImageOff className="h-3.5 w-3.5" /> Kapak görseli eksik ({missingCoverCount})
         </button>
+        {taxiIssueCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setTaxiIssuesOnly((v) => !v)}
+            className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+              taxiIssuesOnly
+                ? "border-bordo bg-bordo/10 text-bordo"
+                : "border-line text-ink/60 hover:border-bordo/40"
+            }`}
+          >
+            <Car className="h-3.5 w-3.5" /> Taksi sorunları ({taxiIssueCount})
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -121,6 +167,20 @@ export default function ApprovedList({ categories }: { categories: Category[] })
                   {!b.cover_image_url && (
                     <span className="flex items-center gap-1 rounded-full bg-offwhite px-2 py-0.5 text-[10px] font-semibold text-ink/50">
                       <ImageOff className="h-2.5 w-2.5" /> Kapak yok
+                    </span>
+                  )}
+                  {isTaxiBusiness(b) && hasTaxiIssue(b) && (
+                    <span className="flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold text-gold-dark">
+                      <ShieldAlert className="h-2.5 w-2.5" />
+                      {!b.phone
+                        ? "Telefon yok"
+                        : !b.address
+                        ? "Adres yok"
+                        : b.lat == null || b.lng == null
+                        ? "Koordinat yok"
+                        : b.taxi_temporarily_unavailable
+                        ? "Hizmet dışı"
+                        : "Telefon güncellenmeli"}
                     </span>
                   )}
                 </div>

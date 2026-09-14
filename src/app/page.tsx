@@ -22,6 +22,7 @@ import {
   Bus,
   Landmark,
   Plus,
+  Car,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CategoryGrid, { type CategoryWithBusinesses } from "@/components/CategoryGrid";
@@ -34,6 +35,7 @@ export const revalidate = 60;
 
 const HIZLI_ERISIM = [
   { href: "/isletmeler", label: "İşletmeler", icon: Building2, bg: "bg-bordo/10", color: "text-bordo" },
+  { href: "/taksi", label: "Taksi Çağır", icon: Car, bg: "bg-gold/15", color: "text-gold-dark" },
   { href: "/nobetci-eczane", label: "Nöbetçi Eczane", icon: Pill, bg: "bg-green-500/10", color: "text-green-600" },
   { href: "/otobus-saatleri", label: "Otobüs Saatleri", icon: Bus, bg: "bg-navy/10", color: "text-navy" },
   { href: "/isletmeler/resmi-kurumlar", label: "Resmi Kurumlar", icon: Landmark, bg: "bg-gold/15", color: "text-gold-dark" },

@@ -101,6 +101,10 @@ export interface Business {
   verification_status: VerificationStatus;
   verification_updated_at: string | null;
   verification_updated_by: string | null;
+  taxi_page_visible: boolean;
+  taxi_service_24_7: boolean;
+  taxi_temporarily_unavailable: boolean;
+  taxi_phone_verified_at: string | null;
 }
 
 export interface BusinessPhoto {
@@ -150,6 +154,13 @@ export interface Tag {
   slug: string;
   seo_intro: string | null;
   display_order: number;
+}
+
+export interface BusinessServiceArea {
+  id: string;
+  business_id: string;
+  neighborhood: string;
+  created_at: string;
 }
 
 export type ApplicantType = "owner" | "employee" | "recommendation";

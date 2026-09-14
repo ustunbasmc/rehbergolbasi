@@ -6,6 +6,7 @@ import {
   formatTelHref,
   formatWhatsappUrl,
   buildDirectionsUrl,
+  isPhoneLike,
 } from "@/lib/analytics";
 
 /**
@@ -28,8 +29,9 @@ export default function CardQuickActions({
   lng: number | null;
 }) {
   const directionsUrl = buildDirectionsUrl(lat, lng);
+  const hasValidWhatsapp = isPhoneLike(whatsapp);
 
-  if (!phone && !whatsapp && !directionsUrl) return null;
+  if (!phone && !hasValidWhatsapp && !directionsUrl) return null;
 
   const btnClass =
     "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-semibold transition";
@@ -46,7 +48,7 @@ export default function CardQuickActions({
           <Phone className="h-3.5 w-3.5" /> Ara
         </a>
       )}
-      {whatsapp && (
+      {hasValidWhatsapp && (
         <a
           href={formatWhatsappUrl(whatsapp)}
           target="_blank"

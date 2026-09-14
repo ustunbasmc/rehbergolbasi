@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Phone, MessageCircle, Navigation, Share2, Check } from "lucide-react";
-import { trackBusinessEvent, formatTelHref, formatWhatsappUrl } from "@/lib/analytics";
+import { trackBusinessEvent, formatTelHref, formatWhatsappUrl, isPhoneLike } from "@/lib/analytics";
 
 export default function QuickActions({
   phone,
@@ -17,6 +17,7 @@ export default function QuickActions({
   businessId: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const hasValidWhatsapp = isPhoneLike(whatsapp);
 
   async function handleShare() {
     const url = window.location.href;
@@ -47,7 +48,7 @@ export default function QuickActions({
           <span className="text-[11px] font-semibold">Ara</span>
         </button>
       )}
-      {whatsapp && (
+      {hasValidWhatsapp && (
         <button
           onClick={async () => {
             await trackBusinessEvent(businessId, "whatsapp_click");

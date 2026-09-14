@@ -5,7 +5,9 @@ import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import type { Business, Category, OpeningHours, VerificationStatus } from "@/lib/types";
 import { DEFAULT_OPENING_HOURS, VERIFICATION_LABELS } from "@/lib/types";
-import { X, Star, Trash2, ShieldCheck, CreditCard, RotateCcw, Sparkles, ImageOff } from "lucide-react";
+import {
+  X, Star, Trash2, ShieldCheck, CreditCard, RotateCcw, Sparkles, ImageOff, Car, PhoneCall,
+} from "lucide-react";
 import {
   SHORT_DESCRIPTION_IDEAL_LENGTH,
   SHORT_DESCRIPTION_MAX_LENGTH,
@@ -55,6 +57,7 @@ export default function EditBusinessModal({
 
   const subCategories = categories.filter((c) => c.parent_id === mainCategoryId);
   const effectiveCategoryId = subCategoryId || mainCategoryId;
+  const isTaxi = categories.find((c) => c.id === effectiveCategoryId)?.slug === "taksi-duragi";
 
   const [form, setForm] = useState({
     name: business.name,
@@ -74,6 +77,16 @@ export default function EditBusinessModal({
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>(
     business.verification_status ?? "unverified"
   );
+  const [taxiPageVisible, setTaxiPageVisible] = useState(business.taxi_page_visible ?? true);
+  const [taxiServiceAllDay, setTaxiServiceAllDay] = useState(business.taxi_service_24_7 ?? false);
+  const [taxiTempUnavailable, setTaxiTempUnavailable] = useState(
+    business.taxi_temporarily_unavailable ?? false
+  );
+  const [taxiPhoneVerifiedAt, setTaxiPhoneVerifiedAt] = useState(business.taxi_phone_verified_at);
+  const [verifyingTaxiPhone, setVerifyingTaxiPhone] = useState(false);
+  const [serviceAreas, setServiceAreas] = useState<string[]>([]);
+  const [serviceAreasLoaded, setServiceAreasLoaded] = useState(false);
+  const [newAreaInput, setNewAreaInput] = useState("");
   const [lat, setLat] = useState<number | null>(business.lat);
   const [lng, setLng] = useState<number | null>(business.lng);
   const [openingHours, setOpeningHours] = useState<OpeningHours>(
@@ -135,6 +148,15 @@ export default function EditBusinessModal({
           setOwnerEmail(data.owner_email ?? "");
         }
         setOwnerLoaded(true);
+      });
+
+    supabase
+      .from("business_service_areas")
+      .select("neighborhood")
+      .eq("business_id", business.id)
+      .then(({ data }) => {
+        setServiceAreas((data ?? []).map((r) => r.neighborhood));
+        setServiceAreasLoaded(true);
       });
   }, [business.id]);
 
@@ -199,6 +221,30 @@ export default function EditBusinessModal({
     if (!updateError) setIsActive(true);
   }
 
+  async function handleVerifyTaxiPhone() {
+    setVerifyingTaxiPhone(true);
+    const now = new Date().toISOString();
+    const { error: updateError } = await supabase
+      .from("businesses")
+      .update({ taxi_phone_verified_at: now })
+      .eq("id", business.id);
+    setVerifyingTaxiPhone(false);
+    if (!updateError) setTaxiPhoneVerifiedAt(now);
+  }
+
+  function addServiceArea() {
+    const value = newAreaInput.trim();
+    if (!value || serviceAreas.includes(value)) {
+      setNewAreaInput("");
+      return;
+    }
+    setServiceAreas((prev) => [...prev, value]);
+    setNewAreaInput("");
+  }
+  function removeServiceArea(value: string) {
+    setServiceAreas((prev) => prev.filter((a) => a !== value));
+  }
+
   async function handleSave() {
     if (!effectiveCategoryId) {
       setError("Lütfen bir kategori seç.");
@@ -233,6 +279,9 @@ export default function EditBusinessModal({
         tier,
         is_featured: isFeatured,
         verification_status: verificationStatus,
+        taxi_page_visible: taxiPageVisible,
+        taxi_service_24_7: taxiServiceAllDay,
+        taxi_temporarily_unavailable: taxiTempUnavailable,
         ...(verificationChanged
           ? {
               verification_updated_at: new Date().toISOString(),
@@ -246,6 +295,13 @@ export default function EditBusinessModal({
       setSaving(false);
       setError("Kaydedilemedi: " + updateError.message);
       return;
+    }
+
+    await supabase.from("business_service_areas").delete().eq("business_id", business.id);
+    if (serviceAreas.length > 0) {
+      await supabase.from("business_service_areas").insert(
+        serviceAreas.map((neighborhood) => ({ business_id: business.id, neighborhood }))
+      );
     }
 
     await supabase.from("business_features").delete().eq("business_id", business.id);
@@ -524,6 +580,110 @@ export default function EditBusinessModal({
               }}
             />
           </div>
+
+          {isTaxi && (
+            <div className="rounded-lg border border-gold/30 bg-gold/5 p-4">
+              <div className="mb-3 flex items-center gap-1.5">
+                <Car className="h-3.5 w-3.5 text-navy" />
+                <p className="text-xs font-bold uppercase tracking-wide text-navy">
+                  Taksi Durağı Ayarları
+                </p>
+              </div>
+
+              <div className="mb-3 flex flex-col gap-2">
+                <label className="flex min-h-9 cursor-pointer items-center gap-2.5 text-sm text-navy">
+                  <input
+                    type="checkbox"
+                    checked={taxiPageVisible}
+                    onChange={(e) => setTaxiPageVisible(e.target.checked)}
+                    className="h-4 w-4 accent-bordo"
+                  />
+                  /taksi sayfasında göster
+                </label>
+                <label className="flex min-h-9 cursor-pointer items-center gap-2.5 text-sm text-navy">
+                  <input
+                    type="checkbox"
+                    checked={taxiServiceAllDay}
+                    onChange={(e) => setTaxiServiceAllDay(e.target.checked)}
+                    className="h-4 w-4 accent-bordo"
+                  />
+                  7/24 hizmet veriyor (yalnızca doğrulandıysa işaretle)
+                </label>
+                <label className="flex min-h-9 cursor-pointer items-center gap-2.5 text-sm text-navy">
+                  <input
+                    type="checkbox"
+                    checked={taxiTempUnavailable}
+                    onChange={(e) => setTaxiTempUnavailable(e.target.checked)}
+                    className="h-4 w-4 accent-bordo"
+                  />
+                  Geçici olarak hizmet dışı
+                </label>
+              </div>
+
+              <div className="mb-3 flex items-center justify-between rounded-lg bg-white p-2.5">
+                <div className="text-xs text-ink/60">
+                  <p className="font-semibold text-navy">Telefon son kontrol</p>
+                  <p>{formatDate(taxiPhoneVerifiedAt)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleVerifyTaxiPhone}
+                  disabled={verifyingTaxiPhone}
+                  className="flex items-center gap-1.5 rounded-lg bg-navy px-3 py-2 text-xs font-bold text-white hover:bg-navy-dark disabled:opacity-60"
+                >
+                  <PhoneCall className="h-3.5 w-3.5" />
+                  {verifyingTaxiPhone ? "..." : "Telefonu Şimdi Kontrol Ettim"}
+                </button>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-navy">
+                  Hizmet verdiği ek mahalleler
+                </label>
+                {serviceAreasLoaded && serviceAreas.length > 0 && (
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {serviceAreas.map((area) => (
+                      <span
+                        key={area}
+                        className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-navy"
+                      >
+                        {area}
+                        <button
+                          type="button"
+                          onClick={() => removeServiceArea(area)}
+                          aria-label={`${area} kaldır`}
+                          className="text-ink/40 hover:text-bordo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-1.5">
+                  <input
+                    value={newAreaInput}
+                    onChange={(e) => setNewAreaInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addServiceArea();
+                      }
+                    }}
+                    placeholder="Örn. İncek"
+                    className="flex-1 rounded-lg border border-line bg-white px-3 py-2 text-sm outline-none focus:border-bordo"
+                  />
+                  <button
+                    type="button"
+                    onClick={addServiceArea}
+                    className="rounded-lg border border-line bg-white px-3 py-2 text-sm font-semibold text-navy hover:border-bordo"
+                  >
+                    Ekle
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-navy">Çalışma saatleri</label>

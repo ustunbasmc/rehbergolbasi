@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { supabase } from "@/lib/supabase";
 import type { Category } from "@/lib/types";
 import FeaturesSelector from "@/components/FeaturesSelector";
@@ -9,8 +10,17 @@ import TagsSelector from "@/components/TagsSelector";
 import {
   Plus, Trash2, CheckCircle2, Upload, X, Building2,
   MapPin, Share2, Sparkles, HelpCircle, ShieldCheck, Rocket,
-  Gauge, Star,
+  Gauge, Star, Car,
 } from "lucide-react";
+
+const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[200px] items-center justify-center rounded-lg border border-line bg-offwhite text-sm text-ink/40">
+      Harita yükleniyor...
+    </div>
+  ),
+});
 import {
   SHORT_DESCRIPTION_IDEAL_LENGTH,
   SHORT_DESCRIPTION_MAX_LENGTH,
@@ -107,6 +117,29 @@ export default function NewBusinessForm({
   const [categoryId, setCategoryId] = useState("");
   const [subcategoryId, setSubcategoryId] = useState("");
   const subcategories = categories.filter((c) => c.parent_id === categoryId);
+  const effectiveCategoryIdForTaxi = subcategoryId || categoryId;
+  const isTaxi =
+    categories.find((c) => c.id === effectiveCategoryIdForTaxi)?.slug === "taksi-duragi";
+
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  const [taxiServiceAllDay, setTaxiServiceAllDay] = useState(false);
+  const [taxiTempUnavailable, setTaxiTempUnavailable] = useState(false);
+  const [serviceAreas, setServiceAreas] = useState<string[]>([]);
+  const [newAreaInput, setNewAreaInput] = useState("");
+
+  function addServiceArea() {
+    const value = newAreaInput.trim();
+    if (!value || serviceAreas.includes(value)) {
+      setNewAreaInput("");
+      return;
+    }
+    setServiceAreas((prev) => [...prev, value]);
+    setNewAreaInput("");
+  }
+  function removeServiceArea(value: string) {
+    setServiceAreas((prev) => prev.filter((a) => a !== value));
+  }
 
   const [form, setForm] = useState(() => ({
     name: prefill?.name ?? "",
@@ -188,6 +221,11 @@ export default function NewBusinessForm({
     });
     setCategoryId("");
     setSubcategoryId("");
+    setLat(null);
+    setLng(null);
+    setTaxiServiceAllDay(false);
+    setTaxiTempUnavailable(false);
+    setServiceAreas([]);
     setCoverFile(null);
     setCoverPreview(null);
     setGalleryFiles([]);
@@ -275,6 +313,11 @@ const completionScore = Math.round(
         status: "approved",
         is_active: true,
         free_until: freeUntil,
+        lat,
+        lng,
+        ...(isTaxi
+          ? { taxi_service_24_7: taxiServiceAllDay, taxi_temporarily_unavailable: taxiTempUnavailable }
+          : {}),
       })
       .select()
       .single();
@@ -283,6 +326,12 @@ const completionScore = Math.round(
       setError("Kaydedilemedi: " + insertError?.message);
       setLoading(false);
       return;
+    }
+
+    if (isTaxi && serviceAreas.length > 0) {
+      await supabase.from("business_service_areas").insert(
+        serviceAreas.map((neighborhood) => ({ business_id: inserted.id, neighborhood }))
+      );
     }
 
     if (galleryUrls.length > 0) {
@@ -514,7 +563,66 @@ const completionScore = Math.round(
             />
           </div>
         </div>
+
+        <div>
+          <label className={labelClass}>Konum</label>
+          <p className="mb-2 text-xs text-ink/50">Haritada işletmenin bulunduğu noktaya tıkla (isteğe bağlı, taksi durakları için önerilir).</p>
+          <LocationPicker lat={lat} lng={lng} onChange={(newLat, newLng) => { setLat(newLat); setLng(newLng); }} />
+        </div>
       </SectionCard>
+
+      {isTaxi && (
+        <SectionCard icon={Car} title="Taksi Durağı Ayarları">
+          <div className="flex flex-col gap-2">
+            <label className="flex min-h-9 cursor-pointer items-center gap-2.5 text-sm text-navy">
+              <input
+                type="checkbox"
+                checked={taxiServiceAllDay}
+                onChange={(e) => setTaxiServiceAllDay(e.target.checked)}
+                className="h-4 w-4 accent-bordo"
+              />
+              7/24 hizmet veriyor (yalnızca doğrulandıysa işaretle)
+            </label>
+            <label className="flex min-h-9 cursor-pointer items-center gap-2.5 text-sm text-navy">
+              <input
+                type="checkbox"
+                checked={taxiTempUnavailable}
+                onChange={(e) => setTaxiTempUnavailable(e.target.checked)}
+                className="h-4 w-4 accent-bordo"
+              />
+              Geçici olarak hizmet dışı
+            </label>
+          </div>
+
+          <div>
+            <label className={labelClass}>Hizmet verdiği ek mahalleler</label>
+            {serviceAreas.length > 0 && (
+              <div className="mb-2 flex flex-wrap gap-1.5">
+                {serviceAreas.map((area) => (
+                  <span key={area} className="flex items-center gap-1 rounded-full bg-offwhite px-2.5 py-1 text-xs font-semibold text-navy">
+                    {area}
+                    <button type="button" onClick={() => removeServiceArea(area)} aria-label={`${area} kaldır`} className="text-ink/40 hover:text-bordo">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-1.5">
+              <input
+                value={newAreaInput}
+                onChange={(e) => setNewAreaInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addServiceArea(); } }}
+                placeholder="Örn. İncek"
+                className={inputClass}
+              />
+              <button type="button" onClick={addServiceArea} className="shrink-0 rounded-lg border border-line px-3 py-2 text-sm font-semibold text-navy hover:border-bordo">
+                Ekle
+              </button>
+            </div>
+          </div>
+        </SectionCard>
+      )}
 
       {/* Sosyal Medya */}
       <SectionCard icon={Share2} title="Sosyal Medya" subtitle="İsteğe bağlı">
