@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -218,13 +219,15 @@ export default function TaxiCard({
         </div>
       </div>
 
-      {reportOpen && (
-        <TaxiReportModal
-          businessId={taxi.id}
-          businessName={taxi.name}
-          onClose={() => setReportOpen(false)}
-        />
-      )}
+      {reportOpen &&
+        createPortal(
+          <TaxiReportModal
+            businessId={taxi.id}
+            businessName={taxi.name}
+            onClose={() => setReportOpen(false)}
+          />,
+          document.body
+        )}
     </article>
   );
 }
