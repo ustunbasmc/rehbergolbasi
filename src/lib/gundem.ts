@@ -1,54 +1,12 @@
-import { Marked } from "marked";
-import DOMPurify from "isomorphic-dompurify";
 import { normalizeForSearch } from "@/lib/taxi";
 import type { GundemPost } from "@/lib/types";
 
-/**
- * Gündem içerikleri Markdown olarak kaydedilir. Başlık seviyeleri kasıtlı
- * olarak bir kademe kaydırılır (# -> h2, ## -> h3, ...): sayfanın tek H1'i
- * her zaman haber başlığıdır, editör içinde H1 oluşturulmasına izin verilmez.
- */
-const gundemMarked = new Marked({
-  breaks: true,
-  gfm: true,
-  renderer: {
-    heading(token) {
-      const depth = Math.min(token.depth + 1, 6);
-      return `<h${depth}>${this.parser.parseInline(token.tokens)}</h${depth}>\n`;
-    },
-  },
-});
-
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    "p", "br", "strong", "em", "b", "i", "u", "s",
-    "h2", "h3", "h4", "h5", "h6",
-    "ul", "ol", "li",
-    "blockquote", "a", "img", "hr",
-    "table", "thead", "tbody", "tr", "th", "td",
-  ],
-  ALLOWED_ATTR: ["href", "src", "alt", "title", "target", "rel", "width", "height"],
-  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
-};
-
-/** Markdown gövdesini güvenli (script/iframe/event-handler/javascript: içermeyen) HTML'e çevirir. */
-export function renderGundemMarkdown(markdown: string): string {
-  const rawHtml = gundemMarked.parse(markdown ?? "", { async: false }) as string;
-  return sanitizeGundemHtml(rawHtml);
-}
-
-/** Zaten üretilmiş HTML'i render anında ikinci kez sanitize eder (savunma katmanı). */
-export function sanitizeGundemHtml(html: string): string {
-  const clean = DOMPurify.sanitize(html ?? "", SANITIZE_CONFIG);
-  // Dış bağlantılara güvenli rel değerleri ekle.
-  return clean.replace(/<a\s+([^>]*href=["']https?:\/\/[^"']*["'][^>]*)>/gi, (match, attrs: string) => {
-    if (/\btarget=/.test(attrs)) {
-      if (/\brel=/.test(attrs)) return match;
-      return `<a ${attrs} rel="noopener noreferrer nofollow">`;
-    }
-    return `<a ${attrs} target="_blank" rel="noopener noreferrer nofollow">`;
-  });
-}
+// NOT: Markdown->HTML render/sanitize fonksiyonları (marked +
+// isomorphic-dompurify) kasıtlı olarak burada değil, `lib/gundem-content.ts`
+// dosyasında. Bu dosya server component'ler (ör. /gundem, /gundem/[slug])
+// tarafından import edildiği için ağır/yalnızca-tarayıcıda-gereken
+// bağımlılıkları burada TUTMUYORUZ — aksi halde sunucu render'ı hiç
+// kullanmadığı bu paketleri de yüklemek zorunda kalırdı.
 
 export function stripHtmlTags(html: string): string {
   return (html ?? "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();

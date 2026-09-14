@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { X, Smartphone, Monitor, Megaphone, MapPin } from "lucide-react";
-import { renderGundemMarkdown, estimateReadingTimeMinutes } from "@/lib/gundem";
+import { estimateReadingTimeMinutes } from "@/lib/gundem";
+import { renderGundemMarkdown } from "@/lib/gundem-content";
 
 export interface GundemPreviewData {
   title: string;

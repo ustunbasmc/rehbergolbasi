@@ -8,12 +8,12 @@ import {
 } from "lucide-react";
 import GundemPreviewModal from "@/components/admin/GundemPreviewModal";
 import {
-  renderGundemMarkdown,
   slugifyTurkish,
   buildGundemSearchText,
   isSafeExternalUrl,
   estimateReadingTimeMinutes,
 } from "@/lib/gundem";
+import { renderGundemMarkdown } from "@/lib/gundem-content";
 import type {
   GundemPost, GundemCategory, GundemSourceType, GundemPostStatus, Tag, Business,
 } from "@/lib/types";
