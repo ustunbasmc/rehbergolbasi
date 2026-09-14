@@ -47,14 +47,14 @@ function daysSince(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function formatVerifiedLabel(iso: string | null): string | null {
-  if (!iso) return null;
+function formatVerifiedLabel(iso: string | null): string {
+  if (!iso) return "Telefon numarası henüz doğrulanmadı";
   const days = daysSince(iso);
-  if (days <= 0) return "Bugün kontrol edildi";
-  if (days === 1) return "Dün kontrol edildi";
-  if (days < 30) return `${days} gün önce kontrol edildi`;
+  if (days <= 0) return "Bugün doğrulandı";
+  if (days === 1) return "Dün doğrulandı";
+  if (days < 30) return `${days} gün önce doğrulandı`;
   const months = Math.round(days / 30);
-  return `${months} ay önce kontrol edildi`;
+  return `${months} ay önce doğrulandı`;
 }
 
 export default function TaxiCard({
@@ -191,24 +191,27 @@ export default function TaxiCard({
         )}
       </div>
 
-      <div className="flex items-center justify-between border-t border-line px-4 py-2.5">
-        <div className="flex items-center gap-1 text-[11px] text-ink/40">
+      <div className="border-t border-line px-4 py-2.5">
+        <p
+          className={`flex items-center gap-1 text-[11px] ${
+            phoneStale ? "text-gold-dark" : "text-ink/40"
+          }`}
+        >
           <Clock className="h-3 w-3 shrink-0" />
-          {verifiedLabel ?? "Telefon henüz kontrol edilmedi"}
-          {phoneStale && <span className="text-gold-dark"> · güncellik kontrol edilmeli</span>}
-        </div>
-        <div className="flex items-center gap-3">
+          {verifiedLabel}
+        </p>
+        <div className="mt-1.5 flex items-center justify-between">
           <button
             type="button"
             onClick={() => setReportOpen(true)}
-            className="flex items-center gap-1 text-[11px] font-semibold text-ink/40 hover:text-bordo"
+            className="flex items-center gap-1 text-xs font-semibold text-ink/40 hover:text-bordo"
           >
             <Flag className="h-3 w-3" /> Bilgi hatalı mı?
           </button>
           <Link
             href={`/isletme/${taxi.slug}`}
             onClick={() => trackBusinessEvent(taxi.id, "profile_click", "taxi_page")}
-            className="flex items-center gap-0.5 text-[11px] font-bold text-bordo hover:underline"
+            className="flex items-center gap-0.5 text-xs font-bold text-bordo hover:underline"
           >
             Profili İncele <ChevronRight className="h-3 w-3" />
           </Link>
