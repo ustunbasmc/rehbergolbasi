@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Send } from "lucide-react";
 import { AD_PLACEMENTS, formatAdPrice, type AdPlacementKey } from "@/lib/adPlacements";
 
-export default function AdInquiryForm() {
+export default function AdInquiryForm({ prices }: { prices?: Record<AdPlacementKey, number> }) {
   const [businessName, setBusinessName] = useState("");
   const [contactName, setContactName] = useState("");
   const [phone, setPhone] = useState("");
@@ -104,7 +104,7 @@ export default function AdInquiryForm() {
             <option value="">İlgilendiğiniz yerleşim (isteğe bağlı)</option>
             {AD_PLACEMENTS.map((p) => (
               <option key={p.key} value={p.key}>
-                {p.label} — {formatAdPrice(p.priceMonthly)}/ay
+                {p.label} — {formatAdPrice(prices?.[p.key] ?? p.priceMonthly)}/ay
               </option>
             ))}
           </select>

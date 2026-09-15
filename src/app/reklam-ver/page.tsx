@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 import { WHATSAPP_NUMBER } from "@/lib/constants";
 import { formatWhatsappUrl } from "@/lib/analytics";
-import { AD_PLACEMENTS, formatAdPrice } from "@/lib/adPlacements";
+import { AD_PLACEMENTS, formatAdPrice, getPlacementPrices } from "@/lib/adPlacements";
 import AdInquiryForm from "@/components/AdInquiryForm";
 
 export const metadata: Metadata = {
@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: "RehberGölbaşı'nda Gölbaşı'na özel hedefli reklam alanları kiralayın. Taksi, işletmeler, gündem ve daha fazla sayfada görünür olun.",
   alternates: { canonical: "https://rehbergolbasi.com/reklam-ver" },
 };
+
+export const revalidate = 60;
 
 const WHY = [
   {
@@ -55,7 +57,9 @@ const STEPS = [
   },
 ];
 
-export default function ReklamVerPage() {
+export default async function ReklamVerPage() {
+  const prices = await getPlacementPrices();
+
   return (
     <div className="overflow-hidden">
 
@@ -166,7 +170,7 @@ export default function ReklamVerPage() {
                     <td className="px-5 py-4 text-sm font-bold text-navy">{p.label}</td>
                     <td className="px-5 py-4 text-sm text-ink/60">{p.pageLabel}</td>
                     <td className="px-5 py-4 text-sm text-ink/50">{p.description}</td>
-                    <td className="px-5 py-4 text-right text-sm font-bold text-bordo">{formatAdPrice(p.priceMonthly)}</td>
+                    <td className="px-5 py-4 text-right text-sm font-bold text-bordo">{formatAdPrice(prices[p.key])}</td>
                   </tr>
                 ))}
               </tbody>
@@ -198,7 +202,7 @@ export default function ReklamVerPage() {
               <MessageCircle className="h-4 w-4" /> WhatsApp&apos;tan Yazın
             </Link>
           </div>
-          <AdInquiryForm />
+          <AdInquiryForm prices={prices} />
         </div>
       </section>
 

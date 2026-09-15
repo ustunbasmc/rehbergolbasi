@@ -3,8 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Trash2, Upload, Eye, EyeOff, Megaphone, MousePointerClick, Wallet } from "lucide-react";
-import { AD_PLACEMENTS, formatAdPrice, type AdPlacementKey } from "@/lib/adPlacements";
+import { Trash2, Upload, Eye, EyeOff, Megaphone, MousePointerClick, Wallet, Check } from "lucide-react";
+import {
+  AD_PLACEMENTS,
+  formatAdPrice,
+  getPlacementPrices,
+  setPlacementPrice,
+  type AdPlacementKey,
+} from "@/lib/adPlacements";
 
 type Placement = AdPlacementKey;
 
@@ -12,7 +18,7 @@ const PLACEMENT_LABELS: Record<Placement, string> = Object.fromEntries(
   AD_PLACEMENTS.map((p) => [p.key, `${p.label} (${p.pageLabel})`])
 ) as Record<Placement, string>;
 
-const PLACEMENT_PRICES: Record<Placement, number> = Object.fromEntries(
+const DEFAULT_PLACEMENT_PRICES: Record<Placement, number> = Object.fromEntries(
   AD_PLACEMENTS.map((p) => [p.key, p.priceMonthly])
 ) as Record<Placement, number>;
 
@@ -74,11 +80,18 @@ export default function AdSlotsManager() {
   const [advertiserName, setAdvertiserName] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [placement, setPlacement] = useState<Placement>("gundem_detail");
-  const [priceMonthly, setPriceMonthly] = useState<string>(String(PLACEMENT_PRICES.gundem_detail));
+  const [priceMonthly, setPriceMonthly] = useState<string>(String(DEFAULT_PLACEMENT_PRICES.gundem_detail));
   const [startsAt, setStartsAt] = useState(toDatetimeLocal(new Date().toISOString()));
   const [endsAt, setEndsAt] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [placementPrices, setPlacementPricesState] = useState<Record<Placement, number>>(DEFAULT_PLACEMENT_PRICES);
+  const [priceInputs, setPriceInputs] = useState<Record<Placement, string>>(
+    Object.fromEntries(AD_PLACEMENTS.map((p) => [p.key, String(p.priceMonthly)])) as Record<Placement, string>
+  );
+  const [savingPlacement, setSavingPlacement] = useState<Placement | null>(null);
+  const [savedPlacement, setSavedPlacement] = useState<Placement | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -90,9 +103,33 @@ export default function AdSlotsManager() {
     setLoading(false);
   }, []);
 
+  const loadPrices = useCallback(async () => {
+    const prices = await getPlacementPrices();
+    setPlacementPricesState(prices);
+    setPriceInputs(Object.fromEntries(Object.entries(prices).map(([k, v]) => [k, String(v)])) as Record<Placement, string>);
+    setPriceMonthly((current) =>
+      current === String(DEFAULT_PLACEMENT_PRICES.gundem_detail) ? String(prices.gundem_detail) : current
+    );
+  }, []);
+
   useEffect(() => {
     load();
-  }, [load]);
+    loadPrices();
+  }, [load, loadPrices]);
+
+  async function handleSavePrice(key: Placement) {
+    const value = Number(priceInputs[key]);
+    if (!Number.isFinite(value) || value < 0) return;
+    setSavingPlacement(key);
+    setSavedPlacement(null);
+    const { error: saveError } = await setPlacementPrice(key, value);
+    setSavingPlacement(null);
+    if (!saveError) {
+      setPlacementPricesState((prev) => ({ ...prev, [key]: value }));
+      setSavedPlacement(key);
+      setTimeout(() => setSavedPlacement((cur) => (cur === key ? null : cur)), 2000);
+    }
+  }
 
   function handleImageChange(file: File | null) {
     setImageFile(file);
@@ -103,7 +140,7 @@ export default function AdSlotsManager() {
     setTitle("");
     setAdvertiserName("");
     setLinkUrl("");
-    setPriceMonthly(String(PLACEMENT_PRICES[placement]));
+    setPriceMonthly(String(placementPrices[placement]));
     setStartsAt(toDatetimeLocal(new Date().toISOString()));
     setEndsAt("");
     setImageFile(null);
@@ -195,18 +232,43 @@ export default function AdSlotsManager() {
       </div>
 
       <div className="card-shadow rounded-2xl bg-white p-5">
-        <div className="mb-3 flex items-center gap-1.5">
-          <Wallet className="h-4 w-4 text-bordo" />
-          <h3 className="font-display text-base font-bold text-navy">Fiyat Referansı (Aylık)</h3>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            <Wallet className="h-4 w-4 text-bordo" />
+            <h3 className="font-display text-base font-bold text-navy">Fiyat Ayarları (Aylık)</h3>
+          </div>
+          <span className="text-xs font-semibold text-ink/50">
+            Tümü dolarsa: {formatAdPrice(Object.values(placementPrices).reduce((a, b) => a + b, 0))}/ay
+          </span>
         </div>
+        <p className="mb-3 text-xs text-ink/40">
+          Her yerleşimin aylık ücretini buradan değiştirebilirsin — yeni reklam eklerken varsayılan olarak bu fiyatlar önerilir.
+        </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {AD_PLACEMENTS.map((p) => (
-            <div key={p.key} className="flex flex-col gap-0.5 rounded-lg bg-offwhite px-3 py-2 text-xs">
+            <div key={p.key} className="flex flex-col gap-1.5 rounded-lg bg-offwhite px-3 py-2.5 text-xs">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-ink/70">{p.label}</span>
-                <span className="font-bold text-navy">{formatAdPrice(p.priceMonthly)}</span>
+                <span className="text-[11px] text-ink/40">{p.imageSize}</span>
               </div>
-              <span className="text-[11px] text-ink/40">{p.imageSize}</span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={0}
+                  value={priceInputs[p.key]}
+                  onChange={(e) => setPriceInputs((prev) => ({ ...prev, [p.key]: e.target.value }))}
+                  className="w-full rounded-md border border-line bg-white px-2 py-1.5 text-sm font-bold text-navy outline-none focus:border-bordo"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSavePrice(p.key)}
+                  disabled={savingPlacement === p.key || Number(priceInputs[p.key]) === placementPrices[p.key]}
+                  className="flex shrink-0 items-center justify-center rounded-md bg-navy px-2.5 py-1.5 text-white transition hover:bg-navy-dark disabled:opacity-30"
+                  title="Kaydet"
+                >
+                  {savedPlacement === p.key ? <Check className="h-3.5 w-3.5" /> : <span className="text-[11px] font-bold">Kaydet</span>}
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -251,7 +313,7 @@ export default function AdSlotsManager() {
             onChange={(e) => {
               const next = e.target.value as Placement;
               setPlacement(next);
-              setPriceMonthly(String(PLACEMENT_PRICES[next]));
+              setPriceMonthly(String(placementPrices[next]));
             }}
             className={inputClass}
           >
