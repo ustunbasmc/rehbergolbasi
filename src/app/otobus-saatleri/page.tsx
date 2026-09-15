@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Bus, ChevronDown, ExternalLink, MapPin, Pill, Sparkles, Info } from "lucide-react";
 import OtobusHatlariList from "./OtobusHatlariList";
+import PageViewTracker from "@/components/PageViewTracker";
 import { OTOBUS_VERI_KAYNAGI, OTOBUS_SON_KONTROL_TARIHI } from "@/data/otobus-hatlari";
 
 export const metadata: Metadata = {
@@ -78,6 +79,7 @@ export default function OtobusSaatleriPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-12">
+      <PageViewTracker eventType="otobus_page_view" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
 

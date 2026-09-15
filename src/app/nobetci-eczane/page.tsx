@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bus, Clock, AlertCircle, ChevronDown, ExternalLink, MapPin, Sparkles } from "lucide-react";
 import Link from "next/link";
 import PharmacyCard from "@/components/PharmacyCard";
+import PageViewTracker from "@/components/PageViewTracker";
 import { formatIstanbulDateLabel, getIstanbulDateString } from "@/lib/timezone";
 
 export const revalidate = 3600;
@@ -173,6 +174,7 @@ export default async function NobetciEczanePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-12">
+      <PageViewTracker eventType="eczane_page_view" resultCount={pharmacies.length} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {pharmacyJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(pharmacyJsonLd) }} />

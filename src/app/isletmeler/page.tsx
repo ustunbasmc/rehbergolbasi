@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import BusinessCard from "@/components/BusinessCard";
+import PageViewTracker from "@/components/PageViewTracker";
 import SearchFilters, { type SortOption } from "@/components/SearchFilters";
 import { getOpenStatus } from "@/lib/openingHours";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
@@ -112,6 +113,7 @@ export default async function BusinessesPage({
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-12">
+      <PageViewTracker eventType="business_list_view" query={query} resultCount={businesses.length} />
       <h1 className="mb-2 font-display text-3xl font-bold text-navy">
         {query ? `"${query}" için sonuçlar` : "Tüm İşletmeler"}
       </h1>

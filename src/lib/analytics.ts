@@ -218,6 +218,37 @@ export async function trackHomeEvent(eventType: HomeEventType, meta?: HomeEventM
   }
 }
 
+export type PageViewEventType = "business_list_view" | "eczane_page_view" | "otobus_page_view";
+
+interface PageViewEventMeta {
+  query?: string;
+  resultCount?: number;
+}
+
+/**
+ * /isletmeler, /nobetci-eczane ve /otobus-saatleri için basit sayfa-görüntüleme
+ * event'i. Bu üç sayfanın (taksi ve gündem'in aksine) daha önce hiç
+ * görüntüleme kaydı yoktu. Aynı `business_events` deseni yeniden kullanılır.
+ */
+export async function trackPageView(eventType: PageViewEventType, meta?: PageViewEventMeta) {
+  if (typeof window === "undefined") return;
+  try {
+    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+    if (consent !== "accepted") return;
+
+    const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+    await supabase.from("business_events").insert({
+      business_id: null,
+      event_type: eventType,
+      referrer: document.referrer || null,
+      device: isMobile ? "mobile" : "desktop",
+      meta: meta ?? null,
+    });
+  } catch {
+    // Olay kaydı sessizce başarısız olsun, kullanıcı deneyimini etkilemesin.
+  }
+}
+
 /**
  * Bir metnin gerçek bir telefon numarasına benzeyip benzemediğini doğrular
  * (ör. `whatsapp` alanına yanlışlıkla mahalle adı girilmiş kayıtları
