@@ -12,8 +12,9 @@ import GundemViewCounter from "@/components/GundemViewCounter";
 import GundemTrackedLink from "@/components/GundemTrackedLink";
 import GundemSourceLink from "@/components/GundemSourceLink";
 import GundemClickTrack from "@/components/GundemClickTrack";
-import BusinessCard from "@/components/BusinessCard";
-import type { GundemCategory, GundemPost, Tag, Business } from "@/lib/types";
+import GundemSidebarBusinessCard from "@/components/GundemSidebarBusinessCard";
+import { getGundemSidebarBusinesses } from "@/lib/gundemSidebar";
+import type { GundemCategory, GundemPost, Tag } from "@/lib/types";
 import { GUNDEM_SOURCE_TYPE_LABELS } from "@/lib/types";
 
 // Sorgular `published_at <= now()` koşulunu istek anında değerlendirir —
@@ -40,19 +41,6 @@ async function getPost(slug: string): Promise<PostRow | null> {
 async function getTags(postId: string): Promise<Tag[]> {
   const { data } = await supabase.from("gundem_post_tags").select("tag:tags(*)").eq("post_id", postId);
   return (data ?? []).map((r) => r.tag as unknown as Tag).filter(Boolean);
-}
-
-async function getRelatedBusinesses(postId: string): Promise<Business[]> {
-  const { data: links } = await supabase.from("gundem_post_businesses").select("business_id").eq("post_id", postId);
-  const ids = (links ?? []).map((l) => l.business_id);
-  if (ids.length === 0) return [];
-  const { data } = await supabase
-    .from("businesses")
-    .select("*, category:categories(name, icon)")
-    .in("id", ids)
-    .eq("status", "approved")
-    .eq("is_active", true);
-  return (data ?? []) as Business[];
 }
 
 async function getRelatedPosts(post: PostRow, tagIds: string[]): Promise<GundemCardData[]> {
@@ -138,10 +126,11 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
   const post = await getPost(slug);
   if (!post) notFound();
 
-  const [tags, relatedBusinesses, relatedPosts] = await Promise.all([
-    getTags(post.id),
-    getRelatedBusinesses(post.id),
-    getTags(post.id).then((t) => getRelatedPosts(post, t.map((tag) => tag.id))),
+  const tags = await getTags(post.id);
+  const tagIds = tags.map((tag) => tag.id);
+  const [sidebarBusinesses, relatedPosts] = await Promise.all([
+    getGundemSidebarBusinesses(post.id, tagIds),
+    getRelatedPosts(post, tagIds),
   ]);
 
   const publicUrl = `${BASE_URL}/gundem/${post.slug}`;
@@ -188,12 +177,22 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
     articleSection: post.category?.name ?? undefined,
   };
 
+  const hasSidebarContent = sidebarBusinesses.length > 0 || relatedPosts.length > 0;
+
   return (
-    <div className="mx-auto max-w-3xl px-5 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
       <GundemViewCounter slug={post.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleJsonLd) }} />
 
+      <div
+        className={
+          hasSidebarContent
+            ? "lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-10 [grid-template-areas:'content'_'sidebar'] lg:[grid-template-areas:'content_sidebar']"
+            : undefined
+        }
+      >
+      <article className={hasSidebarContent ? "min-w-0 lg:max-w-[740px] [grid-area:content]" : undefined}>
       <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1.5 text-sm text-ink/50">
         <Link href="/" className="font-semibold transition-colors hover:text-bordo">Anasayfa</Link>
         <span>/</span>
@@ -306,32 +305,42 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
         <GundemShareButtons url={publicUrl} title={post.title} postSlug={post.slug} />
         <GundemCorrectionButton postId={post.id} postSlug={post.slug} postTitle={post.title} />
       </div>
+      </article>
 
-      {relatedBusinesses.length > 0 && (
-        <div className="mt-10 border-t border-line pt-8">
-          <h2 className="mb-4 font-display text-lg font-bold text-navy">Bu İşletmeyle İlgili</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {relatedBusinesses.map((b) => (
-              <GundemClickTrack key={b.id} eventType="news_related_business_click" meta={{ postSlug: post.slug }}>
-                <BusinessCard business={b} />
-              </GundemClickTrack>
-            ))}
-          </div>
-        </div>
-      )}
+      {hasSidebarContent && (
+        <aside className="mt-10 lg:mt-0 lg:sticky lg:top-24 lg:self-start [grid-area:sidebar]">
+          {sidebarBusinesses.length > 0 && (
+            <div className="rounded-2xl border border-line bg-offwhite/60 p-4">
+              <h2 className="mb-3 font-display text-base font-bold text-navy">Gölbaşı&apos;nda Keşfet</h2>
+              <div className="flex flex-col gap-2">
+                {sidebarBusinesses.map((b) => (
+                  <GundemSidebarBusinessCard key={b.id} business={b} />
+                ))}
+              </div>
+              <Link
+                href="/isletmeler"
+                className="mt-3 flex items-center justify-center gap-1 text-xs font-bold text-bordo hover:underline"
+              >
+                Tüm İşletmeleri Gör <ChevronRight className="h-3 w-3" />
+              </Link>
+            </div>
+          )}
 
-      {relatedPosts.length > 0 && (
-        <div className="mt-10 border-t border-line pt-8">
-          <h2 className="mb-4 font-display text-lg font-bold text-navy">İlgili Haberler</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {relatedPosts.map((p) => (
-              <GundemClickTrack key={p.slug} eventType="news_related_article_click" meta={{ postSlug: post.slug }}>
-                <GundemCard post={p} variant="compact" />
-              </GundemClickTrack>
-            ))}
-          </div>
-        </div>
+          {relatedPosts.length > 0 && (
+            <div className={sidebarBusinesses.length > 0 ? "mt-6" : ""}>
+              <h2 className="mb-3 font-display text-base font-bold text-navy">Gündemden Diğer Yazılar</h2>
+              <div className="flex flex-col gap-3">
+                {relatedPosts.map((p) => (
+                  <GundemClickTrack key={p.slug} eventType="news_related_article_click" meta={{ postSlug: post.slug }}>
+                    <GundemCard post={p} variant="compact" />
+                  </GundemClickTrack>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
       )}
+      </div>
 
       <div className="mt-10 flex items-center justify-between border-t border-line pt-6 text-sm">
         <Link href="/gundem" className="flex items-center gap-1 font-semibold text-bordo hover:underline">
