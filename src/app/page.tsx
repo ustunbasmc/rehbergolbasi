@@ -436,17 +436,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Duyurular */}
-      {announcements.length > 0 && (
-        <section className="border-b border-line bg-white">
-          <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
-            <div className="mx-auto max-w-2xl">
-              <AnnouncementSlider announcements={announcements} />
-            </div>
-          </div>
-        </section>
-      )}
-
       <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
         {/* Öne çıkanlar — ücretli öne çıkarma paketi, açıkça etiketli */}
         {featured.length > 0 && (
@@ -505,10 +494,20 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* Şu an açık restoranlar — yalnızca gerçekten açık olanlar (getOpenStatus zaten eksik/geçersiz saatleri hariç tutar) */}
-        {openNowRestaurants.length > 0 && (
-          <div className="mb-20">
-            <OpenRestaurantsWidget restaurants={openNowRestaurants} />
+        {/* Duyurular + Şu an açık restoranlar — duyuru 2 birim, restoranlar 1 birim genişlikte yan yana */}
+        {(announcements.length > 0 || openNowRestaurants.length > 0) && (
+          <div className="mb-20 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {announcements.length > 0 && (
+              <div className={openNowRestaurants.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
+                <AnnouncementSlider announcements={announcements} />
+              </div>
+            )}
+            {/* Yalnızca gerçekten açık olanlar (getOpenStatus zaten eksik/geçersiz saatleri hariç tutar) */}
+            {openNowRestaurants.length > 0 && (
+              <div className={announcements.length > 0 ? "lg:col-span-1" : "lg:col-span-3"}>
+                <OpenRestaurantsWidget restaurants={openNowRestaurants} />
+              </div>
+            )}
           </div>
         )}
 
