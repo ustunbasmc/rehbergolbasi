@@ -15,14 +15,25 @@ interface Announcement {
 
 export default function AnnouncementSlider({ announcements }: { announcements: Announcement[] }) {
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 
   useEffect(() => {
-    if (announcements.length <= 1) return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    query.addEventListener("change", handler);
+    return () => query.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    if (announcements.length <= 1 || paused || reducedMotion) return;
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % announcements.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, [announcements.length]);
+  }, [announcements.length, paused, reducedMotion]);
 
   if (announcements.length === 0) return null;
 
@@ -48,7 +59,13 @@ export default function AnnouncementSlider({ announcements }: { announcements: A
   );
 
   return (
-    <div className="relative w-full">
+    <div
+      className="relative w-full"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       {current.link_url ? <Link href={current.link_url}>{slide}</Link> : slide}
 
       {announcements.length > 1 && (

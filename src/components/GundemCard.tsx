@@ -52,7 +52,7 @@ export default function GundemCard({
   return (
     <Link
       href={`/gundem/${post.slug}`}
-      className="card-shadow-hover group flex flex-col overflow-hidden rounded-2xl border border-line bg-white"
+      className="card-shadow card-shadow-hover group flex flex-col overflow-hidden rounded-2xl bg-white"
     >
       <div className={`relative w-full overflow-hidden bg-offwhite ${isHero ? "aspect-[16/9]" : "aspect-[16/10]"}`}>
         {post.cover_image_url ? (

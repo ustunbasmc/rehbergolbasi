@@ -51,31 +51,32 @@ export default function CookieConsent() {
       )}
 
       {showBanner && (
-        <div className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-white p-4 shadow-[0_-4px_20px_rgba(20,33,61,0.12)] sm:p-5">
-          <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-bordo">
-                <Cookie className="h-4 w-4" />
+        <div
+          className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-white px-4 py-3 shadow-[0_-4px_20px_rgba(20,33,61,0.12)] sm:p-5"
+          style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="mx-auto flex max-w-6xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex items-start gap-2.5 sm:gap-3">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-bordo sm:h-8 sm:w-8">
+                <Cookie className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </span>
-              <p className="text-sm leading-relaxed text-ink/70">
-                Sitemizi geliştirmek için anonim ziyaretçi istatistikleri (Google Analytics)
-                topluyoruz. Detaylar için{" "}
+              <p className="text-xs leading-snug text-ink/70 sm:text-sm sm:leading-relaxed">
+                Anonim ziyaretçi istatistikleri (Google Analytics) topluyoruz.{" "}
                 <Link href="/cerez-politikasi" className="font-semibold text-bordo hover:underline">
-                  Çerez Politikamıza
-                </Link>{" "}
-                bakabilirsin.
+                  Çerez Politikası
+                </Link>
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
               <button
                 onClick={reject}
-                className="rounded-full border border-line px-4 py-2 text-sm font-semibold text-ink/60 hover:bg-offwhite"
+                className="flex-1 rounded-full border border-line px-3.5 py-2 text-xs font-semibold text-ink/60 hover:bg-offwhite sm:flex-none sm:px-4 sm:text-sm"
               >
                 Reddet
               </button>
               <button
                 onClick={accept}
-                className="rounded-full bg-bordo px-5 py-2 text-sm font-bold text-white hover:bg-bordo-dark"
+                className="flex-1 rounded-full bg-bordo px-4 py-2 text-xs font-bold text-white hover:bg-bordo-dark sm:flex-none sm:px-5 sm:text-sm"
               >
                 Kabul Et
               </button>

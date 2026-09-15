@@ -2,20 +2,32 @@ import type { Metadata } from "next";
 import { Bus, Clock, AlertCircle, ChevronDown, ExternalLink, MapPin, Sparkles } from "lucide-react";
 import Link from "next/link";
 import PharmacyCard from "@/components/PharmacyCard";
+import { formatIstanbulDateLabel, getIstanbulDateString } from "@/lib/timezone";
 
 export const revalidate = 3600;
 
-interface Pharmacy {
+interface RawPharmacy {
   id: string;
   name: string;
   address: string;
   phone: string;
   phone2: string | null;
   location: { latitude: number; longitude: number } | null;
+  dataQuality?: { addressVerified?: boolean };
+}
+
+interface Pharmacy {
+  id: string;
+  name: string;
+  address: string;
+  addressVerified: boolean;
+  phone: string;
+  phone2: string | null;
+  location: { latitude: number; longitude: number } | null;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const gorselTarih = new Date().toLocaleDateString("tr-TR", {
+  const gorselTarih = formatIstanbulDateLabel(new Date(), {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -49,11 +61,27 @@ async function getPharmacies(): Promise<Pharmacy[]> {
     );
     const data = await res.json();
 
-    const today = new Date().toISOString().slice(0, 10);
+    // `toISOString().slice(0,10)` UTC kullanır; Türkiye'nin gece 00:00–02:59
+    // saatlerinde UTC hâlâ bir önceki güne denk geldiği için "bugün" grubu
+    // hiç bulunamıyordu (bkz. teslim raporu). Türkiye takvim gününe göre eşleştir.
+    const today = getIstanbulDateString();
     const todayGroup = (data?.data ?? []).find(
-      (g: { date: string; pharmacies: Pharmacy[] }) => g.date === today
+      (g: { date: string; pharmacies: RawPharmacy[] }) => g.date === today
     );
-    return todayGroup?.pharmacies ?? [];
+    const rawPharmacies: RawPharmacy[] = todayGroup?.pharmacies ?? [];
+    // Kaynak API şu anda TÜM kayıtlarda `addressVerified: false` ile birlikte
+    // anlamsız/bozuk bir adres metni döndürüyor (doğrulandı — bkz. teslim
+    // raporu). Doğrulanmamış adresi temizmiş gibi göstermek yerine ayrı bir
+    // alanda işaretliyoruz; PharmacyCard bunu görünür/gizli karar için kullanır.
+    return rawPharmacies.map((p) => ({
+      id: p.id,
+      name: p.name,
+      address: p.address,
+      addressVerified: p.dataQuality?.addressVerified === true,
+      phone: p.phone,
+      phone2: p.phone2,
+      location: p.location,
+    }));
   } catch {
     return [];
   }
@@ -79,7 +107,7 @@ const SSS = [
 
 export default async function NobetciEczanePage() {
   const pharmacies = await getPharmacies();
-  const today = new Date().toLocaleDateString("tr-TR", {
+  const today = formatIstanbulDateLabel(new Date(), {
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -106,13 +134,20 @@ export default async function NobetciEczanePage() {
             item: {
               "@type": "Pharmacy",
               name: p.name,
-              address: {
-                "@type": "PostalAddress",
-                streetAddress: p.address,
-                addressLocality: "Gölbaşı",
-                addressRegion: "Ankara",
-                addressCountry: "TR",
-              },
+              // Doğrulanmamış (muhtemelen bozuk) adresi yapılandırılmış
+              // veriye hiç koymuyoruz — Google'a görünür içerikle çelişen
+              // veya anlamsız bir adres göstermemek için.
+              ...(p.addressVerified
+                ? {
+                    address: {
+                      "@type": "PostalAddress",
+                      streetAddress: p.address,
+                      addressLocality: "Gölbaşı",
+                      addressRegion: "Ankara",
+                      addressCountry: "TR",
+                    },
+                  }
+                : {}),
               telephone: p.phone,
               ...(p.location && {
                 geo: {

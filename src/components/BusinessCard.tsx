@@ -22,7 +22,7 @@ interface Business {
   category?: { name: string; icon: string | null } | null;
 }
 
-export default function BusinessCard({ business }: { business: Business }) {
+export default function BusinessCard({ business, source }: { business: Business; source?: string }) {
   const isFeatured = business.is_featured ?? false;
   const cardDescription = getCardDescription(business);
   const CategoryIcon = getCategoryIcon(business.category?.icon ?? null);
@@ -31,8 +31,8 @@ export default function BusinessCard({ business }: { business: Business }) {
     <div
       className={`card-shadow-hover group flex h-full flex-col overflow-hidden rounded-2xl bg-white transition ${
         isFeatured
-          ? "border-2 border-gold shadow-[0_4px_18px_rgba(201,162,75,0.25)]"
-          : "card-shadow border border-line"
+          ? "ring-1 ring-gold/40 shadow-[0_4px_20px_rgba(201,162,75,0.28)]"
+          : "card-shadow"
       }`}
     >
       <Link href={`/isletme/${business.slug}`} className="flex flex-1 flex-col">
@@ -80,6 +80,7 @@ export default function BusinessCard({ business }: { business: Business }) {
         whatsapp={business.whatsapp ?? null}
         lat={business.lat ?? null}
         lng={business.lng ?? null}
+        source={source}
       />
     </div>
   );

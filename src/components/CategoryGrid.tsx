@@ -28,10 +28,10 @@ export default function CategoryGrid({
         return (
           <div
             key={cat.id}
-            className="card-shadow flex flex-col rounded-2xl border border-line bg-white p-5"
+            className="card-shadow card-shadow-hover flex flex-col rounded-2xl bg-white p-5 transition"
           >
             <Link href={`/isletmeler/${cat.slug}`} className="mb-3 flex items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-bordo/10 text-bordo">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-bordo to-bordo-dark text-white shadow-sm">
                 <Icon className="h-5 w-5" />
               </span>
               <div className="min-w-0">

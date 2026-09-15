@@ -21,12 +21,14 @@ export default function CardQuickActions({
   whatsapp,
   lat,
   lng,
+  source,
 }: {
   businessId: string;
   phone: string | null;
   whatsapp: string | null;
   lat: number | null;
   lng: number | null;
+  source?: string;
 }) {
   const directionsUrl = buildDirectionsUrl(lat, lng);
   const hasValidWhatsapp = isPhoneLike(whatsapp);
@@ -42,7 +44,7 @@ export default function CardQuickActions({
         <a
           href={formatTelHref(phone)}
           aria-label={`Ara: ${phone}`}
-          onClick={() => trackBusinessEvent(businessId, "phone_click")}
+          onClick={() => trackBusinessEvent(businessId, "phone_click", source)}
           className={`${btnClass} bg-bordo/10 text-bordo hover:bg-bordo hover:text-white`}
         >
           <Phone className="h-3.5 w-3.5" /> Ara
@@ -54,7 +56,7 @@ export default function CardQuickActions({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="WhatsApp'tan yaz"
-          onClick={() => trackBusinessEvent(businessId, "whatsapp_click")}
+          onClick={() => trackBusinessEvent(businessId, "whatsapp_click", source)}
           className={`${btnClass} bg-navy/5 text-navy hover:bg-navy hover:text-white`}
         >
           <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
@@ -66,7 +68,7 @@ export default function CardQuickActions({
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Yol tarifi al"
-          onClick={() => trackBusinessEvent(businessId, "directions_click")}
+          onClick={() => trackBusinessEvent(businessId, "directions_click", source)}
           className={`${btnClass} bg-offwhite text-navy hover:bg-navy/10`}
         >
           <Navigation className="h-3.5 w-3.5" /> Yol Tarifi

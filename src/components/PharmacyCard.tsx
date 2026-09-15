@@ -1,11 +1,12 @@
 "use client";
 
-import { Phone, MapPin } from "lucide-react";
+import { Phone, MapPin, ShieldAlert } from "lucide-react";
 
 interface Pharmacy {
   id: string;
   name: string;
   address: string;
+  addressVerified?: boolean;
   phone: string;
   phone2: string | null;
   location: { latitude: number; longitude: number } | null;
@@ -15,18 +16,28 @@ export default function PharmacyCard({ pharmacy }: { pharmacy: Pharmacy }) {
   const mapsUrl = pharmacy.location
     ? `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.location.latitude},${pharmacy.location.longitude}`
     : null;
+  // Kaynak API adres alanını "addressVerified" ile işaretliyor; false/eksikse
+  // gelen metin genellikle anlamsız/bozuk oluyor (ör. bir hata/log satırı).
+  // Doğruluğu teyit edilemeyen bir adresi temizmiş gibi göstermek yerine
+  // dürüstçe gizliyoruz — konum varsa "Yol Tarifi Al" butonu zaten çalışır.
+  const showAddress = pharmacy.addressVerified && pharmacy.address;
 
   return (
-    <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+    <div className="card-shadow rounded-2xl bg-white p-5">
       <h2 className="mb-3 font-display text-lg font-bold text-navy">
         {pharmacy.name}
       </h2>
 
       <div className="flex flex-col gap-2">
-        {pharmacy.address && (
+        {showAddress ? (
           <div className="flex items-start gap-2 text-sm text-ink/70">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-bordo" />
             <span>{pharmacy.address}</span>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 text-sm text-ink/40">
+            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>Adres bilgisi şu anda doğrulanamıyor{pharmacy.location ? " — aşağıdaki yol tarifi butonunu kullanabilirsiniz." : "."}</span>
           </div>
         )}
         {pharmacy.phone && (

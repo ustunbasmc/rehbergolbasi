@@ -1,22 +1,8 @@
-import {
-  Sun,
-  CloudSun,
-  Cloud,
-  CloudFog,
-  CloudDrizzle,
-  CloudRain,
-  CloudSnow,
-  CloudLightning,
-  Droplets,
-  Wind,
-  Thermometer,
-  Eye,
-  MapPin,
-} from "lucide-react";
+import { Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning } from "lucide-react";
+import { formatIstanbulDateLabel } from "@/lib/timezone";
 
 const GOLBASI_LAT = 39.79;
 const GOLBASI_LON = 32.8;
-const GUN_KISA = ["Paz", "Pzt", "Sal", "Çar", "Per", "Cum", "Cmt"];
 
 function weatherInfo(code: number) {
   if (code === 0) return { label: "Açık", Icon: Sun };
@@ -34,10 +20,8 @@ async function getWeather() {
   try {
     const res = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${GOLBASI_LAT}&longitude=${GOLBASI_LON}` +
-        `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code` +
-        `&hourly=visibility` +
-        `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
-        `&timezone=Europe%2FIstanbul&forecast_days=5`,
+        `&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min` +
+        `&timezone=Europe%2FIstanbul&forecast_days=1`,
       { next: { revalidate: 1800 } }
     );
     if (!res.ok) return null;
@@ -54,102 +38,39 @@ export default async function WeatherWidget() {
   const current = weatherInfo(data.current.weather_code);
   const CurrentIcon = current.Icon;
 
-  const today = new Date().toLocaleDateString("tr-TR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  // hourly.time içinde şu anki saate en yakın index'i bul, görüş mesafesini oradan al.
-  const nowHour = new Date().toISOString().slice(0, 13);
-  const visibilityIdx = Math.max(
-    0,
-    (data.hourly?.time as string[])?.findIndex((t: string) => t.startsWith(nowHour)) ?? 0
-  );
-  const visibilityKm = data.hourly?.visibility?.[visibilityIdx]
-    ? Math.round(data.hourly.visibility[visibilityIdx] / 1000)
-    : null;
-
-  const metrics = [
-    { icon: Droplets, label: "Nem", value: `%${data.current.relative_humidity_2m}` },
-    { icon: Wind, label: "Rüzgar", value: `${Math.round(data.current.wind_speed_10m)} km/sa` },
-    { icon: Thermometer, label: "Hissedilen", value: `${Math.round(data.current.apparent_temperature)}°C` },
-    ...(visibilityKm !== null ? [{ icon: Eye, label: "Görüş", value: `${visibilityKm} km` }] : []),
-  ];
+  // `toLocaleDateString` timeZone verilmeden çağrılırsa sunucunun kendi saat
+  // dilimini (Vercel'de UTC) kullanır — Türkiye saatiyle UTC arasındaki 3
+  // saatlik fark, gece yarısına yakın saatlerde bir gün geride/ileride
+  // yanlış tarih gösterilmesine yol açıyordu (bkz. teslim raporu).
+  const today = formatIstanbulDateLabel(new Date(), { day: "numeric", month: "long" });
+  const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+  const minTemp = Math.round(data.daily.temperature_2m_min[0]);
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white">
-      {/* Üst: tarih + konum + büyük sıcaklık */}
-      <div className="bg-gradient-to-br from-navy to-navy-dark p-5 text-white">
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <p className="text-sm font-semibold">Hava Durumu</p>
-            <p className="text-xs text-white/60">{today}</p>
-          </div>
-          <span className="flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold">
-            <MapPin className="h-3 w-3" /> Gölbaşı, Ankara
+    <div className="card-shadow flex h-full flex-col gap-3 rounded-2xl bg-white p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-navy/10 text-sm">
+            <CurrentIcon className="h-3.5 w-3.5 text-navy" />
           </span>
+          <span className="text-xs font-bold uppercase tracking-wide text-navy">Hava Durumu</span>
         </div>
+        <span className="text-[11px] font-semibold text-ink/40">{today}</span>
+      </div>
 
-        <div className="flex items-center gap-3">
-          <CurrentIcon className="h-12 w-12 text-gold" />
-          <div>
-            <p className="font-display text-4xl font-extrabold leading-none">
-              {Math.round(data.current.temperature_2m)}°C
-            </p>
-            <p className="mt-1 text-sm text-white/70">{current.label}</p>
-          </div>
+      <div className="flex items-center gap-3">
+        <CurrentIcon className="h-9 w-9 shrink-0 text-gold-dark" />
+        <div className="min-w-0">
+          <p className="font-display text-2xl font-extrabold leading-none text-navy">
+            {Math.round(data.current.temperature_2m)}°C
+          </p>
+          <p className="mt-1 truncate text-xs text-ink/55">
+            {current.label} · {maxTemp}° / {minTemp}°
+          </p>
         </div>
       </div>
 
-      {/* Metrikler */}
-      <div className="grid grid-cols-2 gap-3 border-b border-line px-5 py-4">
-        {metrics.map((m) => {
-          const Icon = m.icon;
-          return (
-            <div key={m.label} className="flex items-center gap-2">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bordo/10">
-                <Icon className="h-3.5 w-3.5 text-bordo" />
-              </span>
-              <div>
-                <p className="text-[11px] text-ink/45">{m.label}</p>
-                <p className="text-xs font-bold text-navy">{m.value}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 5 günlük tahmin */}
-      <div className="flex justify-between gap-1 px-5 py-4">
-        {data.daily.time.map((dateStr: string, i: number) => {
-          const day = weatherInfo(data.daily.weather_code[i]);
-          const DayIcon = day.Icon;
-          const dow = GUN_KISA[new Date(dateStr).getDay()];
-          const isToday = i === 0;
-          return (
-            <div
-              key={dateStr}
-              className={`flex flex-1 flex-col items-center gap-1.5 rounded-xl py-2 ${
-                isToday ? "bg-bordo/5" : ""
-              }`}
-            >
-              <span
-                className={`text-[11px] font-bold ${isToday ? "text-bordo" : "text-ink/50"}`}
-              >
-                {isToday ? "Bugün" : dow}
-              </span>
-              <DayIcon className="h-4 w-4 text-navy/60" />
-              <span className="text-xs font-bold text-navy">
-                {Math.round(data.daily.temperature_2m_max[i])}°
-              </span>
-              <span className="text-[11px] text-ink/40">
-                {Math.round(data.daily.temperature_2m_min[i])}°
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      <p className="mt-auto border-t border-line pt-2.5 text-[11px] text-ink/40">Gölbaşı, Ankara</p>
     </div>
   );
 }

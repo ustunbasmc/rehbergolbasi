@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
-import NobetciEczaneWidget from "@/components/NobetciEczaneWidget";
 import OpenRestaurantsWidget from "@/components/OpenRestaurantsWidget";
 import AnnouncementSlider from "@/components/AnnouncementSlider";
 import WeatherWidget from "@/components/WeatherWidget";
+import EzanVakitleriCard from "@/components/EzanVakitleriCard";
+import NobetciEczaneMiniCard, { type MiniPharmacy } from "@/components/NobetciEczaneMiniCard";
 import {
   Search,
   MapPin,
@@ -12,38 +13,31 @@ import {
   Sparkles,
   Star,
   BookOpen,
-  Building2,
-  Hash,
   Clock,
-  Phone,
-  MessageCircle,
-  UtensilsCrossed,
   Pill,
   Bus,
-  Landmark,
-  Plus,
   Car,
   Newspaper,
+  ArrowRight,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CategoryGrid, { type CategoryWithBusinesses } from "@/components/CategoryGrid";
 import BusinessCard from "@/components/BusinessCard";
 import GundemCard, { type GundemCardData } from "@/components/GundemCard";
-import GundemHeroSlider from "@/components/GundemHeroSlider";
 import { getOpenStatus } from "@/lib/openingHours";
-import type { OpeningHours } from "@/lib/types";
+import type { Business, OpeningHours } from "@/lib/types";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
+import { getIstanbulDateString } from "@/lib/timezone";
 
 export const revalidate = 60;
 
-const HIZLI_ERISIM = [
-  { href: "/isletmeler", label: "İşletmeler", icon: Building2, bg: "bg-bordo/10", color: "text-bordo" },
-  { href: "/taksi", label: "Taksi Çağır", icon: Car, bg: "bg-gold/15", color: "text-gold-dark" },
-  { href: "/nobetci-eczane", label: "Nöbetçi Eczane", icon: Pill, bg: "bg-green-500/10", color: "text-green-600" },
-  { href: "/otobus-saatleri", label: "Otobüs Saatleri", icon: Bus, bg: "bg-navy/10", color: "text-navy" },
-  { href: "/isletmeler/resmi-kurumlar", label: "Resmi Kurumlar", icon: Landmark, bg: "bg-gold/15", color: "text-gold-dark" },
-  { href: "/rehberler", label: "Rehberler", icon: BookOpen, bg: "bg-purple-500/10", color: "text-purple-600" },
-  { href: "/isletme-ekle", label: "İşletmeni Ekle", icon: Plus, bg: "bg-bordo/10", color: "text-bordo" },
+const ARAMA_ORNEKLERI = ["taksi", "kuaför", "restoran", "oto kurtarma"];
+
+const HIZLI_EYLEMLER = [
+  { href: "/taksi", label: "Taksi", icon: Car, bg: "from-gold to-gold-dark" },
+  { href: "/nobetci-eczane", label: "Eczane", icon: Pill, bg: "from-green-500 to-green-600" },
+  { href: "/otobus-saatleri", label: "Otobüs", icon: Bus, bg: "from-navy to-navy-dark" },
+  { href: "/gundem", label: "Gündem", icon: Newspaper, bg: "from-bordo to-bordo-dark" },
 ];
 
 const HERO_GUVEN = [
@@ -51,6 +45,9 @@ const HERO_GUVEN = [
   { icon: ShieldCheck, title: "Kontrol Edilen Bilgiler", desc: "İletişim bilgileri ekip tarafından kontrol edilir" },
   { icon: Sparkles, title: "Temel Kayıt Ücretsiz", desc: "İşletmeni süresiz ücretsiz ekle" },
 ];
+
+const HOMEPAGE_DISCOVERY_COUNT = 6;
+const HOMEPAGE_CATEGORY_COUNT = 6;
 
 interface OpenNowBusiness {
   id: string;
@@ -63,6 +60,21 @@ interface OpenNowBusiness {
   tier: "basic" | "premium";
   is_featured: boolean;
 }
+
+/**
+ * Basit, hızlı, deterministik string hash (FNV-1a). Math.random() KULLANILMAZ —
+ * aynı gün içinde her istekte aynı "çeşitlilik" seçimi çıksın diye (SSR
+ * tutarlılığı, hydration hatası riski yok; her gün farklı işletmeler öne çıkar).
+ */
+function stableHash(input: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
 async function getLatestGuides() {
   const { data } = await supabase
     .from("guides")
@@ -73,8 +85,8 @@ async function getLatestGuides() {
     .limit(3);
   return data ?? [];
 }
-const HOMEPAGE_GUNDEM_HERO_COUNT = 5;
-const HOMEPAGE_GUNDEM_SMALL_CARD_COUNT = 4;
+
+const HOMEPAGE_GUNDEM_COUNT = 4;
 
 async function getLatestGundemPosts(): Promise<GundemCardData[]> {
   const { data } = await supabase
@@ -85,43 +97,34 @@ async function getLatestGundemPosts(): Promise<GundemCardData[]> {
     .lte("published_at", new Date().toISOString())
     .order("is_featured", { ascending: false })
     .order("published_at", { ascending: false })
-    .limit(HOMEPAGE_GUNDEM_HERO_COUNT + HOMEPAGE_GUNDEM_SMALL_CARD_COUNT);
+    .limit(HOMEPAGE_GUNDEM_COUNT);
   return (data ?? []) as unknown as GundemCardData[];
 }
 
 async function getData() {
-  const [{ data: allCategories }, { data: allBusinesses }, { data: featured }, { data: recent }, { data: tagLinks }] =
-    await Promise.all([
-      supabase.from("categories").select("*").order("display_order", { ascending: true }),
-      supabase
-        .from("businesses")
-        .select("id, name, slug, phone, tier, category_id, neighborhood, view_count")
-        .eq("status", "approved")
-        .eq("is_active", true)
-        .order("tier", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("businesses")
-        .select("*, category:categories(name, icon)")
-        .eq("status", "approved")
-        .eq("is_active", true)
-        .eq("is_featured", true)
-        .order("created_at", { ascending: false })
-        .limit(6),
-      supabase
-        .from("businesses")
-        .select("*, category:categories(name, icon)")
-        .eq("status", "approved")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(4),
-      supabase
-        .from("business_tags")
-        .select("tag:tags(id, name, slug), business:businesses(status, is_active)"),
-    ]);
+  const [{ data: allCategories }, { data: allBusinesses }, { data: featured }] = await Promise.all([
+    supabase.from("categories").select("*").order("display_order", { ascending: true }),
+    supabase
+      .from("businesses")
+      .select(
+        "id, name, slug, phone, whatsapp, lat, lng, tier, category_id, neighborhood, view_count, description, short_description, cover_image_url, is_featured, category:categories(name, icon)"
+      )
+      .eq("status", "approved")
+      .eq("is_active", true)
+      .order("tier", { ascending: false })
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("businesses")
+      .select("*, category:categories(name, icon)")
+      .eq("status", "approved")
+      .eq("is_active", true)
+      .eq("is_featured", true)
+      .order("created_at", { ascending: false })
+      .limit(6),
+  ]);
 
   const categories = allCategories ?? [];
-  const businesses = allBusinesses ?? [];
+  const businesses = (allBusinesses ?? []) as unknown as Business[];
 
   const topLevel = categories.filter((c) => !c.parent_id);
   const resmiKurumlarTop = topLevel.find((c) => c.slug === "resmi-kurumlar");
@@ -134,9 +137,9 @@ async function getData() {
   };
   const isResmiKurum = (categoryId: string) => excludedCategoryIds.has(categoryId);
 
-const commercialBusinesses = businesses.filter((b) => !isResmiKurum(b.category_id));
-const commercialFeatured = (featured ?? []).filter((b) => !isResmiKurum(b.category_id));
-const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_id));
+  const commercialBusinesses = businesses.filter((b) => !isResmiKurum(b.category_id));
+  const commercialFeatured = (featured ?? []).filter((b) => !isResmiKurum(b.category_id));
+
   const categoriesWithBusinesses: CategoryWithBusinesses[] = topLevel
     .map((cat) => {
       const inThisCategory = businesses.filter((b) => topIdFor(b.category_id) === cat.id);
@@ -146,9 +149,37 @@ const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_i
         businesses: inThisCategory.slice(0, 2),
       };
     })
-    // Ana sayfada yalnızca en az bir yayında işletmesi olan kategoriler görünür.
-    // /isletmeler sayfasında tüm kategoriler keşif amacıyla ayrıca listelenir.
-    .filter((cat) => cat.count > 0);
+    // Ana sayfada yalnızca en az bir yayında işletmesi olan kategoriler görünür,
+    // ve en kalabalık (en faydalı) 6 tanesi — tam liste /isletmeler'de filtrelerle.
+    .filter((cat) => cat.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, HOMEPAGE_CATEGORY_COUNT);
+
+  // Ana sayfa "Gölbaşı'nda Keşfet" — her üst kategoriden (en kalabalıktan başlayarak)
+  // güne göre kararlı, deterministik olarak seçilmiş TEK işletme; zaten "Öne Çıkan"
+  // bölümünde görünen işletmeler burada tekrar edilmez. Math.random() kullanılmaz.
+  const daySeed = getIstanbulDateString();
+  const featuredIds = new Set(commercialFeatured.map((b) => b.id));
+  const categoriesByCount = topLevel
+    .map((cat) => ({
+      cat,
+      count: commercialBusinesses.filter((b) => topIdFor(b.category_id) === cat.id).length,
+    }))
+    .filter((x) => x.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  const discoveryBusinesses: Business[] = [];
+  for (const { cat } of categoriesByCount) {
+    if (discoveryBusinesses.length >= HOMEPAGE_DISCOVERY_COUNT) break;
+    const candidates = commercialBusinesses.filter(
+      (b) => topIdFor(b.category_id) === cat.id && !featuredIds.has(b.id)
+    );
+    if (candidates.length === 0) continue;
+    const pick = [...candidates].sort(
+      (a, b) => stableHash(daySeed + a.id) - stableHash(daySeed + b.id)
+    )[0];
+    discoveryBusinesses.push(pick);
+  }
 
   const neighborhoodCounts = new Map<string, number>();
   businesses.forEach((b) => {
@@ -160,22 +191,6 @@ const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_i
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
-
-  const tagCounts = new Map<string, { name: string; slug: string; count: number }>();
-  (tagLinks ?? []).forEach((row) => {
-    const tag = row.tag as unknown as { id: string; name: string; slug: string } | null;
-    const business = row.business as unknown as { status: string; is_active: boolean } | null;
-    if (!tag || business?.status !== "approved" || !business?.is_active) return;
-    const existing = tagCounts.get(tag.id);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      tagCounts.set(tag.id, { name: tag.name, slug: tag.slug, count: 1 });
-    }
-  });
-  const popularTags = Array.from(tagCounts.values())
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
 
   const totalViews = businesses.reduce((sum, b) => sum + (b.view_count ?? 0), 0);
 
@@ -204,20 +219,20 @@ const commercialRecent = (recent ?? []).filter((b) => !isResmiKurum(b.category_i
   }
 
   return {
-  categories: categoriesWithBusinesses,
-  featured: commercialFeatured,
-  recent: commercialRecent,
-  neighborhoods,
-  popularTags,
-  openNowRestaurants,
-  stats: {
-    businessCount: commercialBusinesses.length,
-    categoryCount: topLevel.length - (resmiKurumlarTop ? 1 : 0),
-    neighborhoodCount: neighborhoodCounts.size,
-    totalViews,
-  },
-};
+    categories: categoriesWithBusinesses,
+    featured: commercialFeatured,
+    discoveryBusinesses,
+    neighborhoods,
+    openNowRestaurants,
+    stats: {
+      businessCount: commercialBusinesses.length,
+      categoryCount: topLevel.length - (resmiKurumlarTop ? 1 : 0),
+      neighborhoodCount: neighborhoodCounts.size,
+      totalViews,
+    },
+  };
 }
+
 async function getAnnouncements() {
   const { data } = await supabase
     .from("announcements")
@@ -227,7 +242,13 @@ async function getAnnouncements() {
   return data ?? [];
 }
 
-async function getNobetciEczaneler() {
+interface RawPharmacy {
+  id: string;
+  name: string;
+  phone: string;
+}
+
+async function getNobetciEczaneler(): Promise<MiniPharmacy[]> {
   try {
     const res = await fetch(
       "https://eczaneapi.com/api/v1/pharmacies/on-duty?city=ankara&district=golbasi",
@@ -237,11 +258,18 @@ async function getNobetciEczaneler() {
       }
     );
     const data = await res.json();
-    const today = new Date().toISOString().slice(0, 10);
+    // Türkiye takvim gününe göre eşleştir — `toISOString().slice(0,10)` UTC
+    // kullandığı için gece 00:00–02:59 arası "bugün" grubu bulunamıyordu
+    // (bkz. teslim raporu, aynı kök neden /nobetci-eczane sayfasında da düzeltildi).
+    const today = getIstanbulDateString();
     const todayGroup = (data?.data ?? []).find(
-      (g: { date: string; pharmacies: unknown[] }) => g.date === today
+      (g: { date: string; pharmacies: RawPharmacy[] }) => g.date === today
     );
-    return todayGroup?.pharmacies ?? [];
+    const rawPharmacies: RawPharmacy[] = todayGroup?.pharmacies ?? [];
+    // Ana sayfadaki mini kart adres alanını hiç göstermiyor (kaynak API'de şu
+    // anda tüm adresler doğrulanamıyor/bozuk — bkz. teslim raporu), bu yüzden
+    // yalnızca isim + telefon eşleniyor.
+    return rawPharmacies.map((p) => ({ id: p.id, name: p.name, phone: p.phone || null }));
   } catch {
     return [];
   }
@@ -252,85 +280,109 @@ export default async function HomePage() {
   const nobetciEczaneler = await getNobetciEczaneler();
   const announcements = await getAnnouncements();
   const latestGundemPosts = await getLatestGundemPosts();
-  const { categories, featured, recent, neighborhoods, popularTags, openNowRestaurants, stats } =
+  const { categories, featured, discoveryBusinesses, neighborhoods, openNowRestaurants } =
     await getData();
-  const gundemHeroSlides = latestGundemPosts.slice(0, HOMEPAGE_GUNDEM_HERO_COUNT);
-  const gundemSmallCards = latestGundemPosts.slice(HOMEPAGE_GUNDEM_HERO_COUNT, HOMEPAGE_GUNDEM_HERO_COUNT + HOMEPAGE_GUNDEM_SMALL_CARD_COUNT);
+
+  const hasEczaneMini = nobetciEczaneler.length > 0;
 
   return (
     <div>
-      {/* Hero — açık zemin, iki sütun (KP düzeni), sağda kendi göl fotoğrafımız */}
-      <section className="overflow-hidden bg-offwhite">
-        <div className="mx-auto max-w-6xl px-5 py-14 sm:px-6 sm:py-20">
-          <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
-            {/* Sol: başlık + arama */}
+      {/* Hero — kısa ve etkili: tek H1, öne çıkan arama, mobilde ilk ekranda arama+4 eylem */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-navy-dark">
+        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-bordo/25 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
+        <div className="relative mx-auto max-w-6xl px-5 pb-8 pt-6 sm:px-6 sm:pb-14 sm:pt-12">
+          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14">
+            {/* Sol: başlık + arama + hızlı eylemler (mobilde ilk viewport bu) */}
             <div>
-              <span className="mb-4 inline-block rounded-full bg-bordo/10 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-bordo">
+              <span className="mb-2 inline-block rounded-full bg-white/10 px-3 py-1 font-mono text-xs font-bold uppercase tracking-widest text-gold sm:mb-3">
                 Gölbaşı, Ankara
               </span>
-              <h1 className="font-display text-4xl font-extrabold leading-[1.1] text-navy sm:text-5xl">
+              <h1 className="font-display text-2xl font-extrabold leading-[1.15] text-white sm:text-4xl lg:text-5xl">
                 Gölbaşı&apos;nda ne ararsan,{" "}
-                <span className="text-bordo">komşundan komşuna</span> burada.
+                <span className="text-gold">komşundan komşuna</span> burada.
               </h1>
-              <p className="mt-5 max-w-md text-base text-ink/60">
-                Restorandan kuaföre, emlakçıdan tesisatçıya — güvenilir işletmeler tek adreste.
+              <p className="mt-2 max-w-md text-xs text-white/60 sm:mt-3 sm:text-base">
+                Restorandan kuaföre, taksiden nöbetçi eczaneye — ihtiyacın olan her şey tek adreste.
               </p>
 
               <form
                 action="/isletmeler"
-                className="mt-8 flex max-w-lg flex-col gap-2 rounded-2xl border border-line bg-white p-2 shadow-lg sm:flex-row"
+                className="mt-4 flex items-center gap-1.5 rounded-2xl bg-white p-1.5 shadow-2xl sm:mt-6 sm:max-w-lg sm:gap-2 sm:p-2"
               >
-                <div className="flex flex-1 items-center gap-2 px-3 py-2">
-                  <Search className="h-5 w-5 text-ink/40" />
+                <div className="flex min-w-0 flex-1 items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5">
+                  <Search className="h-4.5 w-4.5 shrink-0 text-ink/40 sm:h-5 sm:w-5" />
                   <input
                     type="text"
                     name="q"
                     placeholder="Restoran, kuaför, emlakçı ara..."
-                    className="w-full text-sm text-ink outline-none placeholder:text-ink/40"
+                    className="w-full min-w-0 text-sm text-ink outline-none placeholder:text-ink/40"
                   />
                 </div>
                 <button
                   type="submit"
-                  className="rounded-xl bg-bordo px-6 py-3 text-sm font-semibold text-white transition hover:bg-bordo-dark"
+                  aria-label="Ara"
+                  className="flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-bordo to-bordo-dark px-4 py-2.5 text-sm font-semibold text-white shadow-md transition hover:shadow-lg hover:brightness-110 active:scale-[0.97] sm:px-6 sm:py-3"
                 >
                   Ara
                 </button>
               </form>
 
-              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
-                  <Building2 className="h-4 w-4 text-bordo" /> {stats.businessCount}+ işletme
-                </span>
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
-                  <ShieldCheck className="h-4 w-4 text-bordo" /> Kontrol edilen işletme bilgileri
-                </span>
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink/50">
-                  <Sparkles className="h-4 w-4 text-bordo" /> Temel kayıt ücretsiz
-                </span>
+              <div className="mt-2.5 flex gap-1.5 overflow-x-auto [scrollbar-width:none] sm:flex-wrap [&::-webkit-scrollbar]:hidden">
+                {ARAMA_ORNEKLERI.map((ornek) => (
+                  <Link
+                    key={ornek}
+                    href={`/isletmeler?q=${encodeURIComponent(ornek)}`}
+                    className="shrink-0 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/80 backdrop-blur-sm transition hover:border-gold/40 hover:bg-white/15 hover:text-gold"
+                  >
+                    {ornek}
+                  </Link>
+                ))}
+              </div>
+
+              {/* 4 hızlı eylem — mobilde arama ile birlikte ilk ekranda görünür */}
+              <div className="mt-4 grid grid-cols-4 gap-2 sm:mt-6 sm:max-w-lg sm:gap-3">
+                {HIZLI_EYLEMLER.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="card-shadow-hover flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-2xl bg-white px-1 py-2 text-center shadow-lg transition active:scale-[0.97] sm:min-h-[76px] sm:gap-1.5 sm:py-3"
+                    >
+                      <span className={`flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br sm:h-10 sm:w-10 ${item.bg}`}>
+                        <Icon className="h-3.5 w-3.5 text-white sm:h-4.5 sm:w-4.5" />
+                      </span>
+                      <span className="whitespace-nowrap text-[11px] font-bold leading-tight text-navy sm:text-xs">
+                        {item.label}
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Sağ: göl fotoğrafı + taşan bilgi kartı */}
-            <div className="relative">
-              <div className="overflow-hidden rounded-3xl shadow-2xl">
+            {/* Sağ: göl fotoğrafı + güven kartı — yalnızca masaüstünde (mobilde eylemleri aşağı itmesin) */}
+            <div className="relative hidden lg:block">
+              <div className="overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
                 <Image
                   src="/hero-golbasi.jpg"
                   alt="Gölbaşı Gölü"
                   width={720}
                   height={520}
                   priority
-                  className="h-64 w-full object-cover sm:h-80 lg:h-96"
+                  className="h-96 w-full object-cover"
                 />
               </div>
 
-              <div className="relative z-10 -mt-12 ml-4 mr-4 rounded-2xl border border-line bg-white p-4 shadow-xl sm:-mt-14 sm:ml-8 sm:mr-8 sm:p-5">
+              <div className="relative z-10 -mt-14 ml-8 mr-8 rounded-2xl bg-white p-5 shadow-2xl">
                 <div className="flex flex-col gap-3.5">
                   {HERO_GUVEN.map((item) => {
                     const Icon = item.icon;
                     return (
                       <div key={item.title} className="flex items-center gap-3">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-bordo/10">
-                          <Icon className="h-4.5 w-4.5 text-bordo" />
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-bordo to-bordo-dark shadow-sm">
+                          <Icon className="h-4.5 w-4.5 text-white" />
                         </span>
                         <div>
                           <p className="text-sm font-bold text-navy">{item.title}</p>
@@ -346,98 +398,60 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Gölbaşı Gündem — arama alanının hemen altında, öne çıkan konum */}
-      {gundemHeroSlides.length > 0 && (
+      {/* Gölbaşı Gündem — kompakt akış, yalnızca küçük kartlar (büyük manşet yok) */}
+      {latestGundemPosts.length > 0 && (
         <section className="border-b border-line bg-white">
-          <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <div className="mb-1 flex items-center gap-1.5">
-                  <Newspaper className="h-4 w-4 text-bordo" />
-                  <span className="text-xs font-bold uppercase tracking-wide text-bordo">Gölbaşı Gündem</span>
-                </div>
-                <h2 className="font-display text-2xl font-bold text-navy">Gölbaşı&apos;ndan Son Dakika</h2>
-                <p className="text-sm text-ink/60">Haberler, belediye duyuruları ve yerel yaşamdan gelişmeler.</p>
+          <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="flex items-center gap-1.5">
+                <Newspaper className="h-4 w-4 text-bordo" />
+                <h2 className="font-display text-lg font-bold text-navy">Gölbaşı Gündem</h2>
               </div>
-              <Link href="/gundem" className="hidden text-sm font-semibold text-bordo hover:underline sm:block">
-                Tüm Gündemi Gör →
+              <Link href="/gundem" className="shrink-0 whitespace-nowrap text-sm font-semibold text-bordo hover:underline">
+                Tümü →
               </Link>
             </div>
-
-            {gundemHeroSlides.length === 1 ? (
-              <GundemCard post={gundemHeroSlides[0]} variant="hero" />
-            ) : (
-              <GundemHeroSlider slides={gundemHeroSlides} />
-            )}
-
-            {gundemSmallCards.length > 0 && (
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {gundemSmallCards.map((post) => (
-                  <GundemCard key={post.slug} post={post} variant="compact" />
-                ))}
-              </div>
-            )}
-
-            <Link href="/gundem" className="mt-5 block text-center text-sm font-semibold text-bordo hover:underline sm:hidden">
-              Tüm Gündemi Gör →
-            </Link>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {latestGundemPosts.map((post) => (
+                <GundemCard key={post.slug} post={post} variant="compact" />
+              ))}
+            </div>
           </div>
         </section>
       )}
 
-      {/* Hızlı Erişim */}
-      <section className="border-b border-line bg-white">
+      {/* Gölbaşı'nda Bugün — nöbetçi eczane, hava durumu, ezan vakitleri: tutarlı 3 mini kart */}
+      <section className="border-b border-line bg-offwhite">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
-          <h2 className="mb-1 font-display text-xl font-bold text-navy">Hızlı Erişim</h2>
-          <p className="mb-5 text-sm text-ink/60">Gölbaşı&apos;nda en çok aranan bilgilere tek tıkla ulaş.</p>
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-            {HIZLI_ERISIM.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="card-shadow flex flex-col items-center gap-2 rounded-2xl border border-line bg-white p-4 text-center transition hover:-translate-y-0.5 hover:border-bordo hover:shadow-md"
-                >
-                  <span className={`flex h-12 w-12 items-center justify-center rounded-full ${item.bg}`}>
-                    <Icon className={`h-5 w-5 ${item.color}`} />
-                  </span>
-                  <span className="text-xs font-bold leading-tight text-navy">{item.label}</span>
-                </Link>
-              );
-            })}
+          <div className="mb-5">
+            <span className="text-xs font-bold uppercase tracking-wide text-bordo">Güncel</span>
+            <h2 className="font-display text-2xl font-bold text-navy">Gölbaşı&apos;nda Bugün</h2>
+            <p className="text-sm text-ink/60">Nöbetçi eczane, hava durumu ve ezan vakitleri tek bakışta.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {hasEczaneMini && <NobetciEczaneMiniCard pharmacies={nobetciEczaneler} />}
+            <WeatherWidget />
+            <EzanVakitleriCard />
           </div>
         </div>
       </section>
 
-      {/* Duyurular + Hava Durumu */}
-      <section className="border-b border-line bg-offwhite">
-        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
-          {announcements.length > 0 ? (
-            <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      {/* Duyurular */}
+      {announcements.length > 0 && (
+        <section className="border-b border-line bg-white">
+          <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
+            <div className="mx-auto max-w-2xl">
               <AnnouncementSlider announcements={announcements} />
-              <WeatherWidget />
             </div>
-          ) : (
-            <div className="mx-auto max-w-sm">
-              <WeatherWidget />
-            </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
-    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
-        <div className="mb-20 grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <OpenRestaurantsWidget restaurants={openNowRestaurants} />
-          {nobetciEczaneler.length > 0 && (
-            <NobetciEczaneWidget eczaneler={nobetciEczaneler} />
-          )}
-        </div>
-
-        {/* Öne çıkanlar */}
+      <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
+        {/* Öne çıkanlar — ücretli öne çıkarma paketi, açıkça etiketli */}
         {featured.length > 0 && (
           <section className="mb-20">
-            <div className="mb-5 flex items-center justify-between">
+            <div className="mb-5 flex items-start justify-between gap-3">
               <div>
                 <div className="mb-1 flex items-center gap-1.5">
                   <Star className="h-4 w-4 fill-gold text-gold" />
@@ -448,49 +462,74 @@ export default async function HomePage() {
                 <h2 className="font-display text-2xl font-bold text-navy">Öne Çıkan İşletmeler</h2>
                 <p className="text-sm text-ink/60">Gölbaşı&apos;nın öne çıkan işletmeleri.</p>
               </div>
-              <Link href="/isletmeler" className="text-sm font-semibold text-bordo hover:underline">
+              <Link href="/isletmeler" className="shrink-0 whitespace-nowrap text-sm font-semibold text-bordo hover:underline">
                 Tümünü Gör →
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((b) => (
-                <BusinessCard key={b.id} business={b} />
+                <BusinessCard key={b.id} business={b} source="home" />
               ))}
             </div>
           </section>
         )}
 
-        {featured.length === 0 && (
-          <section className="mb-20 rounded-2xl border border-line bg-offwhite p-10 text-center">
+        {featured.length === 0 && discoveryBusinesses.length === 0 && (
+          <section className="card-shadow mb-20 rounded-2xl bg-offwhite p-10 text-center">
             <MapPin className="mx-auto mb-3 h-8 w-8 text-bordo" />
             <p className="font-display text-lg font-bold text-navy">Henüz onaylanmış işletme yok</p>
             <p className="mt-1 text-sm text-ink/60">Yakında Gölbaşı&apos;nın işletmeleri burada listelenecek.</p>
           </section>
         )}
 
-        {/* Yeni Eklenenler */}
-        {recent.length > 0 && (
+        {/* Gölbaşı'nda Keşfet — farklı kategorilerden çeşitli, kaliteli işletmeler (konum kullanılmadığı için "yakınında" değil) */}
+        {discoveryBusinesses.length > 0 && (
           <section className="mb-20">
-            <div className="mb-5 flex items-center gap-1.5">
-              <Clock className="h-4 w-4 text-bordo" />
-              <h2 className="font-display text-2xl font-bold text-navy">Yeni Eklenenler</h2>
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="font-display text-2xl font-bold text-navy">Gölbaşı&apos;nda Keşfet</h2>
+                <p className="text-sm text-ink/60">Farklı kategorilerden öne çıkan işletmeler.</p>
+              </div>
+              <Link href="/isletmeler" className="hidden text-sm font-semibold text-bordo hover:underline sm:block">
+                Tüm İşletmeleri Gör →
+              </Link>
             </div>
-            <p className="mb-5 text-sm text-ink/60">Gölbaşı&apos;na en son katılan işletmeler.</p>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {recent.map((b) => (
-                <BusinessCard key={b.id} business={b} />
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {discoveryBusinesses.map((b) => (
+                <BusinessCard key={b.id} business={b} source="home" />
               ))}
             </div>
+            <Link href="/isletmeler" className="mt-5 block text-center text-sm font-semibold text-bordo hover:underline sm:hidden">
+              Tüm İşletmeleri Gör →
+            </Link>
           </section>
+        )}
+
+        {/* Şu an açık restoranlar — yalnızca gerçekten açık olanlar (getOpenStatus zaten eksik/geçersiz saatleri hariç tutar) */}
+        {openNowRestaurants.length > 0 && (
+          <div className="mb-20">
+            <OpenRestaurantsWidget restaurants={openNowRestaurants} />
+          </div>
         )}
 
         {/* Kategoriler */}
         <section className="mb-20">
-          <h2 className="mb-1 font-display text-2xl font-bold text-navy">Kategoriler</h2>
-          <p className="mb-5 text-sm text-ink/60">
-            İhtiyacına göre bir kategori seç, örnek işletmeleri hemen ara.
-          </p>
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="font-display text-2xl font-bold text-navy">Kategoriler</h2>
+              <p className="text-sm text-ink/60">İhtiyacına göre bir kategori seç, örnek işletmeleri hemen ara.</p>
+            </div>
+            <Link href="/isletmeler" className="hidden items-center gap-1 text-sm font-semibold text-bordo hover:underline sm:flex">
+              Tüm Kategorileri Gör <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
           <CategoryGrid categories={categories} />
+          <Link
+            href="/isletmeler"
+            className="mt-5 flex items-center justify-center gap-1 text-sm font-semibold text-bordo hover:underline sm:hidden"
+          >
+            Tüm Kategorileri Gör <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </section>
 
         {/* Mahallelere Göre Gözat */}
@@ -503,7 +542,7 @@ export default async function HomePage() {
                 <Link
                   key={n.name}
                   href={`/isletmeler?q=${encodeURIComponent(n.name)}`}
-                  className="card-shadow flex flex-col items-center gap-1.5 rounded-2xl border border-line bg-white px-4 py-5 text-center transition-colors hover:border-bordo"
+                  className="card-shadow card-shadow-hover flex flex-col items-center gap-1.5 rounded-2xl bg-white px-4 py-5 text-center transition"
                 >
                   <MapPin className="h-5 w-5 text-bordo" />
                   <span className="font-display text-sm font-bold text-navy">{n.name}</span>
@@ -514,103 +553,75 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* Popüler Etiketler */}
-        {popularTags.length > 0 && (
+        {/* Son Rehberler */}
+        {latestGuides.length > 0 && (
           <section className="mb-20">
-            <h2 className="mb-1 font-display text-2xl font-bold text-navy">Popüler Etiketler</h2>
-            <p className="mb-5 text-sm text-ink/60">Aradığın şeye göre hızlıca filtrele.</p>
-            <div className="flex flex-wrap gap-2">
-              {popularTags.map((tag) => (
+            <div className="mb-6 flex items-start justify-between gap-3">
+              <div>
+                <div className="mb-1 flex items-center gap-1.5">
+                  <BookOpen className="h-4 w-4 text-bordo" />
+                  <span className="text-xs font-bold uppercase tracking-wide text-bordo">Rehberler</span>
+                </div>
+                <h2 className="font-display text-2xl font-bold text-navy">Gölbaşı Hakkında Her Şey</h2>
+                <p className="text-sm text-ink/60">Gölbaşı&apos;nda yaşamı kolaylaştıran rehber yazıları.</p>
+              </div>
+              <Link href="/rehberler" className="shrink-0 whitespace-nowrap text-sm font-semibold text-bordo hover:underline">
+                Tümünü Gör →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {latestGuides.map((guide) => (
                 <Link
-                  key={tag.slug}
-                  href={`/etiket/${tag.slug}`}
-                  className="flex items-center gap-1.5 rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-navy transition-colors hover:border-bordo hover:text-bordo"
+                  key={guide.id}
+                  href={`/rehberler/${guide.slug}`}
+                  className="card-shadow card-shadow-hover group flex flex-col overflow-hidden rounded-2xl bg-white transition"
                 >
-                  <Hash className="h-3.5 w-3.5 text-ink/40" /> {tag.name}
+                  <div className="relative h-44 w-full bg-offwhite">
+                    {guide.cover_image_url ? (
+                      <Image
+                        src={guide.cover_image_url}
+                        alt={guide.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <BookOpen className="h-8 w-8 text-ink/10" />
+                      </div>
+                    )}
+                    {guide.featured && (
+                      <span className="absolute left-3 top-3 rounded-full bg-gold px-2.5 py-1 text-xs font-bold text-gold-dark">
+                        Öne Çıkan
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-4">
+                    <h3 className="mb-2 font-display text-base font-bold text-navy transition-colors group-hover:text-bordo line-clamp-2">
+                      {guide.title}
+                    </h3>
+                    {guide.excerpt && (
+                      <p className="mb-3 flex-1 text-sm text-ink/60 line-clamp-2">{guide.excerpt}</p>
+                    )}
+                    <div className="flex items-center gap-1.5 text-xs text-ink/40">
+                      <Clock className="h-3.5 w-3.5" />
+                      {guide.read_time} dk okuma
+                    </div>
+                  </div>
                 </Link>
               ))}
             </div>
           </section>
         )}
-        {/* Son Rehberler */}
-{latestGuides.length > 0 && (
-  <section className="mb-20">
-    <div className="mb-6 flex items-center justify-between">
-      <div>
-        <div className="mb-1 flex items-center gap-1.5">
-          <BookOpen className="h-4 w-4 text-bordo" />
-          <span className="text-xs font-bold uppercase tracking-wide text-bordo">
-            Rehberler
-          </span>
-        </div>
-        <h2 className="font-display text-2xl font-bold text-navy">
-          Gölbaşı Hakkında Her Şey
-        </h2>
-        <p className="text-sm text-ink/60">
-          Gölbaşı'nda yaşamı kolaylaştıran rehber yazıları.
-        </p>
-      </div>
-      <Link
-        href="/rehberler"
-        className="text-sm font-semibold text-bordo hover:underline"
-      >
-        Tümünü Gör →
-      </Link>
-    </div>
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {latestGuides.map((guide) => (
-        <Link
-          key={guide.id}
-          href={`/rehberler/${guide.slug}`}
-          className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:shadow-lg"
-        >
-          <div className="relative h-44 w-full bg-offwhite">
-            {guide.cover_image_url ? (
-              <Image
-                src={guide.cover_image_url}
-                alt={guide.title}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition duration-300 group-hover:scale-105"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <BookOpen className="h-8 w-8 text-ink/10" />
-              </div>
-            )}
-            {guide.featured && (
-              <span className="absolute left-3 top-3 rounded-full bg-gold px-2.5 py-1 text-xs font-bold text-gold-dark">
-                Öne Çıkan
-              </span>
-            )}
-          </div>
-          <div className="flex flex-1 flex-col p-4">
-            <h3 className="mb-2 font-display text-base font-bold text-navy transition-colors group-hover:text-bordo line-clamp-2">
-              {guide.title}
-            </h3>
-            {guide.excerpt && (
-              <p className="mb-3 flex-1 text-sm text-ink/60 line-clamp-2">
-                {guide.excerpt}
-              </p>
-            )}
-            <div className="flex items-center gap-1.5 text-xs text-ink/40">
-              <Clock className="h-3.5 w-3.5" />
-              {guide.read_time} dk okuma
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  </section>
-)}
+
         {/* Nasıl çalışır */}
         <section className="mb-20 grid gap-6 sm:grid-cols-3">
           {[
             { title: "Kategori Seç", desc: "İhtiyacına uygun kategoriyi bul." },
             { title: "İşletmeyi İncele", desc: "Fotoğraf, konum ve iletişim bilgilerine bak." },
-            { title: "Direkt İletişime Geç", desc: "Telefon veya WhatsApp ile hemen ulaş." }
+            { title: "Direkt İletişime Geç", desc: "Telefon veya WhatsApp ile hemen ulaş." },
           ].map((step, i) => (
-            <div key={step.title} className="rounded-2xl border border-line p-6">
+            <div key={step.title} className="card-shadow rounded-2xl bg-white p-6">
               <span className="font-display text-3xl font-extrabold text-bordo/30">
                 {String(i + 1).padStart(2, "0")}
               </span>
@@ -620,20 +631,22 @@ export default async function HomePage() {
           ))}
         </section>
 
-        {/* İşletme daveti */}
-        <section className="rounded-2xl bg-bordo px-8 py-12 text-center text-white">
-          <h2 className="font-display text-2xl font-bold sm:text-3xl">
+        {/* İşletme daveti — sayfada tek CTA */}
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-bordo to-bordo-dark px-8 py-12 text-center text-white shadow-2xl">
+          <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-gold/20 blur-3xl" />
+          <h2 className="relative font-display text-2xl font-bold sm:text-3xl">
             İşletmen Gölbaşı&apos;nda mı? Ücretsiz listelen.
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-white/80">
+          <p className="relative mx-auto mt-3 max-w-md text-white/80">
             Temel işletme kaydı ücretsizdir. Dilersen RehberGölbaşı Plus&apos;a geçebilirsin —
             ilk 30 gün ücretsiz, sonra aylık 360 TL.
           </p>
           <Link
             href="/isletme-ekle"
-            className="mt-6 inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-bordo transition hover:bg-white/90"
+            className="relative mt-6 inline-block rounded-full bg-white px-6 py-3 text-sm font-semibold text-bordo shadow-lg transition hover:shadow-xl hover:brightness-95 active:scale-[0.98]"
           >
-            İşletmeni Ekle
+            İşletmeni gönder, profilini biz hazırlayalım
           </Link>
         </section>
       </div>
