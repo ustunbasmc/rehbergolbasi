@@ -108,7 +108,7 @@ export default function TagManager() {
 
   return (
     <div>
-      <div className="card-shadow mb-5 rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow mb-5 rounded-2xl bg-white p-5">
         <h3 className="mb-3 font-display text-base font-bold text-navy">Yeni Etiket Ekle</h3>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
@@ -142,7 +142,7 @@ export default function TagManager() {
           {filtered.map((tag) => (
             <div
               key={tag.id}
-              className="card-shadow rounded-xl border border-line bg-white px-4 py-3"
+              className="card-shadow rounded-xl bg-white px-4 py-3"
             >
               {editingId === tag.id ? (
                 <div className="flex flex-col gap-3">

@@ -58,7 +58,7 @@ export default function GundemReportsList() {
       ) : (
         <div className="flex flex-col gap-3">
           {reports.map((report) => (
-            <div key={report.id} className="rounded-2xl border border-line bg-white p-4">
+            <div key={report.id} className="card-shadow rounded-2xl bg-white p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-semibold text-navy">{report.post?.title ?? "Haber silinmiş"}</p>

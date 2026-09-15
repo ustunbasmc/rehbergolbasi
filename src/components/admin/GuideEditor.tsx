@@ -220,7 +220,7 @@ export default function GuideEditor({
           </div>
 
           {/* SEO */}
-          <div className="rounded-lg border border-line bg-offwhite p-4">
+          <div className="card-shadow rounded-lg bg-offwhite p-4">
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">SEO Ayarları</p>
             <div className="flex flex-col gap-3">
               <div>

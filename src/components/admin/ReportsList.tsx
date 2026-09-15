@@ -45,7 +45,7 @@ export default function ReportsList() {
 
   if (reports.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-white p-10 text-center text-ink/60">
+      <div className="card-shadow rounded-2xl bg-white p-10 text-center text-ink/60">
         Bekleyen bildirim yok.
       </div>
     );
@@ -59,7 +59,7 @@ export default function ReportsList() {
         return (
           <div
             key={report.id}
-            className="card-shadow rounded-xl border border-line bg-white p-4"
+            className="card-shadow rounded-xl bg-white p-4"
           >
             <div className="mb-2 flex items-start justify-between gap-3">
               <div>

@@ -120,7 +120,7 @@ export default function SubmissionsList() {
       {loading ? (
         <p className="text-ink/50">Yükleniyor...</p>
       ) : submissions.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+        <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
           Sonuç bulunamadı.
         </div>
       ) : (
@@ -129,7 +129,7 @@ export default function SubmissionsList() {
             <button
               key={s.id}
               onClick={() => setSelected(s)}
-              className="card-shadow flex flex-col gap-2 rounded-xl border border-line bg-white px-4 py-3 text-left transition hover:border-bordo/40 sm:flex-row sm:items-center sm:justify-between"
+              className="card-shadow card-shadow-hover flex flex-col gap-2 rounded-xl bg-white px-4 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">

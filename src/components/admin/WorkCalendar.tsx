@@ -100,7 +100,7 @@ export default function WorkCalendar() {
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
       {/* Takvim */}
-      <div className="card-shadow flex-1 rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow flex-1 rounded-2xl bg-white p-5">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="font-display text-base font-bold text-navy">
             {MONTHS[month]} {year}
@@ -180,7 +180,7 @@ export default function WorkCalendar() {
       </div>
 
       {/* Seçili gün detayı */}
-      <div className="card-shadow w-full rounded-2xl border border-line bg-white p-5 lg:w-80">
+      <div className="card-shadow w-full rounded-2xl bg-white p-5 lg:w-80">
         <div className="mb-3 flex items-center gap-1.5">
           <CalendarIcon className="h-4 w-4 text-bordo" />
           <h3 className="text-sm font-bold text-navy">

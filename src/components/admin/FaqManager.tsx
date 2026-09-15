@@ -106,7 +106,7 @@ export default function FaqManager({ businessId }: { businessId: string }) {
       ) : (
         <div className="flex flex-col gap-3">
           {faqs.map((faq, index) => (
-            <div key={faq.id} className="rounded-lg border border-line bg-offwhite p-3">
+            <div key={faq.id} className="card-shadow rounded-lg bg-offwhite p-3">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
                   <button

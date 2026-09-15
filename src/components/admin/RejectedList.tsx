@@ -46,7 +46,7 @@ export default function RejectedList() {
 
   if (rejected.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-white p-10 text-center text-ink/60">
+      <div className="card-shadow rounded-2xl bg-white p-10 text-center text-ink/60">
         Reddedilen başvuru yok.
       </div>
     );
@@ -57,7 +57,7 @@ export default function RejectedList() {
       {rejected.map((b) => (
         <div
           key={b.id}
-          className="card-shadow flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3"
+          className="card-shadow flex items-center justify-between rounded-xl bg-white px-4 py-3"
         >
           <div>
             <h3 className="font-display text-base font-bold text-navy">{b.name}</h3>

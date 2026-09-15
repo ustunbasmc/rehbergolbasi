@@ -135,7 +135,7 @@ export default function ProspectsList() {
       {/* Hızlı ekleme formu */}
       <form
         onSubmit={handleAdd}
-        className="card-shadow mb-6 flex flex-col gap-3 rounded-2xl border border-line bg-white p-5"
+        className="card-shadow mb-6 flex flex-col gap-3 rounded-2xl bg-white p-5"
       >
         <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-navy">
           <Plus className="h-3.5 w-3.5" /> Hızlı Ekle
@@ -200,7 +200,7 @@ export default function ProspectsList() {
       {loading ? (
         <p className="text-ink/50">Yükleniyor...</p>
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+        <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
           {filter === "hepsi"
             ? "Henüz potansiyel işletme eklemedin. Yukarıdaki formla hızlıca ekleyebilirsin."
             : "Bu durumda kayıt yok."}
@@ -214,7 +214,7 @@ export default function ProspectsList() {
             return (
               <div
                 key={p.id}
-                className="card-shadow flex flex-col gap-3 rounded-xl border border-line bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+                className="card-shadow flex flex-col gap-3 rounded-xl bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">

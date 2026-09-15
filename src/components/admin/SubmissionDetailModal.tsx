@@ -307,7 +307,7 @@ export default function SubmissionDetailModal({
               </div>
             )}
 
-            <div className="rounded-lg border border-line p-4">
+            <div className="card-shadow rounded-lg bg-white p-4">
               <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink/40">Durum</p>
               <select
                 value={status}

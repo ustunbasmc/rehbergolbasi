@@ -628,7 +628,7 @@ export default function GundemEditor({ post, initialTagIds, initialBusinessIds, 
             </p>
           </div>
 
-          <div className="rounded-lg border border-line bg-offwhite p-4">
+          <div className="card-shadow rounded-lg bg-offwhite p-4">
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">Kaynak ve Doğruluk</p>
             <div className="flex flex-col gap-3">
               <div>
@@ -663,7 +663,7 @@ export default function GundemEditor({ post, initialTagIds, initialBusinessIds, 
           </div>
 
           {isEdit && (
-            <div className="rounded-lg border border-line bg-offwhite p-4">
+            <div className="card-shadow rounded-lg bg-offwhite p-4">
               <label className="flex items-center gap-2 text-sm font-semibold text-navy">
                 <input type="checkbox" checked={markCorrection} onChange={(e) => setMarkCorrection(e.target.checked)} />
                 Bu kaydetme önemli bir düzeltme içeriyor (yazım hatası değil, haberin anlamını değiştiren bir bilgi)
@@ -680,7 +680,7 @@ export default function GundemEditor({ post, initialTagIds, initialBusinessIds, 
             </div>
           )}
 
-          <div className="rounded-lg border border-line bg-offwhite p-4">
+          <div className="card-shadow rounded-lg bg-offwhite p-4">
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">SEO Ayarları</p>
             <div className="flex flex-col gap-3">
               <div>

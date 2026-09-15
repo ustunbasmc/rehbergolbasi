@@ -74,9 +74,9 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-line bg-white">
+    <div className="card-shadow overflow-hidden rounded-2xl bg-white">
       <div className="flex items-center gap-3 border-b border-line bg-offwhite px-5 py-3.5">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-bordo">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-bordo to-bordo-dark text-white shadow-sm">
           <Icon className="h-4 w-4" />
         </span>
         <div>
@@ -387,7 +387,7 @@ const completionScore = Math.round(
           Bu form üzerinden eklenen işletme direkt onaylı ve yayında olarak kaydedilir.
         </p>
       </div>
-<div className="rounded-2xl border border-line bg-white p-4">
+<div className="card-shadow rounded-2xl bg-white p-4">
   <div className="mb-2 flex items-center justify-between">
     <div className="flex items-center gap-1.5">
       <Gauge className="h-4 w-4 text-bordo" />
@@ -785,7 +785,7 @@ const completionScore = Math.round(
         </button>
         <div className="flex flex-col gap-3">
           {faqs.map((faq, i) => (
-            <div key={i} className="rounded-lg border border-line bg-offwhite p-3">
+            <div key={i} className="card-shadow rounded-lg bg-offwhite p-3">
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-semibold text-ink/50">Soru {i + 1}</span>
                 <button type="button" onClick={() => removeFaq(i)} className="text-ink/40 hover:text-bordo">

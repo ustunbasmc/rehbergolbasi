@@ -45,7 +45,7 @@ export default function ContactRequestsList() {
 
   if (requests.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-white p-10 text-center text-ink/60">
+      <div className="card-shadow rounded-2xl bg-white p-10 text-center text-ink/60">
         Bekleyen talep yok.
       </div>
     );
@@ -54,7 +54,7 @@ export default function ContactRequestsList() {
   return (
     <div className="flex flex-col gap-3">
       {requests.map((req) => (
-        <div key={req.id} className="card-shadow rounded-xl border border-line bg-white p-4">
+        <div key={req.id} className="card-shadow rounded-xl bg-white p-4">
           <div className="mb-2 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-1.5">

@@ -184,7 +184,7 @@ export default function WorkOrdersList() {
 </div>
 
       {showNewForm && (
-        <div className="mb-6 rounded-2xl border border-line bg-offwhite p-5">
+        <div className="card-shadow mb-6 rounded-2xl bg-offwhite p-5">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-bold text-navy">Yeni İş Ekle</p>
             <button onClick={() => setShowNewForm(false)} className="text-ink/40 hover:text-ink">
@@ -260,15 +260,15 @@ export default function WorkOrdersList() {
             const isExpanded = expandedId === order.id;
 
             return (
-              <div key={order.id} className="overflow-hidden rounded-2xl border border-line bg-white">
+              <div key={order.id} className="card-shadow card-shadow-hover overflow-hidden rounded-2xl bg-white transition">
                 <button
                   onClick={() => setExpandedId(isExpanded ? null : order.id)}
                   className="flex w-full items-center justify-between gap-3 p-4 text-left"
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <span
-                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${
-                        order.status === "completed" ? "bg-green-50 text-green-600" : "bg-bordo/10 text-bordo"
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm ${
+                        order.status === "completed" ? "bg-gradient-to-br from-green-500 to-green-600" : "bg-gradient-to-br from-bordo to-bordo-dark"
                       }`}
                     >
                       <Briefcase className="h-4.5 w-4.5" />

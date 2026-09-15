@@ -73,8 +73,8 @@ export default function PaymentsList() {
   return (
     <div>
       <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="card-shadow flex items-center gap-3 rounded-2xl border border-line bg-white p-5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-navy/5 text-navy">
+        <div className="card-shadow flex items-center gap-3 rounded-2xl bg-white p-5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-navy to-navy-dark text-white shadow-sm">
             <Wallet className="h-5 w-5" />
           </span>
           <div>
@@ -82,8 +82,8 @@ export default function PaymentsList() {
             <p className="font-display text-2xl font-bold text-navy">{formatCurrency(monthTotal)}</p>
           </div>
         </div>
-        <div className="card-shadow flex items-center gap-3 rounded-2xl border border-line bg-white p-5">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gold/10 text-gold-dark">
+        <div className="card-shadow flex items-center gap-3 rounded-2xl bg-white p-5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-gold to-gold-dark text-white shadow-sm">
             <Wallet className="h-5 w-5" />
           </span>
           <div>
@@ -94,7 +94,7 @@ export default function PaymentsList() {
       </div>
 
       {payments.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+        <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
           Henüz kayıtlı ödeme yok.
         </div>
       ) : (
@@ -102,7 +102,7 @@ export default function PaymentsList() {
           {payments.map((p) => (
             <div
               key={p.id}
-              className="card-shadow flex flex-col gap-2 rounded-xl border border-line bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
+              className="card-shadow flex flex-col gap-2 rounded-xl bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <div>
                 {p.business ? (

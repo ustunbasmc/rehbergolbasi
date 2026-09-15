@@ -192,7 +192,7 @@ export default function GundemList() {
           {posts.map((post) => {
             const publiclyVisible = isGundemPostPublic(post);
             return (
-              <div key={post.id} className="flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 sm:flex-row sm:items-center">
+              <div key={post.id} className="card-shadow flex flex-col gap-3 rounded-2xl bg-white p-4 sm:flex-row sm:items-center">
                 {post.cover_image_url ? (
                   <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-offwhite">
                     {/* eslint-disable-next-line @next/next/no-img-element */}

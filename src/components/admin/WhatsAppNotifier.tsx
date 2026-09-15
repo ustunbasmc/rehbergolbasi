@@ -50,7 +50,7 @@ export default function WhatsAppNotifier({
     : null;
 
   return (
-    <div className="rounded-lg border border-line bg-offwhite p-3">
+    <div className="card-shadow rounded-lg bg-offwhite p-3">
       <div className="mb-2 flex items-center gap-1.5">
         <MessageCircle className="h-3.5 w-3.5 text-navy" />
         <p className="text-xs font-bold uppercase tracking-wide text-navy">

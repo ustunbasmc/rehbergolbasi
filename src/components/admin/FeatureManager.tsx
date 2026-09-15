@@ -102,7 +102,7 @@ export default function FeatureManager() {
 
   return (
     <div>
-      <div className="card-shadow mb-5 rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow mb-5 rounded-2xl bg-white p-5">
         <h3 className="mb-3 font-display text-base font-bold text-navy">Yeni Özellik Ekle</h3>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
@@ -129,7 +129,7 @@ export default function FeatureManager() {
           {features.map((feature) => (
             <div
               key={feature.id}
-              className="card-shadow flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3"
+              className="card-shadow flex items-center justify-between rounded-xl bg-white px-4 py-3"
             >
               {editingId === feature.id ? (
                 <div className="flex flex-1 items-center gap-2">

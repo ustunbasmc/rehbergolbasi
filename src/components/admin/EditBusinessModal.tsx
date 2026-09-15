@@ -375,8 +375,8 @@ export default function EditBusinessModal({
 
         <div className="flex flex-col gap-4">
           <div
-            className={`rounded-lg border p-3 ${
-              isActive ? "border-line bg-offwhite" : "border-bordo bg-bordo/5"
+            className={`rounded-lg p-3 ${
+              isActive ? "card-shadow bg-offwhite" : "border border-bordo bg-bordo/5"
             }`}
           >
             <div className="mb-2 flex items-center gap-1.5">
@@ -772,7 +772,7 @@ export default function EditBusinessModal({
             )}
           </div>
 
-          <div className="rounded-lg border border-line bg-offwhite p-3">
+          <div className="card-shadow rounded-lg bg-offwhite p-3">
             <div className="mb-2 flex items-center gap-1.5">
               <ShieldCheck className="h-3.5 w-3.5 text-navy" />
               <p className="text-xs font-bold uppercase tracking-wide text-navy">

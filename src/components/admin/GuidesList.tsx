@@ -103,7 +103,7 @@ export default function GuidesList() {
           {guides.map((guide) => (
             <div
               key={guide.id}
-              className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4"
+              className="card-shadow flex items-center gap-4 rounded-2xl bg-white p-4"
             >
               {guide.cover_image_url && (
                 <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-offwhite">

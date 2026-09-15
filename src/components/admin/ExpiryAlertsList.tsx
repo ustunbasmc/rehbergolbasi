@@ -54,7 +54,7 @@ export default function ExpiryAlertsList() {
 
   if (alerts.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+      <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
         Bekleyen süre uyarısı yok.
       </div>
     );
@@ -69,7 +69,7 @@ export default function ExpiryAlertsList() {
         return (
           <div
             key={a.id}
-            className={`card-shadow flex items-center justify-between gap-3 rounded-xl border border-line p-4 ${
+            className={`card-shadow flex items-center justify-between gap-3 rounded-xl p-4 ${
               isDeactivated ? "bg-navy" : "bg-white"
             }`}
           >

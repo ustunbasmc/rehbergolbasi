@@ -145,7 +145,7 @@ export default function ApprovedList({ categories }: { categories: Category[] })
       {loading ? (
         <p className="text-ink/50">Yükleniyor...</p>
       ) : visibleBusinesses.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+        <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
           Sonuç bulunamadı.
         </div>
       ) : (
@@ -154,7 +154,7 @@ export default function ApprovedList({ categories }: { categories: Category[] })
             <button
               key={b.id}
               onClick={() => setEditing(b)}
-              className="card-shadow flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3 text-left transition hover:border-bordo/40"
+              className="card-shadow card-shadow-hover flex items-center justify-between rounded-xl bg-white px-4 py-3 text-left transition"
             >
               <div>
                 <div className="flex items-center gap-2">

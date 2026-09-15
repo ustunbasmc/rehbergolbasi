@@ -181,7 +181,7 @@ export default function BusinessAnalytics() {
           { label: "Arama", value: totalPhone, icon: Phone },
           { label: "WhatsApp", value: totalWhatsApp, icon: MessageCircle },
         ].map((c) => (
-          <div key={c.label} className="card-shadow rounded-2xl border border-line bg-white p-4">
+          <div key={c.label} className="card-shadow rounded-2xl bg-white p-4">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-semibold text-ink/50">{c.label}</span>
               <c.icon className="h-4 w-4 text-bordo" />
@@ -192,7 +192,7 @@ export default function BusinessAnalytics() {
       </div>
 
       {/* Günlük trend grafiği */}
-      <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow rounded-2xl bg-white p-5">
         <h3 className="mb-4 text-sm font-bold text-navy">Günlük Trend</h3>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={dailyData}>
@@ -210,7 +210,7 @@ export default function BusinessAnalytics() {
 
       {/* Cihaz & Referrer grafikleri */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div className="card-shadow rounded-2xl bg-white p-5">
           <h3 className="mb-4 text-sm font-bold text-navy">Cihaz Dağılımı</h3>
           {deviceData.length > 0 ? (
             <ResponsiveContainer width="100%" height={180}>
@@ -243,7 +243,7 @@ export default function BusinessAnalytics() {
           </div>
         </div>
 
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div className="card-shadow rounded-2xl bg-white p-5">
           <h3 className="mb-4 text-sm font-bold text-navy">Trafik Kaynakları</h3>
           {referrerData.length > 0 ? (
             <ResponsiveContainer width="100%" height={180}>
@@ -262,7 +262,7 @@ export default function BusinessAnalytics() {
       </div>
 
       {/* İşletme bazlı tablo */}
-      <div className="card-shadow rounded-2xl border border-line bg-white">
+      <div className="card-shadow rounded-2xl bg-white">
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
           <Search className="h-4 w-4 text-ink/40" />
           <input

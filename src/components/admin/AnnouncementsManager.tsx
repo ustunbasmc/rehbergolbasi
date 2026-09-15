@@ -137,7 +137,7 @@ export default function AnnouncementsManager() {
         <p className="text-sm text-ink/50">Anasayfadaki duyuru slider&apos;ında gösterilecek içerikleri yönet.</p>
       </div>
 
-      <form onSubmit={handleAdd} className="flex flex-col gap-4 rounded-2xl border border-line bg-white p-5">
+      <form onSubmit={handleAdd} className="card-shadow flex flex-col gap-4 rounded-2xl bg-white p-5">
         <div>
           <label className={labelClass}>Başlık *</label>
           <input
@@ -201,7 +201,7 @@ export default function AnnouncementsManager() {
           <p className="text-sm text-ink/40">Henüz duyuru yok.</p>
         ) : (
           items.map((item, i) => (
-            <div key={item.id} className="flex items-center gap-3 rounded-xl border border-line bg-white p-3">
+            <div key={item.id} className="card-shadow flex items-center gap-3 rounded-xl bg-white p-3">
               <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-offwhite">
                 {item.image_url ? (
                   <Image src={item.image_url} alt={item.title} fill unoptimized className="object-cover" />

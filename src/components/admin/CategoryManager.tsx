@@ -155,7 +155,7 @@ export default function CategoryManager() {
 
   function renderEditForm(cat: Category) {
     return (
-      <div className="flex flex-col gap-3 rounded-xl border border-line bg-white px-4 py-3">
+      <div className="card-shadow flex flex-col gap-3 rounded-xl bg-white px-4 py-3">
         <div>
           <label className="mb-1 block text-xs font-semibold text-ink/50">Kategori adı</label>
           <input
@@ -214,8 +214,8 @@ export default function CategoryManager() {
     return (
       <div
         key={cat.id}
-        className={`card-shadow flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3 ${
-          indented ? "ml-6 border-dashed" : ""
+        className={`card-shadow flex items-center justify-between rounded-xl bg-white px-4 py-3 ${
+          indented ? "ml-6" : ""
         }`}
       >
         <div>
@@ -248,7 +248,7 @@ export default function CategoryManager() {
 
   return (
     <div>
-      <div className="card-shadow mb-5 rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow mb-5 rounded-2xl bg-white p-5">
         <h3 className="mb-3 font-display text-base font-bold text-navy">Yeni Kategori Ekle</h3>
         <div className="flex flex-col gap-3 sm:flex-row">
           <input
@@ -303,7 +303,7 @@ export default function CategoryManager() {
               ) : (
                 <div
                   key={cat.id}
-                  className="card-shadow flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3"
+                  className="card-shadow flex items-center justify-between rounded-xl bg-white px-4 py-3"
                 >
                   <div>
                     <span className="font-semibold text-navy">{categoryLabel(cat)}</span>

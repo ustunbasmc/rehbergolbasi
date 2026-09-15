@@ -121,10 +121,10 @@ export default function MessageTemplates() {
         {filtered.map((template, i) => {
           const originalIndex = TEMPLATES.indexOf(template);
           return (
-            <div key={template.title} className="rounded-2xl border border-line bg-white p-5">
+            <div key={template.title} className="card-shadow rounded-2xl bg-white p-5">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-bordo/10 text-bordo">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-bordo to-bordo-dark text-white shadow-sm">
                     <MessageCircle className="h-4 w-4" />
                   </span>
                   <div>

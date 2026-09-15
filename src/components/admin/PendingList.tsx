@@ -48,7 +48,7 @@ export default function PendingList() {
 
   if (pending.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+      <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
         Bekleyen başvuru yok.
       </div>
     );
@@ -57,7 +57,7 @@ export default function PendingList() {
   return (
     <div className="flex flex-col gap-4">
       {pending.map((b) => (
-        <div key={b.id} className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div key={b.id} className="card-shadow rounded-2xl bg-white p-5">
           <div className="mb-2">
             <h3 className="font-display text-lg font-bold text-navy">{b.name}</h3>
             <p className="font-mono text-xs text-ink/50">
