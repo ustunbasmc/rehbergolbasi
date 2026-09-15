@@ -7,7 +7,13 @@ import { getOpenStatus } from "@/lib/openingHours";
 import type { Business } from "@/lib/types";
 import { Clock } from "lucide-react";
 
-export default function CategoryResults({ businesses }: { businesses: Business[] }) {
+export default function CategoryResults({
+  businesses,
+  adSlot,
+}: {
+  businesses: Business[];
+  adSlot?: React.ReactNode;
+}) {
   const [openOnly, setOpenOnly] = useState(false);
 
   const filtered = useMemo(() => {
@@ -54,7 +60,11 @@ export default function CategoryResults({ businesses }: { businesses: Business[]
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((b) => (
+          {filtered.slice(0, 1).map((b) => (
+            <BusinessCard key={b.id} business={b} />
+          ))}
+          {adSlot}
+          {filtered.slice(1).map((b) => (
             <BusinessCard key={b.id} business={b} />
           ))}
         </div>

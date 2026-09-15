@@ -28,6 +28,7 @@ import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
 import GundemList from "@/components/admin/GundemList";
 import GundemReportsList from "@/components/admin/GundemReportsList";
 import AdSlotsManager from "@/components/admin/AdSlotsManager";
+import AdInquiriesList from "@/components/admin/AdInquiriesList";
 import {
   Clock,
   MessageSquareText,
@@ -76,7 +77,8 @@ export type Tab =
   | "announcements"
   | "gundem"
   | "gundem-reports"
-  | "ads";
+  | "ads"
+  | "ad-inquiries";
 
 interface Stats {
   pending: number;
@@ -85,6 +87,7 @@ interface Stats {
   expiryAlerts: number;
   newSubmissions: number;
   gundemReportsPending: number;
+  adInquiries: number;
 }
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
@@ -98,6 +101,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     expiryAlerts: 0,
     newSubmissions: 0,
     gundemReportsPending: 0,
+    adInquiries: 0,
   });
 
   const loadCategories = useCallback(async () => {
@@ -109,7 +113,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   const loadStats = useCallback(async () => {
-    const [pending, reports, requests, expiryAlerts, newSubmissions, gundemReportsPending] =
+    const [pending, reports, requests, expiryAlerts, newSubmissions, gundemReportsPending, adInquiries] =
       await Promise.all([
         supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("listing_reports").select("id", { count: "exact", head: true }),
@@ -117,6 +121,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         supabase.from("expiry_alerts").select("id", { count: "exact", head: true }),
         supabase.from("business_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
         supabase.from("gundem_reports").select("id", { count: "exact", head: true }).eq("status", "yeni"),
+        supabase.from("ad_inquiries").select("id", { count: "exact", head: true }),
       ]);
     setStats({
       pending: pending.count ?? 0,
@@ -125,6 +130,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       expiryAlerts: expiryAlerts.count ?? 0,
       newSubmissions: newSubmissions.count ?? 0,
       gundemReportsPending: gundemReportsPending.count ?? 0,
+      adInquiries: adInquiries.count ?? 0,
     });
   }, []);
 
@@ -181,6 +187,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "guides", label: "Rehberler", icon: BookOpen },
         { key: "announcements", label: "Duyurular", icon: Megaphone },
         { key: "ads", label: "Reklamlar", icon: BadgePercent },
+        { key: "ad-inquiries", label: "Reklam Talepleri", icon: Inbox, badge: stats.adInquiries },
         { key: "gundem", label: "Gölbaşı Gündem", icon: Newspaper },
         { key: "gundem-reports", label: "Gündem Bildirimleri", icon: Flag, badge: stats.gundemReportsPending },
         { key: "templates", label: "Mesaj Şablonları", icon: MessageSquareText },
@@ -281,6 +288,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "guides" && <GuidesList />}
           {tab === "announcements" && <AnnouncementsManager />}
           {tab === "ads" && <AdSlotsManager />}
+          {tab === "ad-inquiries" && <AdInquiriesList />}
           {tab === "gundem" && <GundemList />}
           {tab === "gundem-reports" && <GundemReportsList />}
           {tab === "requests" && <ContactRequestsList />}

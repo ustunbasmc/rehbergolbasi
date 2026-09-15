@@ -7,6 +7,7 @@ import WeatherWidget from "@/components/WeatherWidget";
 import EzanVakitleriCard from "@/components/EzanVakitleriCard";
 import NobetciEczaneMiniCard, { type MiniPharmacy } from "@/components/NobetciEczaneMiniCard";
 import HeroSearchArea from "@/components/HeroSearchArea";
+import AdSlot from "@/components/AdSlot";
 import {
   MapPin,
   ShieldCheck,
@@ -383,6 +384,8 @@ export default async function HomePage() {
       </section>
 
       <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
+        <AdSlot placement="home" variant="horizontal" className="mb-20" />
+
         {/* Öne çıkanlar — ücretli öne çıkarma paketi, açıkça etiketli */}
         {featured.length > 0 && (
           <section className="mb-20">

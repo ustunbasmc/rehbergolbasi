@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CategoryResults from "@/components/CategoryResults";
+import AdSlot from "@/components/AdSlot";
 import { getCategoryIcon } from "@/lib/categoryIcons";
 import type { Metadata } from "next";
 import type { Category } from "@/lib/types";
@@ -157,7 +158,10 @@ export default async function CategoryPage({
       )}
 
       <div className="mt-8">
-        <CategoryResults businesses={businesses} />
+        <CategoryResults
+          businesses={businesses}
+          adSlot={<AdSlot placement="isletmeler_list" variant="card" />}
+        />
       </div>
     </div>
   );

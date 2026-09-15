@@ -225,11 +225,11 @@ export default async function TaksiPage() {
       </p>
 
       <div className="mt-6">
-        <TaxiFinder initialTaxis={taxis} neighborhoods={neighborhoods} />
-      </div>
-
-      <div className="mt-6">
-        <AdSlot placement="taksi" />
+        <TaxiFinder
+          initialTaxis={taxis}
+          neighborhoods={neighborhoods}
+          adSlot={<AdSlot placement="taksi" variant="horizontal" className="mb-4" />}
+        />
       </div>
 
       {/* Hukuki/güven mesajı */}

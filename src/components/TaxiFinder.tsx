@@ -27,9 +27,11 @@ const LOCATION_ERROR_MESSAGES: Record<Exclude<LocationStatus, "idle" | "requesti
 export default function TaxiFinder({
   initialTaxis,
   neighborhoods,
+  adSlot,
 }: {
   initialTaxis: TaxiListing[];
   neighborhoods: string[];
+  adSlot?: React.ReactNode;
 }) {
   const [search, setSearch] = useState("");
   const [neighborhoodFilter, setNeighborhoodFilter] = useState<string>("all");
@@ -170,6 +172,8 @@ export default function TaxiFinder({
 
   return (
     <div>
+      {adSlot}
+
       {/* Konum + arama */}
       <div className="mb-4 flex flex-col gap-2.5">
         <div className="flex flex-col gap-2 sm:flex-row">

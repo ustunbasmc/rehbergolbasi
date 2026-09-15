@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import BusinessCard from "@/components/BusinessCard";
 import PageViewTracker from "@/components/PageViewTracker";
+import AdSlot from "@/components/AdSlot";
 import SearchFilters, { type SortOption } from "@/components/SearchFilters";
 import { getOpenStatus } from "@/lib/openingHours";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
@@ -143,7 +144,11 @@ export default async function BusinessesPage({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {businesses.map((b) => (
+          {businesses.slice(0, 1).map((b) => (
+            <BusinessCard key={b.id} business={b} />
+          ))}
+          <AdSlot placement="isletmeler_list" variant="card" />
+          {businesses.slice(1).map((b) => (
             <BusinessCard key={b.id} business={b} />
           ))}
         </div>

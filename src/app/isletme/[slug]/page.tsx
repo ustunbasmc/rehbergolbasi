@@ -366,12 +366,15 @@ export default async function BusinessPage({
               )}
             </div>
 
+            <AdSlot placement="business_detail_horizontal" variant="horizontal" />
+
             <MenuSection items={menuItems} />
             <FaqAccordion faqs={faqs} />
           </div>
 
           <div className="flex flex-col gap-5 lg:w-96">
             <WorkingHoursCard hours={business.opening_hours} />
+            <AdSlot placement="business_detail_square" variant="square" />
 
             <div className="card-shadow flex flex-col gap-2 rounded-2xl bg-white p-6">
               <h2 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink/40">
@@ -482,10 +485,6 @@ export default async function BusinessPage({
               </a>
             </div>
           </div>
-        </div>
-
-        <div className="mt-8">
-          <AdSlot placement="business_detail" />
         </div>
 
         {similar.length > 0 && (

@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { Clock, BookOpen } from "lucide-react";
+import AdSlot from "@/components/AdSlot";
 
 export const revalidate = 60;
 
@@ -115,6 +116,7 @@ export default async function RehberlerPage() {
                 <h2 className="mb-5 font-display text-xl font-bold text-navy">Tüm Rehberler</h2>
               )}
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <AdSlot placement="rehberler_list" variant="card" />
                 {rest.map((guide) => (
                   <Link
                     key={guide.id}

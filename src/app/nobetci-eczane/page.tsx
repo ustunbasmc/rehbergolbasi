@@ -242,7 +242,7 @@ export default async function NobetciEczanePage() {
 
         <aside className="hidden lg:block">
           <div className="sticky top-8 flex flex-col gap-4">
-            <AdSlot placement="nobetci_eczane" />
+            <AdSlot placement="nobetci_eczane" variant="square" />
 
             <div className="card-shadow rounded-2xl bg-white p-4">
               <p className="mb-3 text-[13px] font-semibold text-navy">Gölbaşı'nda faydalı bilgiler</p>

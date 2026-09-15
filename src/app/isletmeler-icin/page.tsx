@@ -369,6 +369,22 @@ export default async function IsletmelerIcinPage() {
         </div>
       </section>
 
+      {/* Reklam çapraz link */}
+      <section className="px-5 pb-20">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-line bg-offwhite px-6 py-6 text-center sm:flex sm:items-center sm:justify-between sm:text-left">
+          <p className="text-sm text-ink/70">
+            Profilinizi öne çıkarmanın ötesinde, sitenin en çok görüntülenen sayfalarında{" "}
+            <span className="font-bold text-navy">reklam alanı</span> kiralamak ister misiniz?
+          </p>
+          <Link
+            href="/reklam-ver"
+            className="mt-3 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-navy px-5 py-2.5 text-sm font-bold text-white transition hover:bg-navy-dark sm:mt-0"
+          >
+            Reklam Ver <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
     </div>
   );
 }

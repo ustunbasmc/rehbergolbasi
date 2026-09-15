@@ -88,6 +88,9 @@ export default function Footer() {
                 <Link href="/iletisim" className="text-white/75 transition-colors hover:text-white">
                   İletişim
                 </Link>
+                <Link href="/reklam-ver" className="text-white/75 transition-colors hover:text-white">
+                  Reklam Ver
+                </Link>
               </div>
             </div>
 

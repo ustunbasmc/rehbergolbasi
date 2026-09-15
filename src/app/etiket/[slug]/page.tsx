@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CategoryResults from "@/components/CategoryResults";
+import AdSlot from "@/components/AdSlot";
 import { Hash, Car, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -138,7 +139,10 @@ export default async function TagPage({
       )}
 
       <div className="mt-8">
-        <CategoryResults businesses={businesses} />
+        <CategoryResults
+          businesses={businesses}
+          adSlot={<AdSlot placement="isletmeler_list" variant="card" />}
+        />
       </div>
     </div>
   );

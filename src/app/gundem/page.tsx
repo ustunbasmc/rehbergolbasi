@@ -387,9 +387,7 @@ export default async function GundemPage({
         </div>
       )}
 
-      <div className="mt-10">
-        <AdSlot placement="gundem_list" />
-      </div>
+      <AdSlot placement="gundem_list" variant="horizontal" className="mt-10" />
 
       {isDefaultView && mostRead.length > 0 && (
         <div className="mt-12 border-t border-line pt-8">

@@ -310,7 +310,7 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
 
       {hasSidebarContent && (
         <aside className="mt-10 flex flex-col gap-4 lg:mt-0 lg:sticky lg:top-24 lg:self-start [grid-area:sidebar]">
-          <AdSlot placement="gundem_detail" />
+          <AdSlot placement="gundem_detail" variant="square" />
 
           {sidebarBusinesses.length > 0 && (
             <div className="card-shadow rounded-2xl bg-offwhite/60 p-4">

@@ -3,24 +3,18 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { Trash2, Upload, Eye, EyeOff, Megaphone, MousePointerClick } from "lucide-react";
+import { Trash2, Upload, Eye, EyeOff, Megaphone, MousePointerClick, Wallet } from "lucide-react";
+import { AD_PLACEMENTS, formatAdPrice, type AdPlacementKey } from "@/lib/adPlacements";
 
-type Placement =
-  | "gundem_list"
-  | "gundem_detail"
-  | "business_detail"
-  | "taksi"
-  | "nobetci_eczane"
-  | "otobus_saatleri";
+type Placement = AdPlacementKey;
 
-const PLACEMENT_LABELS: Record<Placement, string> = {
-  gundem_list: "Gündem Listesi",
-  gundem_detail: "Gündem Haber Detayı",
-  business_detail: "İşletme Detay Sayfası",
-  taksi: "Taksi Çağır Sayfası",
-  nobetci_eczane: "Nöbetçi Eczane Sayfası",
-  otobus_saatleri: "Otobüs Saatleri Sayfası",
-};
+const PLACEMENT_LABELS: Record<Placement, string> = Object.fromEntries(
+  AD_PLACEMENTS.map((p) => [p.key, `${p.label} (${p.pageLabel})`])
+) as Record<Placement, string>;
+
+const PLACEMENT_PRICES: Record<Placement, number> = Object.fromEntries(
+  AD_PLACEMENTS.map((p) => [p.key, p.priceMonthly])
+) as Record<Placement, number>;
 
 interface AdSlot {
   id: string;
@@ -35,6 +29,7 @@ interface AdSlot {
   display_order: number;
   impression_count: number;
   click_count: number;
+  price_monthly: number | null;
 }
 
 const inputClass =
@@ -75,6 +70,7 @@ export default function AdSlotsManager() {
   const [advertiserName, setAdvertiserName] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [placement, setPlacement] = useState<Placement>("gundem_detail");
+  const [priceMonthly, setPriceMonthly] = useState<string>(String(PLACEMENT_PRICES.gundem_detail));
   const [startsAt, setStartsAt] = useState(toDatetimeLocal(new Date().toISOString()));
   const [endsAt, setEndsAt] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -103,6 +99,7 @@ export default function AdSlotsManager() {
     setTitle("");
     setAdvertiserName("");
     setLinkUrl("");
+    setPriceMonthly(String(PLACEMENT_PRICES[placement]));
     setStartsAt(toDatetimeLocal(new Date().toISOString()));
     setEndsAt("");
     setImageFile(null);
@@ -154,6 +151,7 @@ export default function AdSlotsManager() {
       image_url: imageUrl,
       link_url: linkUrl.trim(),
       placement,
+      price_monthly: priceMonthly.trim() ? Number(priceMonthly) : null,
       starts_at: startsIso,
       ends_at: endsIso,
       is_active: true,
@@ -192,6 +190,21 @@ export default function AdSlotsManager() {
         </p>
       </div>
 
+      <div className="card-shadow rounded-2xl bg-white p-5">
+        <div className="mb-3 flex items-center gap-1.5">
+          <Wallet className="h-4 w-4 text-bordo" />
+          <h3 className="font-display text-base font-bold text-navy">Fiyat Referansı (Aylık)</h3>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {AD_PLACEMENTS.map((p) => (
+            <div key={p.key} className="flex items-center justify-between gap-2 rounded-lg bg-offwhite px-3 py-2 text-xs">
+              <span className="text-ink/70">{p.label}</span>
+              <span className="font-bold text-navy">{formatAdPrice(p.priceMonthly)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <form onSubmit={handleAdd} className="card-shadow flex flex-col gap-4 rounded-2xl bg-white p-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -228,7 +241,11 @@ export default function AdSlotsManager() {
           <label className={labelClass}>Yerleşim *</label>
           <select
             value={placement}
-            onChange={(e) => setPlacement(e.target.value as Placement)}
+            onChange={(e) => {
+              const next = e.target.value as Placement;
+              setPlacement(next);
+              setPriceMonthly(String(PLACEMENT_PRICES[next]));
+            }}
             className={inputClass}
           >
             {Object.entries(PLACEMENT_LABELS).map(([value, label]) => (
@@ -237,6 +254,17 @@ export default function AdSlotsManager() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className={labelClass}>Aylık Ücret (TL) — referans, düzenlenebilir</label>
+          <input
+            type="number"
+            min={0}
+            value={priceMonthly}
+            onChange={(e) => setPriceMonthly(e.target.value)}
+            className={inputClass}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -327,6 +355,11 @@ export default function AdSlotsManager() {
                     <span className="flex items-center gap-1">
                       <MousePointerClick className="h-3 w-3" /> {item.click_count}
                     </span>
+                    {item.price_monthly != null && (
+                      <span className="flex items-center gap-1 font-semibold text-navy">
+                        <Wallet className="h-3 w-3" /> {formatAdPrice(item.price_monthly)}/ay
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">

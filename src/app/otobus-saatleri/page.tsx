@@ -166,7 +166,7 @@ export default function OtobusSaatleriPage() {
 
         <aside className="hidden lg:block">
           <div className="sticky top-8 flex flex-col gap-4">
-            <AdSlot placement="otobus_saatleri" />
+            <AdSlot placement="otobus_saatleri" variant="square" />
 
             <div className="card-shadow rounded-2xl bg-white p-4">
               <p className="mb-3 text-[13px] font-semibold text-navy">Popüler hatlar</p>
