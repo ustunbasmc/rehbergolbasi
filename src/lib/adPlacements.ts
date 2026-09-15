@@ -16,6 +16,8 @@ export interface AdPlacementInfo {
   pageLabel: string;
   description: string;
   priceMonthly: number;
+  /** Önerilen görsel boyutu (px), AdSlot.tsx'teki ASPECT_BY_VARIANT ile birebir aynı orana denk gelir. */
+  imageSize: string;
 }
 
 /**
@@ -33,70 +35,80 @@ export const AD_PLACEMENTS: AdPlacementInfo[] = [
     label: "Ana Sayfa Banner",
     pageLabel: "Ana Sayfa",
     description: "Sitenin en çok ziyaret edilen sayfasında, geniş banner formatında.",
-    priceMonthly: 750,
+    priceMonthly: 1250,
+    imageSize: "1200 × 340 px (yatay banner)",
   },
   {
     key: "isletmeler_list",
     label: "İşletme Listesi",
     pageLabel: "İşletmeler, kategori ve etiket sayfaları",
     description: "İşletme kartlarıyla birebir aynı boyutta, listenin en üstünde doğal reklam.",
-    priceMonthly: 500,
+    priceMonthly: 850,
+    imageSize: "800 × 600 px (kart, 4:3)",
   },
   {
     key: "taksi",
     label: "Taksi Çağır Banner",
     pageLabel: "Taksi Çağır",
     description: "Sayfanın en üstünde, \"Konumumu Kullan\" butonunun üzerinde geniş banner.",
-    priceMonthly: 450,
+    priceMonthly: 750,
+    imageSize: "1200 × 340 px (yatay banner)",
   },
   {
     key: "gundem_list",
     label: "Gündem Listesi Banner",
     pageLabel: "Gölbaşı Gündem",
     description: "Haber akışının içinde geniş banner.",
-    priceMonthly: 400,
+    priceMonthly: 650,
+    imageSize: "1200 × 340 px (yatay banner)",
   },
   {
     key: "business_detail_horizontal",
     label: "İşletme Detayı — Yatay",
     pageLabel: "Tüm işletme detay sayfaları",
     description: "İşletme açıklamasının hemen altında geniş banner.",
-    priceMonthly: 400,
+    priceMonthly: 650,
+    imageSize: "1200 × 340 px (yatay banner)",
   },
   {
     key: "business_detail_square",
     label: "İşletme Detayı — Kare",
     pageLabel: "Tüm işletme detay sayfaları",
     description: "Çalışma saatleri kartının altında kare reklam.",
-    priceMonthly: 350,
+    priceMonthly: 550,
+    imageSize: "800 × 800 px (kare)",
   },
   {
     key: "gundem_detail",
     label: "Gündem Haber Detayı",
     pageLabel: "Gündem haber detay sayfaları",
     description: "Haber okunurken yan tarafta (kenar çubuğunda) kare reklam.",
-    priceMonthly: 300,
+    priceMonthly: 500,
+    imageSize: "800 × 800 px (kare)",
   },
   {
     key: "rehberler_list",
     label: "Rehberler Listesi",
     pageLabel: "Rehberler",
     description: "Rehber kartlarıyla aynı boyutta, listeye doğal karışan reklam.",
-    priceMonthly: 300,
+    priceMonthly: 450,
+    imageSize: "800 × 600 px (kart, 4:3)",
   },
   {
     key: "nobetci_eczane",
     label: "Nöbetçi Eczane",
     pageLabel: "Nöbetçi Eczane",
     description: "Sayfanın yan tarafında kare reklam.",
-    priceMonthly: 250,
+    priceMonthly: 400,
+    imageSize: "800 × 800 px (kare)",
   },
   {
     key: "otobus_saatleri",
     label: "Otobüs Saatleri",
     pageLabel: "Otobüs Saatleri",
     description: "Sayfanın yan tarafında kare reklam.",
-    priceMonthly: 250,
+    priceMonthly: 400,
+    imageSize: "800 × 800 px (kare)",
   },
 ];
 

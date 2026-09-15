@@ -16,6 +16,10 @@ const PLACEMENT_PRICES: Record<Placement, number> = Object.fromEntries(
   AD_PLACEMENTS.map((p) => [p.key, p.priceMonthly])
 ) as Record<Placement, number>;
 
+const PLACEMENT_IMAGE_SIZES: Record<Placement, string> = Object.fromEntries(
+  AD_PLACEMENTS.map((p) => [p.key, p.imageSize])
+) as Record<Placement, string>;
+
 interface AdSlot {
   id: string;
   title: string;
@@ -197,9 +201,12 @@ export default function AdSlotsManager() {
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {AD_PLACEMENTS.map((p) => (
-            <div key={p.key} className="flex items-center justify-between gap-2 rounded-lg bg-offwhite px-3 py-2 text-xs">
-              <span className="text-ink/70">{p.label}</span>
-              <span className="font-bold text-navy">{formatAdPrice(p.priceMonthly)}</span>
+            <div key={p.key} className="flex flex-col gap-0.5 rounded-lg bg-offwhite px-3 py-2 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-ink/70">{p.label}</span>
+                <span className="font-bold text-navy">{formatAdPrice(p.priceMonthly)}</span>
+              </div>
+              <span className="text-[11px] text-ink/40">{p.imageSize}</span>
             </div>
           ))}
         </div>
@@ -289,7 +296,9 @@ export default function AdSlotsManager() {
         </div>
 
         <div>
-          <label className={labelClass}>Görsel</label>
+          <label className={labelClass}>
+            Görsel <span className="font-normal text-ink/40">— önerilen boyut: {PLACEMENT_IMAGE_SIZES[placement]}</span>
+          </label>
           {imagePreview && (
             <div className="relative mb-2 h-32 w-full overflow-hidden rounded-xl bg-offwhite">
               <Image src={imagePreview} alt="Önizleme" fill unoptimized className="object-cover" />
@@ -344,7 +353,7 @@ export default function AdSlotsManager() {
                       {status.label}
                     </span>
                     <span className="truncate text-[11px] text-ink/40">
-                      {PLACEMENT_LABELS[item.placement]}
+                      {PLACEMENT_LABELS[item.placement]} · {PLACEMENT_IMAGE_SIZES[item.placement]}
                     </span>
                   </div>
                   <p className="truncate text-sm font-bold text-navy">{item.title}</p>
