@@ -212,10 +212,12 @@ async function getData() {
       .eq("is_active", true)
       .in("category_id", foodCategoryIds);
 
+    // 3'e sınırlandırıldı — ana sayfada bu kart, yanındaki duyuru alanıyla
+    // (16:9 görsel oranı) aynı yükseklikte kalması için (bkz. OpenRestaurantsWidget).
     openNowRestaurants = (foodBusinesses ?? [])
       .filter((b) => getOpenStatus(b.opening_hours as OpeningHours | null)?.isOpen)
       .sort((a, b) => Number(b.is_featured) - Number(a.is_featured))
-      .slice(0, 6);
+      .slice(0, 3);
   }
 
   return {
@@ -494,17 +496,24 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* Duyurular + Şu an açık restoranlar — duyuru 2 birim, restoranlar 1 birim genişlikte yan yana */}
+        {/* Duyurular + Şu an açık restoranlar — duyuru 2 birim, restoranlar 1 birim genişlikte yan yana.
+            Grid satırı her iki sütunu da eşit yükseklikte gerer (items-stretch); duyuru görseli kendi
+            en-boy oranıyla dikeyde ortalanır, restoran kartı ise iç boşluklarıyla o yüksekliği doldurur
+            (bkz. OpenRestaurantsWidget) — böylece sayı/oran ne olursa olsun ikisi de aynı yükseklikte görünür. */}
         {(announcements.length > 0 || openNowRestaurants.length > 0) && (
-          <div className="mb-20 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="mb-20 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3">
             {announcements.length > 0 && (
-              <div className={openNowRestaurants.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
+              <div
+                className={`flex h-full flex-col justify-center ${
+                  openNowRestaurants.length > 0 ? "lg:col-span-2" : "lg:col-span-3"
+                }`}
+              >
                 <AnnouncementSlider announcements={announcements} />
               </div>
             )}
             {/* Yalnızca gerçekten açık olanlar (getOpenStatus zaten eksik/geçersiz saatleri hariç tutar) */}
             {openNowRestaurants.length > 0 && (
-              <div className={announcements.length > 0 ? "lg:col-span-1" : "lg:col-span-3"}>
+              <div className={`h-full ${announcements.length > 0 ? "lg:col-span-1" : "lg:col-span-3"}`}>
                 <OpenRestaurantsWidget restaurants={openNowRestaurants} />
               </div>
             )}

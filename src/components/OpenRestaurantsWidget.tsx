@@ -23,7 +23,7 @@ export default function OpenRestaurantsWidget({
   restaurants: Restaurant[];
 }) {
   return (
-    <section className="overflow-hidden rounded-3xl bg-navy px-6 py-10 sm:px-10">
+    <section className="flex h-full flex-col overflow-hidden rounded-3xl bg-navy px-6 py-10 sm:px-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="mb-1 flex items-center gap-1.5">
@@ -42,7 +42,7 @@ export default function OpenRestaurantsWidget({
       </div>
 
       {restaurants.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="flex flex-1 flex-col justify-center gap-4">
           {restaurants.map((b) => (
             <div
               key={b.id}
@@ -107,7 +107,7 @@ export default function OpenRestaurantsWidget({
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl bg-white/10 p-6 text-center">
+        <div className="flex flex-1 items-center justify-center rounded-2xl bg-white/10 p-6 text-center">
           <p className="text-sm text-white/70">
             Şu an açık olan restoran bulunmuyor. Yakında yeni işletmeler açılınca burada listelenecek! 🍽️
           </p>
