@@ -56,13 +56,13 @@ export default function IsletmeEklePage() {
       {/* Content */}
       <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start">
         <div className="lg:flex-1 lg:max-w-2xl">
-          <div className="card-shadow rounded-2xl border border-line bg-white p-6 sm:p-8">
+          <div className="card-shadow rounded-2xl bg-white p-6 sm:p-8">
             <BusinessApplyForm />
           </div>
         </div>
 
         <div className="flex flex-col gap-4 lg:w-80">
-          <div className="card-shadow rounded-2xl border border-line bg-white p-6">
+          <div className="card-shadow rounded-2xl bg-white p-6">
             <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">
               Şimdi ne oluyor?
             </h2>
@@ -88,7 +88,7 @@ export default function IsletmeEklePage() {
             </ul>
           </div>
 
-          <div className="rounded-2xl border border-line bg-offwhite p-6">
+          <div className="card-shadow rounded-2xl bg-offwhite p-6">
             <div className="mb-2 flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-navy" />
               <p className="text-sm font-semibold text-navy">Bilgilerin güvende</p>

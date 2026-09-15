@@ -308,7 +308,7 @@ export default async function GundemPage({
       </div>
 
       {posts.length === 0 && heroCandidates.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-line bg-offwhite p-10 text-center">
+        <div className="card-shadow mt-8 rounded-2xl bg-offwhite p-10 text-center">
           <p className="text-sm text-ink/60">
             {params.q?.trim() || params.mahalle || activeCategory
               ? "Bu filtrelere uygun içerik bulunamadı. Farklı bir arama veya kategori deneyebilirsiniz."

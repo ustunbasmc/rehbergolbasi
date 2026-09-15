@@ -24,8 +24,8 @@ export default function HakkimizdaPage() {
       </p>
 
       <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bordo/10 text-bordo">
+        <div className="card-shadow rounded-2xl bg-white p-5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-bordo to-bordo-dark text-white shadow-sm">
             <MapPin className="h-4 w-4" />
           </span>
           <p className="mt-3 font-display text-lg font-bold text-navy">Sadece Gölbaşı</p>
@@ -33,8 +33,8 @@ export default function HakkimizdaPage() {
             Ankara&apos;nın her yerinden değil, sadece Gölbaşı&apos;ndan işletmeler.
           </p>
         </div>
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bordo/10 text-bordo">
+        <div className="card-shadow rounded-2xl bg-white p-5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-bordo to-bordo-dark text-white shadow-sm">
             <Users className="h-4 w-4" />
           </span>
           <p className="mt-3 font-display text-lg font-bold text-navy">Yerel Odaklı</p>
@@ -42,8 +42,8 @@ export default function HakkimizdaPage() {
             Büyük şehir platformlarının aksine, mahalle mahalle çalışıyoruz.
           </p>
         </div>
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-bordo/10 text-bordo">
+        <div className="card-shadow rounded-2xl bg-white p-5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-bordo to-bordo-dark text-white shadow-sm">
             <Heart className="h-4 w-4" />
           </span>
           <p className="mt-3 font-display text-lg font-bold text-navy">Esnafın Yanında</p>

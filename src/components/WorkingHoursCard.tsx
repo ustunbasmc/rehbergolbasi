@@ -12,7 +12,7 @@ export default function WorkingHoursCard({ hours }: { hours: OpeningHours | null
   if (!hours || !status) return null;
 
   return (
-    <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+    <div className="card-shadow rounded-2xl bg-white p-5">
       <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">
         Çalışma Saatleri
       </p>

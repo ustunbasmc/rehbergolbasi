@@ -10,7 +10,7 @@ export default function FaqAccordion({ faqs }: { faqs: BusinessFaq[] }) {
   if (faqs.length === 0) return null;
 
   return (
-    <div className="card-shadow rounded-2xl border border-line bg-white p-6">
+    <div className="card-shadow rounded-2xl bg-white p-6">
       <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">
         Sıkça Sorulan Sorular
       </h2>

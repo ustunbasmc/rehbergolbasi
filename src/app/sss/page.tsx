@@ -54,7 +54,7 @@ export default function SSSPage() {
         .
       </p>
 
-      <div className="card-shadow rounded-2xl border border-line bg-white p-2 sm:p-4">
+      <div className="card-shadow rounded-2xl bg-white p-2 sm:p-4">
         <div className="flex flex-col divide-y divide-line">
           {FAQS.map((faq, i) => {
             const isOpen = openIndex === i;

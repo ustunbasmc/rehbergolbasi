@@ -228,7 +228,7 @@ export default async function TaksiPage() {
       </div>
 
       {/* Hukuki/güven mesajı */}
-      <div className="mt-10 flex items-start gap-2.5 rounded-2xl border border-line bg-offwhite p-4 text-xs leading-relaxed text-ink/60">
+      <div className="card-shadow mt-10 flex items-start gap-2.5 rounded-2xl bg-offwhite p-4 text-xs leading-relaxed text-ink/60">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-ink/40" />
         <p>
           RehberGölbaşı bir taksi işletmesi veya yolculuk aracılık hizmeti değildir. Listelenen
@@ -291,7 +291,7 @@ export default async function TaksiPage() {
           <h2 className="mb-4 font-display text-xl font-bold text-navy">Gölbaşı Taksi Hakkında Sıkça Sorulan Sorular</h2>
           <div className="flex flex-col gap-2">
             {FAQS.map((faq, i) => (
-              <details key={i} className="group rounded-xl border border-line bg-white p-4">
+              <details key={i} className="card-shadow group rounded-xl bg-white p-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-navy">
                   {faq.q}
                   <ChevronDown className="h-4 w-4 shrink-0 text-ink/40 transition-transform group-open:rotate-180" />

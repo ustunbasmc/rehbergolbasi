@@ -36,7 +36,7 @@ export default function LocationPicker({
   const center: [number, number] = lat && lng ? [lat, lng] : GOLBASI_CENTER;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-line">
+    <div className="card-shadow overflow-hidden rounded-lg">
       <MapContainer center={center} zoom={lat && lng ? 15 : 13} style={{ height: "240px", width: "100%" }}>
         <TileLayer
           attribution='&copy; OpenStreetMap katkıda bulunanlar'

@@ -78,7 +78,7 @@ export default function TaxiCard({
     "flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-xl text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
-    <article className="card-shadow-hover flex flex-col overflow-hidden rounded-2xl border border-line bg-white">
+    <article className="card-shadow card-shadow-hover flex flex-col overflow-hidden rounded-2xl bg-white transition">
       <div className="flex items-start gap-3 p-4 pb-3">
         <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-offwhite">
           {taxi.cover_image_url ? (

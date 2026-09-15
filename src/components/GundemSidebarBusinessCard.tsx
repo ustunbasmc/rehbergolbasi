@@ -11,7 +11,7 @@ export default function GundemSidebarBusinessCard({ business }: { business: Gund
   const subtitle = business.neighborhood ?? business.category?.name ?? null;
 
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-line bg-white p-2 transition hover:border-bordo/30">
+    <div className="card-shadow card-shadow-hover flex items-center gap-2.5 rounded-xl bg-white p-2 transition">
       <Link
         href={`/isletme/${business.slug}`}
         onClick={() => trackBusinessEvent(business.id, "profile_click", "gundem_sidebar")}

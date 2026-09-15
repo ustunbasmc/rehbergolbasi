@@ -48,7 +48,7 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
   }, []);
 
   return (
-    <article id={`hat-${hat.no}`} className="scroll-mt-24 rounded-2xl border border-line bg-white p-4 transition hover:border-bordo/30 sm:p-5">
+    <article id={`hat-${hat.no}`} className="card-shadow card-shadow-hover scroll-mt-24 rounded-2xl bg-white p-4 transition sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className={`shrink-0 rounded-lg ${stil.bg} px-2.5 py-1.5 text-sm font-bold text-white`}>

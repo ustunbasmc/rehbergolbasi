@@ -390,7 +390,7 @@ export default function BusinessApplyForm() {
           bulunursa verdiğiniz iletişim numarası üzerinden sizinle iletişime geçeceğiz.
         </p>
 
-        <div className="mt-5 flex flex-col items-center gap-1 rounded-xl border border-line bg-offwhite px-6 py-4">
+        <div className="card-shadow mt-5 flex flex-col items-center gap-1 rounded-xl bg-offwhite px-6 py-4">
           <span className="text-xs font-semibold uppercase tracking-wide text-ink/40">
             Başvuru referansınız
           </span>

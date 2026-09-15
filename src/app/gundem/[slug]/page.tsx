@@ -263,7 +263,7 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
       )}
 
       {post.source_type !== "original" && post.source_name && (
-        <div className="mt-6 rounded-xl border border-line bg-offwhite p-4 text-sm text-ink/70">
+        <div className="card-shadow mt-6 rounded-xl bg-offwhite p-4 text-sm text-ink/70">
           <p className="mb-1 text-xs font-bold uppercase tracking-wide text-ink/40">
             {GUNDEM_SOURCE_TYPE_LABELS[post.source_type]}
           </p>
@@ -310,7 +310,7 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
       {hasSidebarContent && (
         <aside className="mt-10 lg:mt-0 lg:sticky lg:top-24 lg:self-start [grid-area:sidebar]">
           {sidebarBusinesses.length > 0 && (
-            <div className="rounded-2xl border border-line bg-offwhite/60 p-4">
+            <div className="card-shadow rounded-2xl bg-offwhite/60 p-4">
               <h2 className="mb-3 font-display text-base font-bold text-navy">Gölbaşı&apos;nda Keşfet</h2>
               <div className="flex flex-col gap-2">
                 {sidebarBusinesses.map((b) => (

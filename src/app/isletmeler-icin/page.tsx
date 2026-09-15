@@ -172,9 +172,9 @@ export default async function IsletmelerIcinPage() {
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((f) => (
-              <div key={f.title} className="rounded-2xl border border-line bg-white p-6 transition hover:shadow-md">
-                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-bordo/10">
-                  <f.icon className="h-5 w-5 text-bordo" />
+              <div key={f.title} className="card-shadow card-shadow-hover rounded-2xl bg-white p-6 transition">
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-bordo to-bordo-dark shadow-sm">
+                  <f.icon className="h-5 w-5 text-white" />
                 </div>
                 <h3 className="mb-2 font-display text-base font-bold text-navy">{f.title}</h3>
                 <p className="text-sm text-ink/60 leading-relaxed">{f.desc}</p>
@@ -218,7 +218,7 @@ export default async function IsletmelerIcinPage() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
             {/* Temel */}
-            <div className="rounded-2xl border border-line bg-white p-8">
+            <div className="card-shadow rounded-2xl bg-white p-8">
               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-ink/40">Temel Profil</p>
               <div className="mb-2 flex items-end gap-2">
                 <span className="font-display text-4xl font-bold text-navy">Ücretsiz</span>
@@ -289,7 +289,7 @@ export default async function IsletmelerIcinPage() {
             </div>
 
             {/* Öne Çıkan */}
-            <div className="relative rounded-2xl border border-line bg-white p-8">
+            <div className="card-shadow relative rounded-2xl bg-white p-8">
               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-ink/40">Öne Çıkan</p>
               <div className="mb-2 flex items-end gap-2">
                 <span className="font-display text-3xl font-bold text-navy">Özel Fiyat</span>
@@ -332,7 +332,7 @@ export default async function IsletmelerIcinPage() {
           </div>
           <div className="flex flex-col gap-4">
             {FAQS.map((faq) => (
-              <div key={faq.q} className="rounded-2xl border border-line bg-white p-6">
+              <div key={faq.q} className="card-shadow rounded-2xl bg-white p-6">
                 <h3 className="mb-2 font-display text-base font-bold text-navy">{faq.q}</h3>
                 <p className="text-sm text-ink/60 leading-relaxed">{faq.a}</p>
               </div>

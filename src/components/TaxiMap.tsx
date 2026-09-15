@@ -54,7 +54,7 @@ export default function TaxiMap({
   ];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-line">
+    <div className="card-shadow overflow-hidden rounded-2xl">
       <MapContainer
         center={points[0] ?? GOLBASI_CENTER}
         zoom={13}

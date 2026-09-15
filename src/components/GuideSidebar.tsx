@@ -74,7 +74,7 @@ function BusinessRow({ b }: { b: BizCard }) {
   return (
     <Link
       href={`/isletme/${b.slug}`}
-      className="group flex items-center gap-3 rounded-xl border border-line p-2 transition hover:border-bordo hover:shadow-sm"
+      className="card-shadow card-shadow-hover group flex items-center gap-3 rounded-xl p-2 transition"
     >
       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-offwhite">
         {b.cover_image_url ? (
@@ -118,7 +118,7 @@ export default async function GuideSidebar({
     <aside className="flex flex-col gap-5 lg:sticky lg:top-24 lg:w-80 lg:self-start">
       {/* Öne Çıkan İşletmeler */}
       {featured.length > 0 && (
-        <div className="card-shadow overflow-hidden rounded-2xl border border-line bg-white">
+        <div className="card-shadow overflow-hidden rounded-2xl bg-white">
           <div className="flex items-center gap-1.5 border-b border-line bg-gradient-to-r from-gold/10 to-transparent px-5 py-3.5">
             <Star className="h-4 w-4 fill-gold text-gold" />
             <h3 className="text-sm font-bold text-navy">Öne Çıkan İşletmeler</h3>
@@ -133,7 +133,7 @@ export default async function GuideSidebar({
 
       {/* Keşfet — Rastgele İşletmeler */}
       {discover.length > 0 && (
-        <div className="card-shadow overflow-hidden rounded-2xl border border-line bg-white">
+        <div className="card-shadow overflow-hidden rounded-2xl bg-white">
           <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
             <div className="flex items-center gap-1.5">
               <Shuffle className="h-4 w-4 text-bordo" />
@@ -173,7 +173,7 @@ export default async function GuideSidebar({
       </div>
 
       {/* Paylaş */}
-      <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow rounded-2xl bg-white p-5">
         <div className="mb-3 flex items-center gap-1.5">
           <Share2 className="h-4 w-4 text-bordo" />
           <h3 className="text-sm font-bold text-navy">Bu Rehberi Paylaş</h3>
@@ -182,7 +182,7 @@ export default async function GuideSidebar({
       </div>
 
       {/* Faydalı Bağlantılar */}
-      <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow rounded-2xl bg-white p-5">
         <h3 className="mb-3 text-sm font-bold text-navy">Faydalı Bağlantılar</h3>
         <div className="flex flex-col gap-1">
           <Link
@@ -208,7 +208,7 @@ export default async function GuideSidebar({
 
       {/* Diğer Rehberler */}
       {otherGuides.length > 0 && (
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div className="card-shadow rounded-2xl bg-white p-5">
           <div className="mb-3 flex items-center gap-1.5">
             <BookOpen className="h-4 w-4 text-bordo" />
             <h3 className="text-sm font-bold text-navy">Diğer Rehberler</h3>

@@ -16,7 +16,7 @@ export default function GuideTableOfContents({ headings }: { headings: Heading[]
   if (headings.length <= 2) return null;
 
   return (
-    <div className="mb-10 rounded-2xl border border-line bg-offwhite overflow-hidden">
+    <div className="card-shadow mb-10 rounded-2xl bg-offwhite overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between gap-3 px-6 py-4 text-left transition hover:bg-offwhite/80"

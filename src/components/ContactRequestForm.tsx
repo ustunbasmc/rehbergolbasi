@@ -39,7 +39,7 @@ export default function ContactRequestForm({ businessId }: { businessId: string 
   }
 
   return (
-    <div className="card-shadow rounded-2xl border border-line bg-white p-6">
+    <div className="card-shadow rounded-2xl bg-white p-6">
       <h2 className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink/40">
         <PhoneCall className="h-3.5 w-3.5" /> Sizi Arayalım
       </h2>

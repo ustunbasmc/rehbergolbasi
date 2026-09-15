@@ -106,7 +106,7 @@ export default function OtobusSaatleriPage() {
             href="https://www.ego.gov.tr/otobusnerede"
             target="_blank"
             rel="noopener noreferrer"
-            className="mb-4 flex items-center justify-between rounded-2xl border border-line bg-navy/[0.03] p-4"
+            className="card-shadow mb-4 flex items-center justify-between rounded-2xl bg-navy/[0.03] p-4"
           >
             <div>
               <p className="text-sm font-semibold text-navy">Canlı otobüs takibi</p>
@@ -146,7 +146,7 @@ export default function OtobusSaatleriPage() {
             <h2 className="mb-4 font-display text-xl font-bold text-navy">Sıkça sorulan sorular</h2>
             <div className="flex flex-col gap-2">
               {SSS.map((s, i) => (
-                <details key={i} className="group rounded-xl border border-line bg-white p-4">
+                <details key={i} className="card-shadow group rounded-xl bg-white p-4">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[14px] font-semibold text-navy">
                     {s.soru}
                     <ChevronDown className="h-4 w-4 shrink-0 text-ink/40 transition-transform group-open:rotate-180" />
@@ -165,7 +165,7 @@ export default function OtobusSaatleriPage() {
 
         <aside className="hidden lg:block">
           <div className="sticky top-8 flex flex-col gap-4">
-            <div className="rounded-2xl border border-line bg-white p-4">
+            <div className="card-shadow rounded-2xl bg-white p-4">
               <p className="mb-3 text-[13px] font-semibold text-navy">Popüler hatlar</p>
               <ul className="flex flex-col gap-2">
                 {POPULER_HATLAR.map((h) => (
@@ -184,7 +184,7 @@ export default function OtobusSaatleriPage() {
               </ul>
             </div>
 
-            <div className="rounded-2xl border border-line bg-white p-4">
+            <div className="card-shadow rounded-2xl bg-white p-4">
               <p className="mb-3 text-[13px] font-semibold text-navy">Gölbaşı'nda faydalı bilgiler</p>
               <ul className="flex flex-col gap-1">
                 <li>

@@ -325,7 +325,7 @@ export default async function BusinessPage({
         <PhotoGrid photos={photos} businessName={business.name} />
         <div className="mt-6 flex flex-col gap-5 lg:flex-row lg:items-start">
           <div className="flex flex-col gap-5 lg:flex-1">
-            <div className="card-shadow rounded-2xl border border-line bg-white p-6">
+            <div className="card-shadow rounded-2xl bg-white p-6">
               <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-ink/40">
                 Hakkında
               </h2>
@@ -372,7 +372,7 @@ export default async function BusinessPage({
           <div className="flex flex-col gap-5 lg:w-96">
             <WorkingHoursCard hours={business.opening_hours} />
 
-            <div className="card-shadow flex flex-col gap-2 rounded-2xl border border-line bg-white p-6">
+            <div className="card-shadow flex flex-col gap-2 rounded-2xl bg-white p-6">
               <h2 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink/40">
                 İletişim
               </h2>
@@ -464,7 +464,7 @@ export default async function BusinessPage({
               </div>
             </div>
 
-            <div className="card-shadow flex flex-col items-center gap-2 rounded-2xl border border-line bg-white p-6">
+            <div className="card-shadow flex flex-col items-center gap-2 rounded-2xl bg-white p-6">
               <h2 className="mb-1 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink/40">
                 <QrCode className="h-3.5 w-3.5" /> QR Kod
               </h2>

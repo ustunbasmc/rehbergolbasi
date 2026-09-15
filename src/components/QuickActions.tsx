@@ -35,7 +35,7 @@ export default function QuickActions({
   }
 
   return (
-    <div className="relative z-10 -mt-6 flex gap-2 rounded-2xl border border-line bg-white p-2 shadow-[0_4px_20px_rgba(20,33,61,0.12)]">
+    <div className="relative z-10 -mt-6 flex gap-2 rounded-2xl bg-white p-2 shadow-[0_4px_20px_rgba(20,33,61,0.12)]">
       {phone && (
         <button
           onClick={async () => {

@@ -151,7 +151,7 @@ export default function Header() {
                 />
               </button>
               {dropdownOpen && (
-                <div className="absolute left-0 top-full mt-2 flex w-56 flex-col overflow-hidden rounded-xl border border-line bg-white py-1.5 shadow-lg">
+                <div className="card-shadow absolute left-0 top-full mt-2 flex w-56 flex-col overflow-hidden rounded-xl bg-white py-1.5">
                   {FAYDALI_BILGILER.map((item) => (
                     <Link
                       key={item.href}

@@ -138,7 +138,7 @@ export default async function BusinessesPage({
       )}
 
       {businesses.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+        <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
           {query ? "Aramanla eşleşen işletme bulunamadı." : "Henüz onaylanmış işletme yok."}
         </div>
       ) : (

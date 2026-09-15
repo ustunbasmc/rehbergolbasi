@@ -54,7 +54,7 @@ export default function IletisimPage() {
       </p>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <div className="card-shadow flex-1 rounded-2xl border border-line bg-white p-6 sm:p-8">
+        <div className="card-shadow flex-1 rounded-2xl bg-white p-6 sm:p-8">
           {sent ? (
             <div className="py-8 text-center">
               <p className="font-display text-lg font-bold text-navy">Teşekkürler!</p>
@@ -117,7 +117,7 @@ export default function IletisimPage() {
         </div>
 
         <div className="flex flex-col gap-4 lg:w-72">
-          <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+          <div className="card-shadow rounded-2xl bg-white p-5">
             <p className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">
               İletişim Bilgileri
             </p>
@@ -134,7 +134,7 @@ export default function IletisimPage() {
             </a>
           </div>
 
-          <div className="rounded-2xl border border-line bg-offwhite p-5">
+          <div className="card-shadow rounded-2xl bg-offwhite p-5">
             <p className="text-sm font-semibold text-navy">İşletmeni mi eklemek istiyorsun?</p>
             <p className="mt-1 text-xs leading-relaxed text-ink/60">
               Bu form genel sorular içindir. İşletme eklemek için{" "}

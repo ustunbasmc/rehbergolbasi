@@ -10,7 +10,7 @@ import { trackTaxiEvent } from "@/lib/analytics";
 const TaxiMap = dynamic(() => import("@/components/TaxiMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[420px] items-center justify-center rounded-2xl border border-line bg-offwhite text-sm text-ink/40">
+    <div className="card-shadow flex h-[420px] items-center justify-center rounded-2xl bg-offwhite text-sm text-ink/40">
       Harita yükleniyor...
     </div>
   ),
@@ -299,7 +299,7 @@ export default function TaxiFinder({
       </p>
 
       {result.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-8 text-center">
+        <div className="card-shadow rounded-2xl bg-offwhite p-8 text-center">
           <p className="text-sm text-ink/60">
             Bu filtrelere uygun taksi durağı bulunamadı. Farklı bir filtre deneyebilir veya tüm durakları görüntüleyebilirsiniz.
           </p>

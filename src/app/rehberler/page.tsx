@@ -52,7 +52,7 @@ export default async function RehberlerPage() {
       </div>
 
       {guides.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-16 text-center">
+        <div className="card-shadow rounded-2xl bg-offwhite p-16 text-center">
           <BookOpen className="mx-auto mb-3 h-8 w-8 text-ink/20" />
           <p className="text-sm text-ink/50">Henüz rehber yazısı yok. Yakında eklenecek!</p>
         </div>
@@ -67,7 +67,7 @@ export default async function RehberlerPage() {
                   <Link
                     key={guide.id}
                     href={`/rehberler/${guide.slug}`}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:shadow-lg"
+                    className="card-shadow card-shadow-hover group flex flex-col overflow-hidden rounded-2xl bg-white transition"
                   >
                     <div className="relative h-48 w-full bg-offwhite">
                       {guide.cover_image_url ? (
@@ -119,7 +119,7 @@ export default async function RehberlerPage() {
                   <Link
                     key={guide.id}
                     href={`/rehberler/${guide.slug}`}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white transition hover:shadow-lg"
+                    className="card-shadow card-shadow-hover group flex flex-col overflow-hidden rounded-2xl bg-white transition"
                   >
                     <div className="relative h-40 w-full bg-offwhite">
                       {guide.cover_image_url ? (

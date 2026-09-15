@@ -61,7 +61,7 @@ export default function ClaimButton({ businessId }: { businessId: string }) {
           onClick={handleClose}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5"
+            className="card-shadow w-full max-w-sm rounded-2xl bg-white p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-3 flex items-center justify-between">

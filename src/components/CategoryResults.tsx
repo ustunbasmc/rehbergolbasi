@@ -20,7 +20,7 @@ export default function CategoryResults({ businesses }: { businesses: Business[]
 
   if (businesses.length === 0) {
     return (
-      <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+      <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
         Bu kategoride henüz işletme eklenmedi.{" "}
         <Link href="/isletme-ekle" className="text-bordo underline">
           Bir işletme öner
@@ -49,7 +49,7 @@ export default function CategoryResults({ businesses }: { businesses: Business[]
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-line bg-offwhite p-10 text-center text-ink/60">
+        <div className="card-shadow rounded-2xl bg-offwhite p-10 text-center text-ink/60">
           Şu an açık olan işletme bulunamadı.
         </div>
       ) : (
