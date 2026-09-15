@@ -184,6 +184,40 @@ export async function trackGundemEvent(eventType: GundemEventType, meta?: Gundem
   }
 }
 
+export type HomeEventType = "home_search_submit" | "home_example_chip_click" | "home_quick_action_click";
+
+interface HomeEventMeta {
+  action?: string;
+  query?: string;
+}
+
+/**
+ * Ana sayfa (hero) huni event'leri: arama gönderimi, örnek arama chip'leri ve
+ * hızlı-eylem karoları (Taksi/Eczane/Otobüs/Gündem). Aynı `business_events`
+ * tablosu ve deseni (business_id: null, meta.source) yeniden kullanılır —
+ * hedef sayfaların (ör. /taksi) kendi sayfa-görüntüleme event'leriyle
+ * ÇAKIŞMAZ: onlar "kaç kişi o sayfayı gördü", bu ise "kaç kişi ana sayfadan
+ * o karoya bastı" sorusuna cevap verir — farklı, tekrarsız bilgi.
+ */
+export async function trackHomeEvent(eventType: HomeEventType, meta?: HomeEventMeta) {
+  if (typeof window === "undefined") return;
+  try {
+    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
+    if (consent !== "accepted") return;
+
+    const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+    await supabase.from("business_events").insert({
+      business_id: null,
+      event_type: eventType,
+      referrer: document.referrer || null,
+      device: isMobile ? "mobile" : "desktop",
+      meta: meta ? { source: "home", ...meta } : { source: "home" },
+    });
+  } catch {
+    // Olay kaydı sessizce başarısız olsun, kullanıcı deneyimini etkilemesin.
+  }
+}
+
 /**
  * Bir metnin gerçek bir telefon numarasına benzeyip benzemediğini doğrular
  * (ör. `whatsapp` alanına yanlışlıkla mahalle adı girilmiş kayıtları
