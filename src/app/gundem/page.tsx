@@ -4,10 +4,14 @@ import { Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { normalizeForSearch } from "@/lib/taxi";
 import GundemCard, { type GundemCardData } from "@/components/GundemCard";
+import GundemHeroSlider from "@/components/GundemHeroSlider";
 import GundemSearchForm from "@/components/GundemSearchForm";
 import GundemTrackedLink from "@/components/GundemTrackedLink";
 import GundemListViewTracker from "@/components/GundemListViewTracker";
 import type { GundemCategory } from "@/lib/types";
+
+const GUNDEM_CARD_COLUMNS =
+  "slug, title, summary, cover_image_url, cover_image_alt, published_at, corrected_at, neighborhoods, is_sponsored, is_breaking, breaking_until, category:gundem_categories(*)";
 
 // Sorgular `published_at <= now()` koşulunu istek anında değerlendirir
 // (zamanlanmış bir haberin, cron olmadan, vakti geldiğinde ek bir bekleme
@@ -49,7 +53,7 @@ async function getNeighborhoods(): Promise<string[]> {
 async function getBreakingPosts(): Promise<GundemCardData[]> {
   const { data } = await supabase
     .from("gundem_posts")
-    .select("slug, title, summary, cover_image_url, cover_image_alt, published_at, corrected_at, neighborhoods, is_sponsored, is_breaking, breaking_until, category:gundem_categories(*)")
+    .select(GUNDEM_CARD_COLUMNS)
     .is("deleted_at", null)
     .in("status", ["scheduled", "published"])
     .lte("published_at", new Date().toISOString())
@@ -60,24 +64,31 @@ async function getBreakingPosts(): Promise<GundemCardData[]> {
   return (data ?? []) as unknown as GundemCardData[];
 }
 
-async function getFeaturedHero(): Promise<GundemCardData | null> {
+const HERO_SLIDE_COUNT = 5;
+
+/**
+ * Manşet adayları: öne çıkanlar önce, sonra en güncelller. Yalnızca 2+ aday
+ * varsa liste sayfası bunu bir slider olarak gösterir; tek adayda düz statik
+ * hero'ya, hiç yoksa hiçbir şeye düşer (bkz. GundemPage) — içerik azken asla
+ * boş/garip görünen bir slider oluşmaz.
+ */
+async function getHeroCandidates(): Promise<GundemCardData[]> {
   const { data } = await supabase
     .from("gundem_posts")
-    .select("slug, title, summary, cover_image_url, cover_image_alt, published_at, corrected_at, neighborhoods, is_sponsored, is_breaking, breaking_until, category:gundem_categories(*)")
+    .select(GUNDEM_CARD_COLUMNS)
     .is("deleted_at", null)
     .in("status", ["scheduled", "published"])
     .lte("published_at", new Date().toISOString())
-    .eq("is_featured", true)
+    .order("is_featured", { ascending: false })
     .order("published_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  return (data as unknown as GundemCardData) ?? null;
+    .limit(HERO_SLIDE_COUNT);
+  return (data ?? []) as unknown as GundemCardData[];
 }
 
 async function getMostRead(): Promise<GundemCardData[]> {
   const { data } = await supabase
     .from("gundem_posts")
-    .select("slug, title, summary, cover_image_url, cover_image_alt, published_at, corrected_at, neighborhoods, is_sponsored, is_breaking, breaking_until, view_count, category:gundem_categories(*)")
+    .select(`${GUNDEM_CARD_COLUMNS}, view_count`)
     .is("deleted_at", null)
     .in("status", ["scheduled", "published"])
     .lte("published_at", new Date().toISOString())
@@ -88,6 +99,39 @@ async function getMostRead(): Promise<GundemCardData[]> {
   return rows.length >= 3 ? rows : [];
 }
 
+const CATEGORY_SECTION_POOL_SIZE = 60;
+const CATEGORY_SECTION_POST_COUNT = 4;
+
+export interface GundemCategorySection {
+  category: GundemCategory;
+  posts: GundemCardData[];
+}
+
+/**
+ * Kategori bazlı bölümler için TEK bir sorgu ile son N yayın çekilip
+ * kategoriye göre gruplanır (her kategori için ayrı sorgu atıp N+1
+ * oluşturmamak için). Yalnızca gerçekten yayında en az 1 içeriği olan
+ * kategoriler döner — boş/thin bir kategori bölümü asla gösterilmez.
+ */
+async function getCategorySections(categories: GundemCategory[]): Promise<GundemCategorySection[]> {
+  const { data } = await supabase
+    .from("gundem_posts")
+    .select(GUNDEM_CARD_COLUMNS)
+    .is("deleted_at", null)
+    .in("status", ["scheduled", "published"])
+    .lte("published_at", new Date().toISOString())
+    .order("published_at", { ascending: false })
+    .limit(CATEGORY_SECTION_POOL_SIZE);
+
+  const pool = (data ?? []) as unknown as GundemCardData[];
+  const sections: GundemCategorySection[] = [];
+  for (const category of categories) {
+    const postsInCategory = pool.filter((p) => p.category?.slug === category.slug).slice(0, CATEGORY_SECTION_POST_COUNT);
+    if (postsInCategory.length > 0) sections.push({ category, posts: postsInCategory });
+  }
+  return sections;
+}
+
 async function getPosts(params: SearchParamsShape, categories: GundemCategory[]) {
   const page = Math.max(1, Number(params.sayfa) || 1);
   const offset = (page - 1) * PAGE_SIZE;
@@ -95,10 +139,7 @@ async function getPosts(params: SearchParamsShape, categories: GundemCategory[])
 
   let query = supabase
     .from("gundem_posts")
-    .select(
-      "slug, title, summary, cover_image_url, cover_image_alt, published_at, corrected_at, neighborhoods, is_sponsored, is_breaking, breaking_until, category:gundem_categories(*)",
-      { count: "exact" }
-    )
+    .select(GUNDEM_CARD_COLUMNS, { count: "exact" })
     .is("deleted_at", null)
     .in("status", ["scheduled", "published"])
     .lte("published_at", nowIso)
@@ -166,17 +207,18 @@ export default async function GundemPage({
   const categories = await getCategories();
   const isDefaultView = !params.kategori && !params.q?.trim() && !params.mahalle && (!params.sayfa || params.sayfa === "1");
 
-  const [{ posts, total, page, activeCategory }, neighborhoods, breakingPosts, hero, mostRead] = await Promise.all([
+  const [{ posts, total, page, activeCategory }, neighborhoods, breakingPosts, heroCandidates, mostRead, categorySections] = await Promise.all([
     getPosts(params, categories),
     getNeighborhoods(),
     getBreakingPosts(),
-    isDefaultView ? getFeaturedHero() : Promise.resolve(null),
+    isDefaultView ? getHeroCandidates() : Promise.resolve([]),
     isDefaultView ? getMostRead() : Promise.resolve([]),
+    isDefaultView ? getCategorySections(categories) : Promise.resolve([]),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const heroExcludedSlug = hero?.slug;
-  const gridPosts = isDefaultView ? posts.filter((p) => p.slug !== heroExcludedSlug) : posts;
+  const heroExcludedSlugs = new Set(heroCandidates.map((p) => p.slug));
+  const gridPosts = isDefaultView ? posts.filter((p) => !heroExcludedSlugs.has(p.slug)) : posts;
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -265,7 +307,7 @@ export default async function GundemPage({
         ))}
       </div>
 
-      {posts.length === 0 && !hero ? (
+      {posts.length === 0 && heroCandidates.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-line bg-offwhite p-10 text-center">
           <p className="text-sm text-ink/60">
             {params.q?.trim() || params.mahalle || activeCategory
@@ -280,9 +322,14 @@ export default async function GundemPage({
         </div>
       ) : (
         <>
-          {hero && (
+          {heroCandidates.length === 1 && (
             <div className="mt-8">
-              <GundemCard post={hero} variant="hero" />
+              <GundemCard post={heroCandidates[0]} variant="hero" />
+            </div>
+          )}
+          {heroCandidates.length > 1 && (
+            <div className="mt-8">
+              <GundemHeroSlider slides={heroCandidates} />
             </div>
           )}
 
@@ -312,6 +359,31 @@ export default async function GundemPage({
             </div>
           )}
         </>
+      )}
+
+      {isDefaultView && categorySections.length > 0 && (
+        <div className="mt-12 flex flex-col gap-10 border-t border-line pt-8">
+          {categorySections.map(({ category, posts: sectionPosts }) => (
+            <div key={category.id}>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-display text-xl font-bold text-navy">{category.name}</h2>
+                <GundemTrackedLink
+                  href={`/gundem?kategori=${category.slug}`}
+                  eventType="news_category_click"
+                  meta={{ category: category.slug }}
+                  className="text-sm font-semibold text-bordo hover:underline"
+                >
+                  Tümünü Gör →
+                </GundemTrackedLink>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {sectionPosts.map((post) => (
+                  <GundemCard key={post.slug} post={post} variant="compact" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
       {isDefaultView && mostRead.length > 0 && (
