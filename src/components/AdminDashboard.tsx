@@ -33,7 +33,6 @@ import {
   CheckCircle2,
   Briefcase,
   XCircle,
-  Building2,
   LayoutGrid,
   LogOut,
   ListChecks,
@@ -77,10 +76,7 @@ type Tab =
   | "gundem-reports";
 
 interface Stats {
-  total: number;
   pending: number;
-  approved: number;
-  rejected: number;
   reports: number;
   requests: number;
   expiryAlerts: number;
@@ -92,10 +88,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [searchSelectedBusiness, setSearchSelectedBusiness] = useState<Business | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<Stats>({
-    total: 0,
     pending: 0,
-    approved: 0,
-    rejected: 0,
     reports: 0,
     requests: 0,
     expiryAlerts: 0,
@@ -111,22 +104,16 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   const loadStats = useCallback(async () => {
-    const [total, pending, approved, rejected, reports, requests, expiryAlerts, newSubmissions] =
+    const [pending, reports, requests, expiryAlerts, newSubmissions] =
       await Promise.all([
-        supabase.from("businesses").select("id", { count: "exact", head: true }),
         supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "approved"),
-        supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "rejected"),
         supabase.from("listing_reports").select("id", { count: "exact", head: true }),
         supabase.from("contact_requests").select("id", { count: "exact", head: true }),
         supabase.from("expiry_alerts").select("id", { count: "exact", head: true }),
         supabase.from("business_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
       ]);
     setStats({
-      total: total.count ?? 0,
       pending: pending.count ?? 0,
-      approved: approved.count ?? 0,
-      rejected: rejected.count ?? 0,
       reports: reports.count ?? 0,
       requests: requests.count ?? 0,
       expiryAlerts: expiryAlerts.count ?? 0,
@@ -196,21 +183,19 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   ];
 
-  const statCards = [
-    { label: "Toplam İşletme", value: stats.total, icon: Building2 },
-    { label: "Bekleyen", value: stats.pending, icon: Clock },
-    { label: "Onaylı", value: stats.approved, icon: CheckCircle2 },
-    { label: "Reddedilen", value: stats.rejected, icon: XCircle },
-  ];
-
   const currentLabel = navSections.flatMap((s) => s.items).find((n) => n.key === tab)?.label;
 
   return (
     <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden bg-offwhite sm:flex-row">
-      <aside className="flex w-full shrink-0 flex-col gap-2 bg-navy px-4 py-3 sm:min-h-screen sm:w-56 sm:px-4 sm:py-6">
-        <div className="flex items-center justify-between sm:mb-8 sm:justify-start">
+      <aside className="relative flex w-full shrink-0 flex-col gap-2 overflow-hidden bg-gradient-to-br from-navy via-navy to-navy-dark px-4 py-3 sm:min-h-screen sm:w-60 sm:px-4 sm:py-6">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-bordo/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-gold/10 blur-3xl" />
+
+        <div className="relative flex items-center justify-between sm:mb-8 sm:justify-start">
           <div className="flex items-center gap-2">
-            <ListChecks className="h-5 w-5 text-gold" />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-gold-dark shadow-sm">
+              <ListChecks className="h-4 w-4 text-navy" />
+            </span>
             <span className="font-display text-sm font-bold text-white">RehberGölbaşı</span>
           </div>
           <button onClick={handleLogout} className="text-xs font-semibold text-white/60 sm:hidden">
@@ -218,9 +203,9 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </button>
         </div>
 
-        <nav className="-mx-4 flex flex-row gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-col sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0">
+        <nav className="relative -mx-4 flex flex-row gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-col sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0">
           {navSections.map((section) => (
-            <div key={section.title || "root"} className="flex shrink-0 flex-row gap-1 sm:flex-col">
+            <div key={section.title || "root"} className="flex shrink-0 flex-row gap-1 sm:flex-col sm:gap-1">
               {section.title && (
                 <p className="hidden px-3 text-[10px] font-bold uppercase tracking-wider text-white/30 sm:block">
                   {section.title}
@@ -233,13 +218,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <button
                     key={item.key}
                     onClick={() => setTab(item.key)}
-                    className={`relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-semibold transition ${
+                    className={`relative flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-left text-sm font-semibold transition ${
                       active
-                        ? "bg-white/10 text-white"
-                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/10 text-white shadow-inner"
+                        : "text-white/55 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <Icon className="h-4 w-4 shrink-0" />
+                    {active && <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-gold" />}
+                    <Icon className={`h-4 w-4 shrink-0 ${active ? "text-gold" : ""}`} />
                     <span className="hidden sm:inline">{item.label}</span>
                     {!!item.badge && (
                       <span className="absolute -right-0.5 -top-0.5 rounded-full bg-gold px-1.5 py-0.5 text-[9px] font-bold text-gold-dark sm:static sm:ml-auto sm:px-2 sm:text-[10px]">
@@ -255,14 +241,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         <button
           onClick={handleLogout}
-          className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white/60 hover:bg-white/5 hover:text-white sm:mt-auto sm:flex"
+          className="relative hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-white/55 hover:bg-white/5 hover:text-white sm:mt-auto sm:flex"
         >
           <LogOut className="h-4 w-4" /> Çıkış yap
         </button>
       </aside>
 
       <div className="min-w-0 flex-1">
-        <header className="card-shadow flex flex-col gap-3 border-b border-line bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <header className="card-shadow flex flex-col gap-3 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
   <div>
     <h1 className="font-display text-xl font-bold text-navy">{currentLabel}</h1>
     <p className="text-xs text-ink/50">RehberGölbaşı yönetim paneli</p>
@@ -271,30 +257,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 </header>
 
         <main className="min-w-0 px-4 py-6 sm:px-8 sm:py-8">
-          {tab === "overview" && (
-            <>
-              <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-                {statCards.map((card) => {
-                  const Icon = card.icon;
-                  return (
-                    <div
-                      key={card.label}
-                      className="card-shadow rounded-2xl border border-line bg-white p-4"
-                    >
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-ink/50">{card.label}</span>
-                        <Icon className="h-4 w-4 text-bordo" />
-                      </div>
-                      <span className="font-display text-2xl font-bold text-navy">
-                        {card.value}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-              <Overview />
-            </>
-          )}
+          {tab === "overview" && <Overview />}
           {tab === "templates" && <MessageTemplates />}
           {tab === "submissions" && <SubmissionsList />}
           {tab === "new-business" && <NewBusinessForm />}

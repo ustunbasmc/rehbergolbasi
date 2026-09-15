@@ -4,14 +4,30 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
-  Eye, Clock, TrendingUp, TrendingDown, Building2, Wallet,
-  Phone, MessageCircle, ArrowUpRight, Sparkles, Trophy,
-  ListTodo, FileEdit,
+  Eye, Clock, TrendingUp, Building2, Wallet,
+  MessageCircle, ArrowUpRight, Sparkles, Trophy,
+  ListTodo, FileEdit, Car, Newspaper, Pill, Bus, Search as SearchIcon,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
+import KpiCard from "./dashboard/KpiCard";
+import ModuleBreakdown, { type ModuleCardData } from "./dashboard/ModuleBreakdown";
+import SiteTrendChart, { type TrendPoint } from "./dashboard/SiteTrendChart";
+import TopContentLists, { type TopGundemPost, type TopSearchTerm } from "./dashboard/TopContentLists";
+import DeviceReferrerBreakdown, {
+  type DeviceCount,
+  type ReferrerCount,
+} from "./dashboard/DeviceReferrerBreakdown";
+import {
+  MODULES,
+  MODULE_BREAKDOWN_EVENTS,
+  moduleForEvent,
+  classifyReferrer,
+  extractQuery,
+  type RawBusinessEvent,
+} from "./dashboard/moduleStats";
 
 interface CategoryCount {
   name: string;
@@ -57,55 +73,26 @@ const STATUS_COLORS: Record<string, string> = {
   Reddedilen: "#7A1F2E",
 };
 
+const MODULE_ICONS: Record<string, React.ElementType> = {
+  business: Building2,
+  home: Sparkles,
+  taxi: Car,
+  gundem: Newspaper,
+  eczane: Pill,
+  otobus: Bus,
+};
+
+const MODULE_GRADIENTS: Record<string, string> = {
+  business: "from-navy to-navy-dark",
+  home: "from-bordo to-bordo-dark",
+  taxi: "from-gold to-gold-dark",
+  gundem: "from-green-500 to-green-600",
+  eczane: "from-sky-500 to-sky-600",
+  otobus: "from-violet-500 to-violet-600",
+};
+
 function formatCurrency(n: number) {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);
-}
-
-function KpiCard({
-  icon: Icon,
-  label,
-  value,
-  trend,
-  gradient,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-  trend?: { value: number; positive: boolean };
-  gradient: string;
-}) {
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl p-5 text-white shadow-lg"
-      style={{ background: gradient }}
-    >
-      <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10" />
-      <div className="absolute -bottom-6 -right-2 h-20 w-20 rounded-full bg-white/5" />
-      <div className="relative">
-        <div className="mb-3 flex items-center justify-between">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-            <Icon className="h-5 w-5" />
-          </span>
-          {trend && (
-            <span
-              className={`flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                trend.positive ? "bg-white/20" : "bg-black/20"
-              }`}
-            >
-              {trend.positive ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {trend.value}%
-            </span>
-          )}
-        </div>
-        <p className="font-display text-2xl font-bold sm:text-3xl">{value}</p>
-        <p className="text-xs font-medium text-white/70">{label}</p>
-      </div>
-    </div>
-  );
 }
 
 export default function Overview() {
@@ -128,6 +115,18 @@ export default function Overview() {
     expiringCount: 0,
     draftGuidesCount: 0,
   });
+
+  // Site geneli (tüm modüller) — yalnızca ana sayfada zaten var olan
+  // işletme-profili event'leriyle sınırlı değil, business_events'te
+  // tanımlı TÜM event tiplerini kapsar (bkz. dashboard/moduleStats.ts).
+  const [siteTotalEvents, setSiteTotalEvents] = useState(0);
+  const [moduleCards, setModuleCards] = useState<ModuleCardData[]>([]);
+  const [trendData, setTrendData] = useState<TrendPoint[]>([]);
+  const [deviceData, setDeviceData] = useState<DeviceCount[]>([]);
+  const [referrerData, setReferrerData] = useState<ReferrerCount[]>([]);
+  const [topPosts, setTopPosts] = useState<TopGundemPost[]>([]);
+  const [searchTerms, setSearchTerms] = useState<TopSearchTerm[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -135,15 +134,19 @@ export default function Overview() {
 
     const since14 = new Date();
     since14.setDate(since14.getDate() - 13);
+    const since30 = new Date();
+    since30.setDate(since30.getDate() - 29);
 
     const [
       { data: businesses },
       { data: payments },
       { data: topBusinesses },
       { data: expiryCandidates },
-      { data: events },
+      { data: events14 },
       { count: draftGuides },
       { data: workOrderRevenue },
+      { data: events30 },
+      { data: gundemTop },
     ] = await Promise.all([
       supabase.from("businesses").select("status, is_active, category:categories(name)"),
       supabase.from("payments").select("amount, paid_at"),
@@ -167,6 +170,17 @@ export default function Overview() {
         .select("id", { count: "exact", head: true })
         .eq("published", false),
       supabase.from("work_orders").select("price, revenue_date").neq("status", "cancelled"),
+      supabase
+        .from("business_events")
+        .select("event_type, occurred_at, device, referrer, meta")
+        .gte("occurred_at", since30.toISOString()),
+      supabase
+        .from("gundem_posts")
+        .select("slug, title, view_count")
+        .is("deleted_at", null)
+        .in("status", ["scheduled", "published"])
+        .order("view_count", { ascending: false })
+        .limit(5),
     ]);
 
     if (businesses) {
@@ -266,7 +280,7 @@ export default function Overview() {
       draftGuidesCount: draftGuides ?? 0,
     }));
 
-    // Günlük etkileşim trendi (son 14 gün)
+    // Günlük etkileşim trendi (son 14 gün) — yalnızca işletme profili event'leri
     const dayMap: Record<string, DailyEvent> = {};
     for (let i = 13; i >= 0; i--) {
       const d = new Date();
@@ -283,7 +297,7 @@ export default function Overview() {
     let totalCalls = 0;
     let totalWhatsapp = 0;
     let totalViews = 0;
-    (events ?? []).forEach((e) => {
+    (events14 ?? []).forEach((e) => {
       const key = e.occurred_at.slice(0, 10);
       if (!dayMap[key]) return;
       if (e.event_type === "profile_view") { dayMap[key].views++; totalViews++; }
@@ -297,6 +311,95 @@ export default function Overview() {
       totalCalls,
       totalWhatsapp,
     }));
+
+    // ---- Site geneli (30 gün, tüm modüller) ----
+    const rawEvents: RawBusinessEvent[] = (events30 ?? []) as unknown as RawBusinessEvent[];
+
+    const moduleTotals: Record<string, number> = {};
+    const moduleTypeCounts: Record<string, Record<string, number>> = {};
+    const deviceCounts: Record<string, number> = { mobile: 0, desktop: 0 };
+    const referrerCounts = new Map<string, number>();
+    const queryCounts = new Map<string, number>();
+    const trendMap: Record<string, TrendPoint> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      trendMap[key] = {
+        label: d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" }),
+        business: 0,
+        home: 0,
+        taxi: 0,
+        gundem: 0,
+        eczane: 0,
+        otobus: 0,
+      };
+    }
+
+    rawEvents.forEach((e) => {
+      const mod = moduleForEvent(e.event_type);
+      if (mod) {
+        moduleTotals[mod] = (moduleTotals[mod] ?? 0) + 1;
+        moduleTypeCounts[mod] ??= {};
+        moduleTypeCounts[mod][e.event_type] = (moduleTypeCounts[mod][e.event_type] ?? 0) + 1;
+
+        const dayKey = e.occurred_at.slice(0, 10);
+        if (trendMap[dayKey]) {
+          trendMap[dayKey][mod] += 1;
+        }
+      }
+
+      if (e.device === "mobile" || e.device === "desktop") {
+        deviceCounts[e.device] += 1;
+      }
+
+      const refLabel = classifyReferrer(e.referrer);
+      referrerCounts.set(refLabel, (referrerCounts.get(refLabel) ?? 0) + 1);
+
+      const q = extractQuery(e.meta);
+      if (q) queryCounts.set(q, (queryCounts.get(q) ?? 0) + 1);
+    });
+
+    setSiteTotalEvents(rawEvents.length);
+
+    setModuleCards(
+      MODULES.map((m) => ({
+        key: m.key,
+        label: m.label,
+        icon: MODULE_ICONS[m.key],
+        gradient: MODULE_GRADIENTS[m.key],
+        total: moduleTotals[m.key] ?? 0,
+        breakdown: MODULE_BREAKDOWN_EVENTS[m.key].map((b) => ({
+          label: b.label,
+          value: moduleTypeCounts[m.key]?.[b.type] ?? 0,
+        })),
+      }))
+    );
+
+    setTrendData(Object.values(trendMap));
+
+    setDeviceData([
+      { name: "Mobil", value: deviceCounts.mobile },
+      { name: "Masaüstü", value: deviceCounts.desktop },
+    ]);
+
+    setReferrerData(
+      Array.from(referrerCounts.entries())
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 8)
+    );
+
+    setSearchTerms(
+      Array.from(queryCounts.entries())
+        .map(([term, count]) => ({ term, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 12)
+    );
+
+    setTopPosts(
+      (gundemTop ?? []).map((p) => ({ slug: p.slug, title: p.title, view_count: p.view_count ?? 0 }))
+    );
 
     setLoading(false);
   }, []);
@@ -319,7 +422,7 @@ export default function Overview() {
 
   if (!hasBusinesses) {
     return (
-      <div className="rounded-2xl border border-line bg-white p-10 text-center text-ink/60">
+      <div className="card-shadow rounded-2xl bg-white p-10 text-center text-ink/60">
         Henüz grafik gösterecek kadar veri yok.
       </div>
     );
@@ -347,7 +450,7 @@ export default function Overview() {
     <div className="flex flex-col gap-6">
       {/* Bugün Yapılacaklar */}
       {todoItems.length > 0 && (
-        <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4">
+        <div className="card-shadow rounded-2xl bg-gold/5 p-4">
           <div className="mb-2 flex items-center gap-1.5">
             <ListTodo className="h-4 w-4 text-gold-dark" />
             <span className="text-sm font-bold text-navy">Bugün Yapılacaklar</span>
@@ -379,24 +482,48 @@ export default function Overview() {
         />
         <KpiCard
           icon={Sparkles}
-          label="14 Günlük Etkileşim"
-          value={`${kpis.totalEngagement}`}
+          label="30 Günlük Site Etkileşimi"
+          value={`${siteTotalEvents}`}
           gradient="linear-gradient(135deg, #C9A24B 0%, #dbb968 100%)"
         />
         <KpiCard
           icon={MessageCircle}
-          label="WhatsApp Tıklaması"
+          label="WhatsApp Tıklaması (14g)"
           value={`${kpis.totalWhatsapp}`}
           gradient="linear-gradient(135deg, #25864a 0%, #34a85f 100%)"
         />
       </div>
 
-      {/* Günlük Etkileşim Trendi */}
-      <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+      {/* Modül kartları — site geneli, tüm event tipleri (son 30 gün) */}
+      <div>
+        <div className="mb-3 flex items-center gap-1.5">
+          <SearchIcon className="h-4 w-4 text-bordo" />
+          <h3 className="font-display text-base font-bold text-navy">Modül Bazlı Etkileşim (Son 30 Gün)</h3>
+        </div>
+        <ModuleBreakdown modules={moduleCards} />
+      </div>
+
+      {/* Site geneli günlük trend */}
+      <div className="card-shadow rounded-2xl bg-white p-5">
+        <div className="mb-4 flex items-center gap-1.5">
+          <ArrowUpRight className="h-4 w-4 text-bordo" />
+          <h3 className="font-display text-base font-bold text-navy">Son 30 Gün — Site Geneli Etkileşim</h3>
+        </div>
+        <SiteTrendChart data={trendData} />
+      </div>
+
+      {/* En çok okunan gündem + en çok aranan terimler */}
+      <TopContentLists posts={topPosts} terms={searchTerms} />
+
+      {/* Cihaz + kaynak dağılımı (site geneli) */}
+      <DeviceReferrerBreakdown devices={deviceData} referrers={referrerData} />
+
+      {/* Eski: işletme profili etkileşim trendi (14 gün) */}
+      <div className="card-shadow rounded-2xl bg-white p-5">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-1.5">
-            <ArrowUpRight className="h-4 w-4 text-bordo" />
-            <h3 className="font-display text-base font-bold text-navy">Son 14 Gün — Ziyaretçi Etkileşimi</h3>
+            <Eye className="h-4 w-4 text-bordo" />
+            <h3 className="font-display text-base font-bold text-navy">Son 14 Gün — İşletme Profili Etkileşimi</h3>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={240}>
@@ -427,7 +554,7 @@ export default function Overview() {
       </div>
 
       {/* Gelir grafiği */}
-      <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+      <div className="card-shadow rounded-2xl bg-white p-5">
         <div className="mb-4 flex items-center gap-1.5">
           <TrendingUp className="h-4 w-4 text-bordo" />
           <h3 className="font-display text-base font-bold text-navy">Son 6 Ay Gelir</h3>
@@ -443,7 +570,7 @@ export default function Overview() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div className="card-shadow rounded-2xl bg-white p-5">
           <h3 className="mb-4 font-display text-base font-bold text-navy">
             Kategoriye Göre İşletme Sayısı
           </h3>
@@ -457,7 +584,7 @@ export default function Overview() {
           </ResponsiveContainer>
         </div>
 
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div className="card-shadow rounded-2xl bg-white p-5">
           <h3 className="mb-4 font-display text-base font-bold text-navy">Durum Dağılımı</h3>
           <ResponsiveContainer width="100%" height={260}>
             <PieChart>
@@ -481,7 +608,7 @@ export default function Overview() {
       </div>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div className="card-shadow rounded-2xl bg-white p-5">
           <div className="mb-3 flex items-center gap-1.5">
             <Trophy className="h-4 w-4 text-gold-dark" />
             <h3 className="font-display text-base font-bold text-navy">
@@ -523,7 +650,7 @@ export default function Overview() {
           )}
         </div>
 
-        <div className="card-shadow rounded-2xl border border-line bg-white p-5">
+        <div className="card-shadow rounded-2xl bg-white p-5">
           <div className="mb-3 flex items-center gap-1.5">
             <Clock className="h-4 w-4 text-bordo" />
             <h3 className="font-display text-base font-bold text-navy">Süresi Yaklaşanlar</h3>
