@@ -12,7 +12,9 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from "recharts";
+import type { Tab } from "@/components/AdminDashboard";
 import KpiCard from "./dashboard/KpiCard";
+import NotificationCenter, { type NotificationItem } from "./dashboard/NotificationCenter";
 import ModuleBreakdown, { type ModuleCardData } from "./dashboard/ModuleBreakdown";
 import SiteTrendChart, { type TrendPoint } from "./dashboard/SiteTrendChart";
 import TopContentLists, { type TopGundemPost, type TopSearchTerm } from "./dashboard/TopContentLists";
@@ -95,7 +97,7 @@ function formatCurrency(n: number) {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);
 }
 
-export default function Overview() {
+export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
   const [categoryData, setCategoryData] = useState<CategoryCount[]>([]);
   const [statusData, setStatusData] = useState<StatusCount[]>([]);
   const [revenueData, setRevenueData] = useState<MonthRevenue[]>([]);
@@ -126,6 +128,7 @@ export default function Overview() {
   const [referrerData, setReferrerData] = useState<ReferrerCount[]>([]);
   const [topPosts, setTopPosts] = useState<TopGundemPost[]>([]);
   const [searchTerms, setSearchTerms] = useState<TopSearchTerm[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -182,6 +185,114 @@ export default function Overview() {
         .order("view_count", { ascending: false })
         .limit(5),
     ]);
+
+    // ---- Bildirimler — tüm kaynaklardan (başvuru, onay, işletme/gündem
+    // bildirimi, iletişim talebi, süre uyarısı) tek bir listede, en yeniden
+    // eskiye. Sidebar'daki dağınık rozet sayılarının aynısı, tek yerde.
+    const [
+      { data: newSubmissions },
+      { data: pendingBusinesses },
+      { data: listingReports },
+      { data: gundemReportsData },
+      { data: contactRequests },
+      { data: expiryAlertRows },
+    ] = await Promise.all([
+      supabase
+        .from("business_submissions")
+        .select("id, business_name, created_at")
+        .eq("status", "new")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("businesses")
+        .select("id, name, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("listing_reports")
+        .select("id, reason, type, created_at, business:businesses(name)")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("gundem_reports")
+        .select("id, reason, created_at, post:gundem_posts(title)")
+        .eq("status", "yeni")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("contact_requests")
+        .select("id, name, created_at, business:businesses(name)")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      supabase
+        .from("expiry_alerts")
+        .select("id, alert_type, created_at, business:businesses(name)")
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+
+    const notificationItems: NotificationItem[] = [
+      ...(newSubmissions ?? []).map((s) => ({
+        id: s.id,
+        type: "submission" as const,
+        title: s.business_name,
+        subtitle: "Yeni işletme başvurusu",
+        createdAt: s.created_at,
+        tab: "submissions" as Tab,
+      })),
+      ...(pendingBusinesses ?? []).map((b) => ({
+        id: b.id,
+        type: "pending" as const,
+        title: b.name,
+        subtitle: "Onay bekliyor",
+        createdAt: b.created_at,
+        tab: "pending" as Tab,
+      })),
+      ...(listingReports ?? []).map((r) => ({
+        id: r.id,
+        type: "report" as const,
+        title: (r.business as unknown as { name?: string } | null)?.name ?? "İşletme",
+        subtitle: r.type === "claim" ? "Sahiplenme talebi" : r.type === "taxi_info" ? "Taksi bilgisi" : r.reason,
+        createdAt: r.created_at,
+        tab: "reports" as Tab,
+      })),
+      ...(gundemReportsData ?? []).map((r) => ({
+        id: r.id,
+        type: "gundem_report" as const,
+        title: (r.post as unknown as { title?: string } | null)?.title ?? "Gündem yazısı",
+        subtitle: r.reason,
+        createdAt: r.created_at,
+        tab: "gundem-reports" as Tab,
+      })),
+      ...(contactRequests ?? []).map((c) => ({
+        id: c.id,
+        type: "contact" as const,
+        title: (c.business as unknown as { name?: string } | null)?.name ?? c.name,
+        subtitle: `İletişim talebi — ${c.name}`,
+        createdAt: c.created_at,
+        tab: "requests" as Tab,
+      })),
+      ...(expiryAlertRows ?? []).map((a) => ({
+        id: a.id,
+        type: "expiry" as const,
+        title: (a.business as unknown as { name?: string } | null)?.name ?? "İşletme",
+        subtitle:
+          a.alert_type === "son_gun"
+            ? "Son gün"
+            : a.alert_type === "3_gun"
+            ? "3 gün kaldı"
+            : a.alert_type === "10_gun"
+            ? "10 gün kaldı"
+            : "Plus süresi doldu",
+        createdAt: a.created_at,
+        tab: "expiry" as Tab,
+      })),
+    ]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 10);
+
+    setNotifications(notificationItems);
 
     if (businesses) {
       const catMap = new Map<string, number>();
@@ -448,6 +559,9 @@ export default function Overview() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Bildirimler — tüm kaynaklardan tek merkezi liste */}
+      <NotificationCenter items={notifications} onNavigate={onNavigate} />
+
       {/* Bugün Yapılacaklar */}
       {todoItems.length > 0 && (
         <div className="card-shadow rounded-2xl bg-gold/5 p-4">

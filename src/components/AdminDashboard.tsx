@@ -52,7 +52,7 @@ import {
   Newspaper,
 } from "lucide-react";
 
-type Tab =
+export type Tab =
   | "overview"
   | "submissions"
   | "pending"
@@ -81,6 +81,7 @@ interface Stats {
   requests: number;
   expiryAlerts: number;
   newSubmissions: number;
+  gundemReportsPending: number;
 }
 
 export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
@@ -93,6 +94,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     requests: 0,
     expiryAlerts: 0,
     newSubmissions: 0,
+    gundemReportsPending: 0,
   });
 
   const loadCategories = useCallback(async () => {
@@ -104,13 +106,14 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   }, []);
 
   const loadStats = useCallback(async () => {
-    const [pending, reports, requests, expiryAlerts, newSubmissions] =
+    const [pending, reports, requests, expiryAlerts, newSubmissions, gundemReportsPending] =
       await Promise.all([
         supabase.from("businesses").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("listing_reports").select("id", { count: "exact", head: true }),
         supabase.from("contact_requests").select("id", { count: "exact", head: true }),
         supabase.from("expiry_alerts").select("id", { count: "exact", head: true }),
         supabase.from("business_submissions").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("gundem_reports").select("id", { count: "exact", head: true }).eq("status", "yeni"),
       ]);
     setStats({
       pending: pending.count ?? 0,
@@ -118,6 +121,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       requests: requests.count ?? 0,
       expiryAlerts: expiryAlerts.count ?? 0,
       newSubmissions: newSubmissions.count ?? 0,
+      gundemReportsPending: gundemReportsPending.count ?? 0,
     });
   }, []);
 
@@ -174,7 +178,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "guides", label: "Rehberler", icon: BookOpen },
         { key: "announcements", label: "Duyurular", icon: Megaphone },
         { key: "gundem", label: "Gölbaşı Gündem", icon: Newspaper },
-        { key: "gundem-reports", label: "Gündem Bildirimleri", icon: Flag },
+        { key: "gundem-reports", label: "Gündem Bildirimleri", icon: Flag, badge: stats.gundemReportsPending },
         { key: "templates", label: "Mesaj Şablonları", icon: MessageSquareText },
         { key: "requests", label: "Talepler", icon: PhoneCall, badge: stats.requests },
         { key: "reports", label: "Bildirimler", icon: Flag, badge: stats.reports },
@@ -257,7 +261,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 </header>
 
         <main className="min-w-0 px-4 py-6 sm:px-8 sm:py-8">
-          {tab === "overview" && <Overview />}
+          {tab === "overview" && <Overview onNavigate={setTab} />}
           {tab === "templates" && <MessageTemplates />}
           {tab === "submissions" && <SubmissionsList />}
           {tab === "new-business" && <NewBusinessForm />}
