@@ -29,6 +29,7 @@ import { supabase } from "@/lib/supabase";
 import CategoryGrid, { type CategoryWithBusinesses } from "@/components/CategoryGrid";
 import BusinessCard from "@/components/BusinessCard";
 import GundemCard, { type GundemCardData } from "@/components/GundemCard";
+import GundemHeroSlider from "@/components/GundemHeroSlider";
 import { getOpenStatus } from "@/lib/openingHours";
 import type { OpeningHours } from "@/lib/types";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
@@ -72,6 +73,9 @@ async function getLatestGuides() {
     .limit(3);
   return data ?? [];
 }
+const HOMEPAGE_GUNDEM_HERO_COUNT = 5;
+const HOMEPAGE_GUNDEM_SMALL_CARD_COUNT = 4;
+
 async function getLatestGundemPosts(): Promise<GundemCardData[]> {
   const { data } = await supabase
     .from("gundem_posts")
@@ -81,7 +85,7 @@ async function getLatestGundemPosts(): Promise<GundemCardData[]> {
     .lte("published_at", new Date().toISOString())
     .order("is_featured", { ascending: false })
     .order("published_at", { ascending: false })
-    .limit(4);
+    .limit(HOMEPAGE_GUNDEM_HERO_COUNT + HOMEPAGE_GUNDEM_SMALL_CARD_COUNT);
   return (data ?? []) as unknown as GundemCardData[];
 }
 
@@ -250,7 +254,8 @@ export default async function HomePage() {
   const latestGundemPosts = await getLatestGundemPosts();
   const { categories, featured, recent, neighborhoods, popularTags, openNowRestaurants, stats } =
     await getData();
-  const [gundemHero, ...gundemHelpers] = latestGundemPosts;
+  const gundemHeroSlides = latestGundemPosts.slice(0, HOMEPAGE_GUNDEM_HERO_COUNT);
+  const gundemSmallCards = latestGundemPosts.slice(HOMEPAGE_GUNDEM_HERO_COUNT, HOMEPAGE_GUNDEM_HERO_COUNT + HOMEPAGE_GUNDEM_SMALL_CARD_COUNT);
 
   return (
     <div>
@@ -340,6 +345,45 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Gölbaşı Gündem — arama alanının hemen altında, öne çıkan konum */}
+      {gundemHeroSlides.length > 0 && (
+        <section className="border-b border-line bg-white">
+          <div className="mx-auto max-w-6xl px-5 py-10 sm:px-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <div className="mb-1 flex items-center gap-1.5">
+                  <Newspaper className="h-4 w-4 text-bordo" />
+                  <span className="text-xs font-bold uppercase tracking-wide text-bordo">Gölbaşı Gündem</span>
+                </div>
+                <h2 className="font-display text-2xl font-bold text-navy">Gölbaşı&apos;ndan Son Dakika</h2>
+                <p className="text-sm text-ink/60">Haberler, belediye duyuruları ve yerel yaşamdan gelişmeler.</p>
+              </div>
+              <Link href="/gundem" className="hidden text-sm font-semibold text-bordo hover:underline sm:block">
+                Tüm Gündemi Gör →
+              </Link>
+            </div>
+
+            {gundemHeroSlides.length === 1 ? (
+              <GundemCard post={gundemHeroSlides[0]} variant="hero" />
+            ) : (
+              <GundemHeroSlider slides={gundemHeroSlides} />
+            )}
+
+            {gundemSmallCards.length > 0 && (
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {gundemSmallCards.map((post) => (
+                  <GundemCard key={post.slug} post={post} variant="compact" />
+                ))}
+              </div>
+            )}
+
+            <Link href="/gundem" className="mt-5 block text-center text-sm font-semibold text-bordo hover:underline sm:hidden">
+              Tüm Gündemi Gör →
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Hızlı Erişim */}
       <section className="border-b border-line bg-white">
@@ -436,35 +480,6 @@ export default async function HomePage() {
               {recent.map((b) => (
                 <BusinessCard key={b.id} business={b} />
               ))}
-            </div>
-          </section>
-        )}
-
-        {/* Gölbaşı Gündem */}
-        {gundemHero && (
-          <section className="mb-20">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <div className="mb-1 flex items-center gap-1.5">
-                  <Newspaper className="h-4 w-4 text-bordo" />
-                  <span className="text-xs font-bold uppercase tracking-wide text-bordo">Gölbaşı Gündem</span>
-                </div>
-                <h2 className="font-display text-2xl font-bold text-navy">Gölbaşı&apos;ndan Son Dakika</h2>
-                <p className="text-sm text-ink/60">Haberler, belediye duyuruları ve yerel yaşamdan gelişmeler.</p>
-              </div>
-              <Link href="/gundem" className="text-sm font-semibold text-bordo hover:underline">
-                Tüm Gündemi Gör →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              <GundemCard post={gundemHero} variant="hero" />
-              {gundemHelpers.length > 0 && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-1">
-                  {gundemHelpers.map((post) => (
-                    <GundemCard key={post.slug} post={post} variant="compact" />
-                  ))}
-                </div>
-              )}
             </div>
           </section>
         )}
