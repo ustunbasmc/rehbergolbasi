@@ -14,6 +14,7 @@ import GundemSourceLink from "@/components/GundemSourceLink";
 import GundemClickTrack from "@/components/GundemClickTrack";
 import GundemSidebarBusinessCard from "@/components/GundemSidebarBusinessCard";
 import { getGundemSidebarBusinesses } from "@/lib/gundemSidebar";
+import AdSlot from "@/components/AdSlot";
 import type { GundemCategory, GundemPost, Tag } from "@/lib/types";
 import { GUNDEM_SOURCE_TYPE_LABELS } from "@/lib/types";
 
@@ -308,7 +309,9 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
       </article>
 
       {hasSidebarContent && (
-        <aside className="mt-10 lg:mt-0 lg:sticky lg:top-24 lg:self-start [grid-area:sidebar]">
+        <aside className="mt-10 flex flex-col gap-4 lg:mt-0 lg:sticky lg:top-24 lg:self-start [grid-area:sidebar]">
+          <AdSlot placement="gundem_detail" />
+
           {sidebarBusinesses.length > 0 && (
             <div className="card-shadow rounded-2xl bg-offwhite/60 p-4">
               <h2 className="mb-3 font-display text-base font-bold text-navy">Gölbaşı&apos;nda Keşfet</h2>
@@ -327,7 +330,7 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
           )}
 
           {relatedPosts.length > 0 && (
-            <div className={sidebarBusinesses.length > 0 ? "mt-6" : ""}>
+            <div>
               <h2 className="mb-3 font-display text-base font-bold text-navy">Gündemden Diğer Yazılar</h2>
               <div className="flex flex-col gap-3">
                 {relatedPosts.map((p) => (

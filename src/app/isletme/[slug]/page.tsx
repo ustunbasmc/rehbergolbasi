@@ -30,6 +30,7 @@ import ClaimButton from "@/components/ClaimButton";
 import CopyButton from "@/components/CopyButton";
 import MenuSection from "@/components/MenuSection";
 import FaqAccordion from "@/components/FaqAccordion";
+import AdSlot from "@/components/AdSlot";
 import type { OpeningHours } from "@/lib/types";
 import PhotoGrid from "@/components/PhotoGrid";
 
@@ -481,6 +482,10 @@ export default async function BusinessPage({
               </a>
             </div>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <AdSlot placement="business_detail" />
         </div>
 
         {similar.length > 0 && (

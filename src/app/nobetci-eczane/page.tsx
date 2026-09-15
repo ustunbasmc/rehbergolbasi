@@ -3,6 +3,7 @@ import { Bus, Clock, AlertCircle, ChevronDown, ExternalLink, MapPin, Sparkles } 
 import Link from "next/link";
 import PharmacyCard from "@/components/PharmacyCard";
 import PageViewTracker from "@/components/PageViewTracker";
+import AdSlot from "@/components/AdSlot";
 import { formatIstanbulDateLabel, getIstanbulDateString } from "@/lib/timezone";
 
 export const revalidate = 3600;
@@ -241,6 +242,8 @@ export default async function NobetciEczanePage() {
 
         <aside className="hidden lg:block">
           <div className="sticky top-8 flex flex-col gap-4">
+            <AdSlot placement="nobetci_eczane" />
+
             <div className="card-shadow rounded-2xl bg-white p-4">
               <p className="mb-3 text-[13px] font-semibold text-navy">Gölbaşı'nda faydalı bilgiler</p>
               <ul className="flex flex-col gap-1">

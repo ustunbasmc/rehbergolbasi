@@ -4,6 +4,7 @@ import { ChevronDown, ShieldCheck, Info } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getTaxiCategoryIds, normalizeNeighborhoodKey } from "@/lib/taxi";
 import TaxiFinder from "@/components/TaxiFinder";
+import AdSlot from "@/components/AdSlot";
 import type { TaxiListing } from "@/components/TaxiCard";
 
 export const revalidate = 60;
@@ -225,6 +226,10 @@ export default async function TaksiPage() {
 
       <div className="mt-6">
         <TaxiFinder initialTaxis={taxis} neighborhoods={neighborhoods} />
+      </div>
+
+      <div className="mt-6">
+        <AdSlot placement="taksi" />
       </div>
 
       {/* Hukuki/güven mesajı */}

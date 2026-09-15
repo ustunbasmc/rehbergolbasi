@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Bus, ChevronDown, ExternalLink, MapPin, Pill, Sparkles, Info } from "lucide-react";
 import OtobusHatlariList from "./OtobusHatlariList";
 import PageViewTracker from "@/components/PageViewTracker";
+import AdSlot from "@/components/AdSlot";
 import { OTOBUS_VERI_KAYNAGI, OTOBUS_SON_KONTROL_TARIHI } from "@/data/otobus-hatlari";
 
 export const metadata: Metadata = {
@@ -165,6 +166,8 @@ export default function OtobusSaatleriPage() {
 
         <aside className="hidden lg:block">
           <div className="sticky top-8 flex flex-col gap-4">
+            <AdSlot placement="otobus_saatleri" />
+
             <div className="card-shadow rounded-2xl bg-white p-4">
               <p className="mb-3 text-[13px] font-semibold text-navy">Popüler hatlar</p>
               <ul className="flex flex-col gap-2">

@@ -8,6 +8,7 @@ import GundemHeroSlider from "@/components/GundemHeroSlider";
 import GundemSearchForm from "@/components/GundemSearchForm";
 import GundemTrackedLink from "@/components/GundemTrackedLink";
 import GundemListViewTracker from "@/components/GundemListViewTracker";
+import AdSlot from "@/components/AdSlot";
 import type { GundemCategory } from "@/lib/types";
 
 const GUNDEM_CARD_COLUMNS =
@@ -385,6 +386,10 @@ export default async function GundemPage({
           ))}
         </div>
       )}
+
+      <div className="mt-10">
+        <AdSlot placement="gundem_list" />
+      </div>
 
       {isDefaultView && mostRead.length > 0 && (
         <div className="mt-12 border-t border-line pt-8">

@@ -27,6 +27,7 @@ import MessageTemplates from "@/components/admin/MessageTemplates";
 import AnnouncementsManager from "@/components/admin/AnnouncementsManager";
 import GundemList from "@/components/admin/GundemList";
 import GundemReportsList from "@/components/admin/GundemReportsList";
+import AdSlotsManager from "@/components/admin/AdSlotsManager";
 import {
   Clock,
   MessageSquareText,
@@ -50,6 +51,7 @@ import {
   Megaphone,
   Inbox,
   Newspaper,
+  BadgePercent,
 } from "lucide-react";
 
 export type Tab =
@@ -73,7 +75,8 @@ export type Tab =
   | "new-business"
   | "announcements"
   | "gundem"
-  | "gundem-reports";
+  | "gundem-reports"
+  | "ads";
 
 interface Stats {
   pending: number;
@@ -177,6 +180,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         { key: "features", label: "Özellikler", icon: TagsIcon },
         { key: "guides", label: "Rehberler", icon: BookOpen },
         { key: "announcements", label: "Duyurular", icon: Megaphone },
+        { key: "ads", label: "Reklamlar", icon: BadgePercent },
         { key: "gundem", label: "Gölbaşı Gündem", icon: Newspaper },
         { key: "gundem-reports", label: "Gündem Bildirimleri", icon: Flag, badge: stats.gundemReportsPending },
         { key: "templates", label: "Mesaj Şablonları", icon: MessageSquareText },
@@ -276,6 +280,7 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {tab === "features" && <FeatureManager />}
           {tab === "guides" && <GuidesList />}
           {tab === "announcements" && <AnnouncementsManager />}
+          {tab === "ads" && <AdSlotsManager />}
           {tab === "gundem" && <GundemList />}
           {tab === "gundem-reports" && <GundemReportsList />}
           {tab === "requests" && <ContactRequestsList />}
