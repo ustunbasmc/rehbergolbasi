@@ -126,9 +126,7 @@ export async function generateMetadata({
   if (!mahalle) return { title: "Mahalle Bulunamadı" };
 
   const title = `${mahalle.name} Mahallesi — Gölbaşı, Ankara`;
-  const description = mahalle.population2023
-    ? `${mahalle.name} Mahallesi hakkında bilgiler: muhtar, işletmeler, eğitim kurumları ve son haberler. ${mahalle.population2023.toLocaleString("tr-TR")} nüfuslu Gölbaşı mahallesi.`
-    : `${mahalle.name} Mahallesi hakkında bilgiler: muhtar, işletmeler ve son haberler. Ankara'nın Gölbaşı ilçesine bağlı bir mahalle.`;
+  const description = `${mahalle.name} Mahallesi hakkında bilgiler: muhtar, işletmeler, eğitim kurumları ve son haberler. ${mahalle.population.toLocaleString("tr-TR")} nüfuslu Gölbaşı mahallesi.`;
 
   return {
     title,
@@ -243,13 +241,9 @@ export default async function MahallePage({
                   {`${mahalle.name} Mahallesi`}
                 </h1>
                 <p className="flex items-center gap-1.5 text-sm text-white/60">
-                  {mahalle.population2023 && (
-                    <>
-                      <Users className="h-3.5 w-3.5" /> {mahalle.population2023.toLocaleString("tr-TR")} nüfus (2023
-                      ADNKS)
-                      {" · "}
-                    </>
-                  )}
+                  <Users className="h-3.5 w-3.5" /> {mahalle.population.toLocaleString("tr-TR")} nüfus (
+                  {mahalle.populationYear} ADNKS)
+                  {" · "}
                   {businesses.length} işletme
                 </p>
               </div>
@@ -311,9 +305,11 @@ export default async function MahallePage({
 
         <div className="flex flex-col gap-5 lg:w-80">
           <MuhtarCard mahalle={mahalle} />
-          {mahalle.population2023 && (
-            <PopulationTrendCard population2023={mahalle.population2023} history={mahalle.populationHistory ?? []} />
-          )}
+          <PopulationTrendCard
+            population={mahalle.population}
+            populationYear={mahalle.populationYear}
+            history={mahalle.populationHistory}
+          />
           <AdSlot placement="mahalle_detail" variant="square" />
 
           <div className="card-shadow rounded-2xl bg-white p-6">

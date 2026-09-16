@@ -28,13 +28,11 @@ export function buildMahalleFaqs(
     },
   ];
 
-  if (mahalle.population2023) {
-    faqs.push({
-      id: "nufus",
-      question: `${mahalle.name} Mahallesi'nin nüfusu kaçtır?`,
-      answer: `TÜİK Adrese Dayalı Nüfus Kayıt Sistemi (ADNKS) 2023 verilerine göre ${mahalle.name} Mahallesi'nin nüfusu ${mahalle.population2023.toLocaleString("tr-TR")} kişidir.`,
-    });
-  }
+  faqs.push({
+    id: "nufus",
+    question: `${mahalle.name} Mahallesi'nin nüfusu kaçtır?`,
+    answer: `TÜİK Adrese Dayalı Nüfus Kayıt Sistemi (ADNKS) ${mahalle.populationYear} verilerine göre ${mahalle.name} Mahallesi'nin nüfusu ${mahalle.population.toLocaleString("tr-TR")} kişidir.`,
+  });
 
   if (businessCount > 0) {
     faqs.push({

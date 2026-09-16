@@ -3,25 +3,38 @@
 import { Users, TrendingUp } from "lucide-react";
 import { AreaChart, Area, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 
+// "2007'den", "2013'ten" gibi - yılın Türkçe okunuşuna göre 2 yönlü ünlü uyumu +
+// ünsüz sertleşmesi gerektirir. Sadece 2007-2025 arası kullanıldığından elle
+// doğrulanmış sabit bir tablo yeterli.
+const YEAR_ABLATIVE_SUFFIX: Record<number, string> = {
+  2007: "'den", 2008: "'den", 2009: "'dan", 2010: "'dan", 2011: "'den", 2012: "'den",
+  2013: "'ten", 2014: "'ten", 2015: "'ten", 2016: "'dan", 2017: "'den", 2018: "'den",
+  2019: "'dan", 2020: "'den", 2021: "'den", 2022: "'den", 2023: "'ten", 2024: "'ten", 2025: "'ten",
+};
+
 export default function PopulationTrendCard({
-  population2023,
+  population,
+  populationYear,
   history,
 }: {
-  population2023: number;
+  population: number;
+  populationYear: number;
   history: { year: number; count: number }[];
 }) {
   const first = history[0];
-  const growthPct = first ? Math.round(((population2023 - first.count) / first.count) * 100) : null;
+  const growthPct = first ? Math.round(((population - first.count) / first.count) * 100) : null;
+  const sinceSuffix = first ? YEAR_ABLATIVE_SUFFIX[first.year] ?? "'den" : "";
 
   return (
     <div className="card-shadow rounded-2xl bg-white p-6">
-      <h2 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink/40">Nüfus (TÜİK ADNKS)</h2>
+      <h2 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink/40">Nüfus (TÜİK ADNKS {populationYear})</h2>
       <p className="flex items-center gap-1.5 font-display text-2xl font-bold text-navy">
-        <Users className="h-5 w-5 text-bordo" /> {population2023.toLocaleString("tr-TR")}
+        <Users className="h-5 w-5 text-bordo" /> {population.toLocaleString("tr-TR")}
       </p>
-      {growthPct !== null && first && (
-        <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-green-700">
-          <TrendingUp className="h-3.5 w-3.5" /> {`${first.year}'den bu yana %${growthPct} artış`}
+      {growthPct !== null && first && growthPct !== 0 && (
+        <p className={`mt-1 flex items-center gap-1 text-xs font-semibold ${growthPct > 0 ? "text-green-700" : "text-bordo"}`}>
+          <TrendingUp className={`h-3.5 w-3.5 ${growthPct < 0 ? "rotate-180" : ""}`} />
+          {`${first.year}${sinceSuffix} bu yana %${Math.abs(growthPct)} ${growthPct > 0 ? "artış" : "azalış"}`}
         </p>
       )}
       {history.length > 1 && (

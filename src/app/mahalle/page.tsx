@@ -68,7 +68,7 @@ export default async function MahallelerPage() {
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {MAHALLELER.map((m) => (
+        {[...MAHALLELER].sort((a, b) => b.population - a.population).map((m) => (
           <Link
             key={m.slug}
             href={`/mahalle/${m.slug}`}
@@ -82,7 +82,7 @@ export default async function MahallelerPage() {
             <div className="mt-auto flex items-center justify-between border-t border-line pt-3 text-xs font-semibold text-ink/50">
               <span className="flex items-center gap-1.5 truncate">
                 <Users className="h-3.5 w-3.5 shrink-0" />
-                {m.population2023 ? `${m.population2023.toLocaleString("tr-TR")} nüfus` : `Muhtar: ${m.muhtar.name}`}
+                {m.population.toLocaleString("tr-TR")} nüfus
               </span>
               <span className="flex shrink-0 items-center gap-1 text-bordo">
                 {counts.get(m.slug) ?? 0} işletme <ArrowRight className="h-3.5 w-3.5" />
