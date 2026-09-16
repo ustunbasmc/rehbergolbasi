@@ -11,6 +11,7 @@ const FAYDALI_BILGILER = [
   { href: "/nobetci-eczane", label: "Nöbetçi Eczane" },
   { href: "/isletmeler/resmi-kurumlar", label: "Resmi Kurumlar" },
   { href: "/otobus-saatleri", label: "Otobüs Saatleri" },
+  { href: "/mahalle", label: "Mahalleler" },
 ];
 
 const NAV_ITEMS = [

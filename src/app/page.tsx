@@ -27,6 +27,8 @@ import { getOpenStatus } from "@/lib/openingHours";
 import type { Business, OpeningHours } from "@/lib/types";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
 import { getIstanbulDateString } from "@/lib/timezone";
+import { normalizeNeighborhood } from "@/lib/neighborhood";
+import { getMahalleByName } from "@/data/mahalleler";
 
 export const revalidate = 60;
 
@@ -181,12 +183,13 @@ async function getData() {
 
   const neighborhoodCounts = new Map<string, number>();
   businesses.forEach((b) => {
-    if (b.neighborhood) {
-      neighborhoodCounts.set(b.neighborhood, (neighborhoodCounts.get(b.neighborhood) ?? 0) + 1);
+    const name = normalizeNeighborhood(b.neighborhood);
+    if (name) {
+      neighborhoodCounts.set(name, (neighborhoodCounts.get(name) ?? 0) + 1);
     }
   });
   const neighborhoods = Array.from(neighborhoodCounts.entries())
-    .map(([name, count]) => ({ name, count }))
+    .map(([name, count]) => ({ name, count, slug: getMahalleByName(name)?.slug }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
 
@@ -490,13 +493,20 @@ export default async function HomePage() {
         {/* Mahallelere Göre Gözat */}
         {neighborhoods.length > 0 && (
           <section className="mb-20">
-            <h2 className="mb-1 font-display text-2xl font-bold text-navy">Mahallelere Göre Gözat</h2>
-            <p className="mb-5 text-sm text-ink/60">Yaşadığın mahalledeki işletmeleri keşfet.</p>
+            <div className="mb-5 flex items-end justify-between gap-3">
+              <div>
+                <h2 className="mb-1 font-display text-2xl font-bold text-navy">Mahallelere Göre Gözat</h2>
+                <p className="text-sm text-ink/60">Yaşadığın mahalledeki işletmeleri keşfet.</p>
+              </div>
+              <Link href="/mahalle" className="shrink-0 whitespace-nowrap text-sm font-semibold text-bordo hover:underline">
+                Tüm Mahalleler →
+              </Link>
+            </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
               {neighborhoods.map((n) => (
                 <Link
                   key={n.name}
-                  href={`/isletmeler?q=${encodeURIComponent(n.name)}`}
+                  href={n.slug ? `/mahalle/${n.slug}` : `/isletmeler?q=${encodeURIComponent(n.name)}`}
                   className="card-shadow card-shadow-hover flex flex-col items-center gap-1.5 rounded-2xl bg-white px-4 py-5 text-center transition"
                 >
                   <MapPin className="h-5 w-5 text-bordo" />

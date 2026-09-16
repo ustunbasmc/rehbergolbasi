@@ -85,3 +85,8 @@ export const MAHALLELER: Mahalle[] = [
 export function getMahalleBySlug(slug: string): Mahalle | undefined {
   return MAHALLELER.find((m) => m.slug === slug);
 }
+
+/** `normalizeNeighborhood()` çıktısı olan kurallı isimden mahalle kaydını bulur. */
+export function getMahalleByName(name: string): Mahalle | undefined {
+  return MAHALLELER.find((m) => m.name === name);
+}

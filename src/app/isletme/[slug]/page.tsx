@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { VERIFICATION_LABELS, type VerificationStatus } from "@/lib/types";
 import { RESMI_KURUM_SLUGS, getBusinessSchemaType } from "@/lib/schemaType";
+import { normalizeNeighborhood } from "@/lib/neighborhood";
+import { getMahalleByName } from "@/data/mahalleler";
 import PhotoGallery from "@/components/PhotoGallery";
 import QuickActions from "@/components/QuickActions";
 import BusinessCard from "@/components/BusinessCard";
@@ -201,6 +203,9 @@ export default async function BusinessPage({
       ? `https://www.google.com/maps/dir/?api=1&destination=${business.lat},${business.lng}`
       : null;
   const pageUrl = `https://rehbergolbasi.com/isletme/${business.slug}`;
+  const mahalle = business.neighborhood
+    ? getMahalleByName(normalizeNeighborhood(business.neighborhood) ?? "")
+    : undefined;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pageUrl)}`;
   const isNew =
     new Date(business.created_at).getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -280,7 +285,15 @@ export default async function BusinessPage({
                     {business.category.name}
                   </span>
                 )}
-                {business.neighborhood && (
+                {business.neighborhood && mahalle && (
+                  <Link
+                    href={`/mahalle/${mahalle.slug}`}
+                    className="pointer-events-auto flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/25"
+                  >
+                    <MapPin className="h-3 w-3" /> {business.neighborhood}
+                  </Link>
+                )}
+                {business.neighborhood && !mahalle && (
                   <span className="flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
                     <MapPin className="h-3 w-3" /> {business.neighborhood}
                   </span>
