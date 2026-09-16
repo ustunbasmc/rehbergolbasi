@@ -14,7 +14,6 @@ import {
 } from "recharts";
 import type { Tab } from "@/components/AdminDashboard";
 import KpiCard from "./dashboard/KpiCard";
-import NotificationCenter, { type NotificationItem } from "./dashboard/NotificationCenter";
 import ModuleBreakdown, { type ModuleCardData } from "./dashboard/ModuleBreakdown";
 import SiteTrendChart, { type TrendPoint } from "./dashboard/SiteTrendChart";
 import TopContentLists, { type TopGundemPost, type TopSearchTerm } from "./dashboard/TopContentLists";
@@ -97,6 +96,12 @@ const MODULE_GRADIENTS: Record<string, string> = {
   otobus: "from-violet-500 to-violet-600",
 };
 
+function SectionEyebrow({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-3 text-[11px] font-bold uppercase tracking-wider text-ink/35">{children}</p>
+  );
+}
+
 function formatCurrency(n: number) {
   return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);
 }
@@ -132,7 +137,6 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
   const [referrerData, setReferrerData] = useState<ReferrerCount[]>([]);
   const [topPosts, setTopPosts] = useState<TopGundemPost[]>([]);
   const [searchTerms, setSearchTerms] = useState<TopSearchTerm[]>([]);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -197,114 +201,6 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
         .order("occurred_at", { ascending: false })
         .limit(12),
     ]);
-
-    // ---- Bildirimler — tüm kaynaklardan (başvuru, onay, işletme/gündem
-    // bildirimi, iletişim talebi, süre uyarısı) tek bir listede, en yeniden
-    // eskiye. Sidebar'daki dağınık rozet sayılarının aynısı, tek yerde.
-    const [
-      { data: newSubmissions },
-      { data: pendingBusinesses },
-      { data: listingReports },
-      { data: gundemReportsData },
-      { data: contactRequests },
-      { data: expiryAlertRows },
-    ] = await Promise.all([
-      supabase
-        .from("business_submissions")
-        .select("id, business_name, created_at")
-        .eq("status", "new")
-        .order("created_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("businesses")
-        .select("id, name, created_at")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("listing_reports")
-        .select("id, reason, type, created_at, business:businesses(name)")
-        .order("created_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("gundem_reports")
-        .select("id, reason, created_at, post:gundem_posts(title)")
-        .eq("status", "yeni")
-        .order("created_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("contact_requests")
-        .select("id, name, created_at, business:businesses(name)")
-        .order("created_at", { ascending: false })
-        .limit(5),
-      supabase
-        .from("expiry_alerts")
-        .select("id, alert_type, created_at, business:businesses(name)")
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
-
-    const notificationItems: NotificationItem[] = [
-      ...(newSubmissions ?? []).map((s) => ({
-        id: s.id,
-        type: "submission" as const,
-        title: s.business_name,
-        subtitle: "Yeni işletme başvurusu",
-        createdAt: s.created_at,
-        tab: "submissions" as Tab,
-      })),
-      ...(pendingBusinesses ?? []).map((b) => ({
-        id: b.id,
-        type: "pending" as const,
-        title: b.name,
-        subtitle: "Onay bekliyor",
-        createdAt: b.created_at,
-        tab: "pending" as Tab,
-      })),
-      ...(listingReports ?? []).map((r) => ({
-        id: r.id,
-        type: "report" as const,
-        title: (r.business as unknown as { name?: string } | null)?.name ?? "İşletme",
-        subtitle: r.type === "claim" ? "Sahiplenme talebi" : r.type === "taxi_info" ? "Taksi bilgisi" : r.reason,
-        createdAt: r.created_at,
-        tab: "reports" as Tab,
-      })),
-      ...(gundemReportsData ?? []).map((r) => ({
-        id: r.id,
-        type: "gundem_report" as const,
-        title: (r.post as unknown as { title?: string } | null)?.title ?? "Gündem yazısı",
-        subtitle: r.reason,
-        createdAt: r.created_at,
-        tab: "gundem-reports" as Tab,
-      })),
-      ...(contactRequests ?? []).map((c) => ({
-        id: c.id,
-        type: "contact" as const,
-        title: (c.business as unknown as { name?: string } | null)?.name ?? c.name,
-        subtitle: `İletişim talebi — ${c.name}`,
-        createdAt: c.created_at,
-        tab: "requests" as Tab,
-      })),
-      ...(expiryAlertRows ?? []).map((a) => ({
-        id: a.id,
-        type: "expiry" as const,
-        title: (a.business as unknown as { name?: string } | null)?.name ?? "İşletme",
-        subtitle:
-          a.alert_type === "son_gun"
-            ? "Son gün"
-            : a.alert_type === "3_gun"
-            ? "3 gün kaldı"
-            : a.alert_type === "10_gun"
-            ? "10 gün kaldı"
-            : "Plus süresi doldu",
-        createdAt: a.created_at,
-        tab: "expiry" as Tab,
-      })),
-    ]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 10);
-
-    setNotifications(notificationItems);
 
     setRecentActivity(
       (recentEvents ?? []).map((e) => ({
@@ -578,26 +474,27 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
       icon: ListTodo,
       text: `${todos.pendingCount} bekleyen başvuru var`,
       color: "text-gold-dark",
+      tab: "pending" as Tab,
     },
     todos.expiringCount > 0 && {
       icon: Clock,
       text: `${todos.expiringCount} işletmenin süresi 7 gün içinde doluyor`,
       color: "text-bordo",
+      tab: "expiry" as Tab,
     },
     todos.draftGuidesCount > 0 && {
       icon: FileEdit,
       text: `${todos.draftGuidesCount} rehber taslak halinde bekliyor`,
       color: "text-navy",
+      tab: "guides" as Tab,
     },
-  ].filter(Boolean) as { icon: React.ElementType; text: string; color: string }[];
+  ].filter(Boolean) as { icon: React.ElementType; text: string; color: string; tab: Tab }[];
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Bildirimler — tüm kaynaklardan tek merkezi liste */}
-      <NotificationCenter items={notifications} onNavigate={onNavigate} />
-
-      {/* KPI kartları (solda, alt alta) + Son İşlemler (sağda) */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
+    <div className="flex flex-col gap-8">
+      <div>
+        <SectionEyebrow>Genel Durum</SectionEyebrow>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
           <KpiCard
             icon={Building2}
@@ -624,7 +521,8 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
             gradient="linear-gradient(135deg, #25864a 0%, #34a85f 100%)"
           />
         </div>
-        <RecentActivity items={recentActivity} />
+          <RecentActivity items={recentActivity} />
+        </div>
       </div>
 
       {/* Bugün Yapılacaklar */}
@@ -634,41 +532,57 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
             <ListTodo className="h-4 w-4 text-gold-dark" />
             <span className="text-sm font-bold text-navy">Bugün Yapılacaklar</span>
           </div>
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             {todoItems.map((item, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm text-ink/70">
+              <button
+                key={i}
+                onClick={() => onNavigate(item.tab)}
+                className="flex items-center gap-2 rounded-lg px-1.5 py-1 text-left text-sm text-ink/70 transition hover:bg-white/60"
+              >
                 <item.icon className={`h-3.5 w-3.5 shrink-0 ${item.color}`} />
                 {item.text}
-              </div>
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Modül kartları — site geneli, tüm event tipleri (son 30 gün) */}
       <div>
-        <div className="mb-3 flex items-center gap-1.5">
-          <SearchIcon className="h-4 w-4 text-bordo" />
-          <h3 className="font-display text-base font-bold text-navy">Modül Bazlı Etkileşim (Son 30 Gün)</h3>
+        <SectionEyebrow>Site Etkileşimi (Son 30 Gün)</SectionEyebrow>
+        <div className="flex flex-col gap-5">
+          {/* Modül kartları — site geneli, tüm event tipleri (son 30 gün) */}
+          <div>
+            <div className="mb-3 flex items-center gap-1.5">
+              <SearchIcon className="h-4 w-4 text-bordo" />
+              <h3 className="font-display text-base font-bold text-navy">Modül Bazlı Etkileşim</h3>
+            </div>
+            <ModuleBreakdown modules={moduleCards} />
+          </div>
+
+          {/* Site geneli günlük trend */}
+          <div className="card-shadow rounded-2xl bg-white p-5">
+            <div className="mb-4 flex items-center gap-1.5">
+              <ArrowUpRight className="h-4 w-4 text-bordo" />
+              <h3 className="font-display text-base font-bold text-navy">Günlük Trend</h3>
+            </div>
+            <SiteTrendChart data={trendData} />
+          </div>
         </div>
-        <ModuleBreakdown modules={moduleCards} />
       </div>
 
-      {/* Site geneli günlük trend */}
-      <div className="card-shadow rounded-2xl bg-white p-5">
-        <div className="mb-4 flex items-center gap-1.5">
-          <ArrowUpRight className="h-4 w-4 text-bordo" />
-          <h3 className="font-display text-base font-bold text-navy">Son 30 Gün — Site Geneli Etkileşim</h3>
+      <div>
+        <SectionEyebrow>İçerik &amp; Trafik Kaynakları</SectionEyebrow>
+        <div className="flex flex-col gap-5">
+          {/* En çok okunan gündem + en çok aranan terimler */}
+          <TopContentLists posts={topPosts} terms={searchTerms} />
+
+          {/* Cihaz + kaynak dağılımı (site geneli) */}
+          <DeviceReferrerBreakdown devices={deviceData} referrers={referrerData} />
         </div>
-        <SiteTrendChart data={trendData} />
       </div>
 
-      {/* En çok okunan gündem + en çok aranan terimler */}
-      <TopContentLists posts={topPosts} terms={searchTerms} />
-
-      {/* Cihaz + kaynak dağılımı (site geneli) */}
-      <DeviceReferrerBreakdown devices={deviceData} referrers={referrerData} />
-
+      <div className="flex flex-col gap-5">
+      <SectionEyebrow>İşletme Yönetimi</SectionEyebrow>
       {/* Eski: işletme profili etkileşim trendi (14 gün) */}
       <div className="card-shadow rounded-2xl bg-white p-5">
         <div className="mb-4 flex items-center justify-between">
@@ -835,6 +749,7 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

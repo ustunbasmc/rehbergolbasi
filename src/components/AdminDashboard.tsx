@@ -21,6 +21,7 @@ import BusinessAnalytics from "@/components/admin/BusinessAnalytics";
 import GuidesList from "@/components/admin/GuidesList";
 import NewBusinessForm from "@/components/admin/NewBusinessForm";
 import GlobalSearch from "@/components/admin/GlobalSearch";
+import NotificationBell from "@/components/admin/dashboard/NotificationBell";
 import EditBusinessModal from "@/components/admin/EditBusinessModal";
 import type { Business } from "@/lib/types";
 import MessageTemplates from "@/components/admin/MessageTemplates";
@@ -268,7 +269,10 @@ export default function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     <h1 className="font-display text-xl font-bold text-navy">{currentLabel}</h1>
     <p className="text-xs text-ink/50">RehberGölbaşı yönetim paneli</p>
   </div>
-  <GlobalSearch onSelect={handleSearchSelect} />
+  <div className="flex items-center gap-3">
+    <GlobalSearch onSelect={handleSearchSelect} />
+    <NotificationBell onNavigate={setTab} />
+  </div>
 </header>
 
         <main className="min-w-0 px-4 py-6 sm:px-8 sm:py-8">
