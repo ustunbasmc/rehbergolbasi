@@ -22,6 +22,10 @@ import DeviceReferrerBreakdown, {
   type DeviceCount,
   type ReferrerCount,
 } from "./dashboard/DeviceReferrerBreakdown";
+import RecentActivity, {
+  RECENT_ACTIVITY_EVENT_TYPES,
+  type RecentActivityItem,
+} from "./dashboard/RecentActivity";
 import {
   MODULES,
   MODULE_BREAKDOWN_EVENTS,
@@ -129,6 +133,7 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
   const [topPosts, setTopPosts] = useState<TopGundemPost[]>([]);
   const [searchTerms, setSearchTerms] = useState<TopSearchTerm[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -150,6 +155,7 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
       { data: workOrderRevenue },
       { data: events30 },
       { data: gundemTop },
+      { data: recentEvents },
     ] = await Promise.all([
       supabase.from("businesses").select("status, is_active, category:categories(name)"),
       supabase.from("payments").select("amount, paid_at"),
@@ -184,6 +190,12 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
         .in("status", ["scheduled", "published"])
         .order("view_count", { ascending: false })
         .limit(5),
+      supabase
+        .from("business_events")
+        .select("id, event_type, occurred_at, meta, business:businesses(name)")
+        .in("event_type", RECENT_ACTIVITY_EVENT_TYPES)
+        .order("occurred_at", { ascending: false })
+        .limit(12),
     ]);
 
     // ---- Bildirimler — tüm kaynaklardan (başvuru, onay, işletme/gündem
@@ -293,6 +305,16 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
       .slice(0, 10);
 
     setNotifications(notificationItems);
+
+    setRecentActivity(
+      (recentEvents ?? []).map((e) => ({
+        id: e.id,
+        eventType: e.event_type,
+        occurredAt: e.occurred_at,
+        businessName: (e.business as unknown as { name?: string } | null)?.name ?? null,
+        query: extractQuery(e.meta as Record<string, unknown> | null),
+      }))
+    );
 
     if (businesses) {
       const catMap = new Map<string, number>();
@@ -448,7 +470,7 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
     }
 
     rawEvents.forEach((e) => {
-      const mod = moduleForEvent(e.event_type);
+      const mod = moduleForEvent(e.event_type, e.meta);
       if (mod) {
         moduleTotals[mod] = (moduleTotals[mod] ?? 0) + 1;
         moduleTypeCounts[mod] ??= {};
@@ -561,6 +583,9 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
     <div className="flex flex-col gap-6">
       {/* Bildirimler — tüm kaynaklardan tek merkezi liste */}
       <NotificationCenter items={notifications} onNavigate={onNavigate} />
+
+      {/* Son İşlemler — ziyaret, arama, WhatsApp, telefon, yol tarifi (canlı akış) */}
+      <RecentActivity items={recentActivity} />
 
       {/* Bugün Yapılacaklar */}
       {todoItems.length > 0 && (

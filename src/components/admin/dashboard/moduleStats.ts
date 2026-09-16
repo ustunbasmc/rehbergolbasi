@@ -62,7 +62,25 @@ const EVENT_MODULE_MAP: Record<string, ModuleKey> = {
   otobus_page_view: "otobus",
 };
 
-export function moduleForEvent(eventType: string): ModuleKey | null {
+/**
+ * `phone_click`/`whatsapp_click`/`directions_click`/`profile_click` gibi
+ * event_type'lar birden çok sayfada (işletme profili, taksi kartı, gündem
+ * kenar çubuğu) aynı isimle tekrar kullanılır — hangi modüle ait olduklarını
+ * event_type tek başına söylemez. `trackBusinessEvent`'e verilen `source`
+ * (ör. "taxi_page") bu event'lerde `meta.source` olarak saklanır; burada
+ * o kaynağa bakılarak doğru modüle yönlendirilir. Aksi halde ör. taksi
+ * sayfasındaki "Hemen Ara" tıklamaları modül kartlarında hiç görünmez,
+ * hepsi genel "İşletmeler" toplamına karışırdı.
+ */
+const SOURCE_MODULE_MAP: Record<string, ModuleKey> = {
+  taxi_page: "taxi",
+};
+
+export function moduleForEvent(eventType: string, meta?: Record<string, unknown> | null): ModuleKey | null {
+  const source = meta?.source;
+  if (typeof source === "string" && SOURCE_MODULE_MAP[source]) {
+    return SOURCE_MODULE_MAP[source];
+  }
   return EVENT_MODULE_MAP[eventType] ?? null;
 }
 
@@ -80,8 +98,10 @@ export const MODULE_BREAKDOWN_EVENTS: Record<ModuleKey, { type: string; label: s
   ],
   taxi: [
     { type: "taxi_page_view", label: "Sayfa görüntüleme" },
-    { type: "taxi_location_granted", label: "Konum izni verildi" },
     { type: "taxi_search", label: "Arama yapıldı" },
+    { type: "phone_click", label: "Telefon araması" },
+    { type: "whatsapp_click", label: "WhatsApp" },
+    { type: "directions_click", label: "Yol tarifi" },
   ],
   gundem: [
     { type: "news_list_view", label: "Liste görüntüleme" },
