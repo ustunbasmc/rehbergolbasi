@@ -4,7 +4,9 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { BusinessFaq } from "@/lib/types";
 
-export default function FaqAccordion({ faqs }: { faqs: BusinessFaq[] }) {
+type FaqLike = Pick<BusinessFaq, "id" | "question" | "answer">;
+
+export default function FaqAccordion({ faqs }: { faqs: FaqLike[] }) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   if (faqs.length === 0) return null;

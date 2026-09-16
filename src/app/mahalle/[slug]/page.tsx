@@ -1,18 +1,69 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { MapPin, Phone, Users, GraduationCap, Newspaper } from "lucide-react";
+import { MapPin, Phone, Users, Newspaper, Navigation, HelpCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { MAHALLELER, getMahalleBySlug } from "@/data/mahalleler";
-import CategoryResults from "@/components/CategoryResults";
-import BusinessCard from "@/components/BusinessCard";
+import { MAHALLELER, getMahalleBySlug, type Mahalle } from "@/data/mahalleler";
 import GundemCard, { type GundemCardData } from "@/components/GundemCard";
+import FaqAccordion from "@/components/FaqAccordion";
+import PopulationTrendCard from "@/components/mahalle/PopulationTrendCard";
+import MahalleBusinessGroups, { type MahalleBusinessGroup } from "@/components/mahalle/MahalleBusinessGroups";
+import AdSlot from "@/components/AdSlot";
+import { buildMahalleFaqs } from "@/lib/mahalleFaq";
 import type { Business, Category } from "@/lib/types";
 
 export const revalidate = 60;
 
 const GUNDEM_CARD_COLUMNS =
   "slug, title, summary, cover_image_url, cover_image_alt, published_at, corrected_at, neighborhoods, is_sponsored, is_breaking, breaking_until, category:gundem_categories(*)";
+
+/**
+ * Bir mahallede birden fazla işletme türü varsa, en çok ziyaret edilmesi
+ * beklenen kategoriler kendi başlığı altında öne çıkarılır; bu listede
+ * olmayan her şey "Diğer İşletmeler" altında toplanır (bkz. `groupBusinesses`).
+ */
+const PRIORITY_CATEGORIES = [
+  "Resmi Kurumlar",
+  "Restoran & Kafe",
+  "Eğitim",
+  "Kuaför & Güzellik",
+  "Sağlık",
+  "Konaklama",
+  "Düğün & Etkinlik",
+  "Emlak",
+];
+
+function groupBusinesses(businesses: Business[], topCategoryNameOf: (categoryId: string) => string | null) {
+  const byCategory = new Map<string, Business[]>();
+  const diger: Business[] = [];
+
+  businesses.forEach((b) => {
+    const topName = topCategoryNameOf(b.category_id);
+    if (topName && PRIORITY_CATEGORIES.includes(topName)) {
+      const list = byCategory.get(topName) ?? [];
+      list.push(b);
+      byCategory.set(topName, list);
+    } else {
+      diger.push(b);
+    }
+  });
+
+  const groups: MahalleBusinessGroup[] = PRIORITY_CATEGORIES.filter((name) => byCategory.has(name)).map((name) => ({
+    key: name,
+    label: name,
+    businesses: byCategory.get(name)!,
+    note:
+      name === "Eğitim"
+        ? "İlçe genelindeki okul kayıt ve eğitim işlemleri için Gölbaşı İlçe Millî Eğitim Müdürlüğü sayfasına bakabilirsiniz."
+        : undefined,
+  }));
+
+  if (diger.length > 0) {
+    groups.push({ key: "diger", label: "Diğer İşletmeler", businesses: diger });
+  }
+
+  return groups;
+}
 
 async function getData(slug: string) {
   const mahalle = getMahalleBySlug(slug);
@@ -27,7 +78,7 @@ async function getData(slug: string) {
       .in("neighborhood", mahalle.aliases)
       .order("tier", { ascending: false })
       .order("created_at", { ascending: false }),
-    supabase.from("categories").select("id, slug, parent_id"),
+    supabase.from("categories").select("id, name, slug, parent_id"),
     supabase
       .from("gundem_posts")
       .select(GUNDEM_CARD_COLUMNS)
@@ -41,8 +92,10 @@ async function getData(slug: string) {
 
   const businesses = (allBusinesses ?? []) as Business[];
 
-  const categoryById = new Map((categories ?? []).map((c) => [c.id, c as Pick<Category, "id" | "slug" | "parent_id">]));
-  function topSlugOf(categoryId: string): string | null {
+  const categoryById = new Map(
+    (categories ?? []).map((c) => [c.id, c as Pick<Category, "id" | "name" | "slug" | "parent_id">])
+  );
+  function topCategoryNameOf(categoryId: string): string | null {
     let current = categoryById.get(categoryId);
     if (!current) return null;
     while (current.parent_id) {
@@ -50,15 +103,15 @@ async function getData(slug: string) {
       if (!parent) break;
       current = parent;
     }
-    return current.slug;
+    return current.name;
   }
 
-  const egitimBusinesses = businesses.filter((b) => topSlugOf(b.category_id) === "egitim");
+  const businessGroups = groupBusinesses(businesses, topCategoryNameOf);
 
   return {
     mahalle,
     businesses,
-    egitimBusinesses,
+    businessGroups,
     gundemPosts: (gundemPosts ?? []) as unknown as GundemCardData[],
   };
 }
@@ -86,6 +139,24 @@ export async function generateMetadata({
   };
 }
 
+function mapEmbedSrc(lat: number, lng: number, zoom = 15) {
+  return `https://www.google.com/maps?q=${lat},${lng}&z=${zoom}&output=embed`;
+}
+
+function directionsUrl(lat: number, lng: number) {
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+}
+
+function muhtarInitials(name: string) {
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 export default async function MahallePage({
   params,
 }: {
@@ -94,10 +165,13 @@ export default async function MahallePage({
   const { slug } = await params;
   const data = await getData(slug);
   if (!data) notFound();
-  const { mahalle, businesses, egitimBusinesses, gundemPosts } = data;
+  const { mahalle, businesses, businessGroups, gundemPosts } = data;
 
   const pageUrl = `https://rehbergolbasi.com/mahalle/${slug}`;
   const otherMahalleler = MAHALLELER.filter((m) => m.slug !== slug);
+
+  const topCategoryNames = businessGroups.filter((g) => g.key !== "diger").map((g) => g.label).slice(0, 3);
+  const faqs = buildMahalleFaqs(mahalle, businesses.length, topCategoryNames);
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -123,12 +197,23 @@ export default async function MahallePage({
         }
       : null;
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       {itemListJsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }} />
       )}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       {/* Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-navy px-6 py-10 sm:px-10 sm:py-12">
@@ -138,32 +223,45 @@ export default async function MahallePage({
             background: "radial-gradient(circle at 90% 15%, rgba(201,162,75,0.18), transparent 55%)",
           }}
         />
-        <div className="relative">
-          <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/60">
-            <Link href="/mahalle" className="transition-colors hover:text-white">
-              Mahalleler
-            </Link>
-            <span>/</span>
-            <span className="text-white">{mahalle.name}</span>
-          </nav>
-          <div className="flex items-center gap-4">
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-gold backdrop-blur-sm">
-              <MapPin className="h-7 w-7" />
-            </span>
-            <div>
-              <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                {`${mahalle.name} Mahallesi`}
-              </h1>
-              <p className="flex items-center gap-1.5 text-sm text-white/60">
-                <Users className="h-3.5 w-3.5" /> {mahalle.population2023.toLocaleString("tr-TR")} nüfus (2023 ADNKS)
-                {" · "}
-                {businesses.length} işletme
-              </p>
+        <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center">
+          <div className="flex-1">
+            <nav className="mb-4 flex flex-wrap items-center gap-1 text-xs font-semibold text-white/60">
+              <Link href="/mahalle" className="transition-colors hover:text-white">
+                Mahalleler
+              </Link>
+              <span>/</span>
+              <span className="text-white">{mahalle.name}</span>
+            </nav>
+            <div className="flex items-center gap-4">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-gold backdrop-blur-sm">
+                <MapPin className="h-7 w-7" />
+              </span>
+              <div>
+                <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                  {`${mahalle.name} Mahallesi`}
+                </h1>
+                <p className="flex items-center gap-1.5 text-sm text-white/60">
+                  <Users className="h-3.5 w-3.5" /> {mahalle.population2023.toLocaleString("tr-TR")} nüfus (2023
+                  ADNKS)
+                  {" · "}
+                  {businesses.length} işletme
+                </p>
+              </div>
             </div>
+            <p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-white/75 sm:text-base">
+              {mahalle.intro}
+            </p>
           </div>
-          <p className="mt-5 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-white/75 sm:text-base">
-            {mahalle.intro}
-          </p>
+          <div className="w-full shrink-0 overflow-hidden rounded-2xl border border-white/10 lg:w-80">
+            <iframe
+              title={`${mahalle.name} Mahallesi konumu`}
+              width="100%"
+              height="220"
+              loading="lazy"
+              style={{ border: 0, display: "block" }}
+              src={mapEmbedSrc(mahalle.lat, mahalle.lng, 14)}
+            />
+          </div>
         </div>
       </div>
 
@@ -173,28 +271,8 @@ export default async function MahallePage({
             <h2 className="mb-4 font-display text-xl font-bold text-navy">
               {`${mahalle.name} Mahallesi'ndeki İşletmeler`}
             </h2>
-            <CategoryResults businesses={businesses} />
+            <MahalleBusinessGroups groups={businessGroups} totalCount={businesses.length} />
           </div>
-
-          {egitimBusinesses.length > 0 && (
-            <div className="card-shadow rounded-2xl bg-white p-6">
-              <h2 className="mb-4 flex items-center gap-1.5 font-display text-lg font-bold text-navy">
-                <GraduationCap className="h-5 w-5 text-bordo" /> Eğitim
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {egitimBusinesses.map((b) => (
-                  <BusinessCard key={b.id} business={b} />
-                ))}
-              </div>
-              <p className="mt-4 text-xs text-ink/50">
-                İlçe genelindeki okul kayıt ve eğitim işlemleri için{" "}
-                <Link href="/isletme/golbasi-ilce-milli-egitim-mudurlugu" className="font-semibold text-bordo hover:underline">
-                  Gölbaşı İlçe Millî Eğitim Müdürlüğü
-                </Link>{" "}
-                sayfasına bakabilirsiniz.
-              </p>
-            </div>
-          )}
 
           <div className="card-shadow rounded-2xl bg-white p-6">
             <h2 className="mb-4 flex items-center gap-1.5 font-display text-lg font-bold text-navy">
@@ -216,26 +294,19 @@ export default async function MahallePage({
               </div>
             )}
           </div>
+
+          <div>
+            <h2 className="mb-4 flex items-center gap-1.5 font-display text-xl font-bold text-navy">
+              <HelpCircle className="h-5 w-5 text-bordo" /> Sıkça Sorulan Sorular
+            </h2>
+            <FaqAccordion faqs={faqs} />
+          </div>
         </div>
 
         <div className="flex flex-col gap-5 lg:w-80">
-          <div className="card-shadow rounded-2xl bg-white p-6">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">Mahalle Muhtarı</h2>
-            <p className="text-base font-bold text-navy">{mahalle.muhtar.name}</p>
-            <div className="mt-2 flex flex-col gap-1.5 text-sm text-ink/70">
-              {mahalle.muhtar.phone && (
-                <a href={`tel:${mahalle.muhtar.phone.replace(/[^\d+]/g, "")}`} className="flex items-center gap-2 hover:text-bordo">
-                  <Phone className="h-3.5 w-3.5" /> {mahalle.muhtar.phone} (Muhtarlık)
-                </a>
-              )}
-              <a href={`tel:${mahalle.muhtar.mobile.replace(/[^\d+]/g, "")}`} className="flex items-center gap-2 hover:text-bordo">
-                <Phone className="h-3.5 w-3.5" /> {mahalle.muhtar.mobile} (Cep)
-              </a>
-            </div>
-            <p className="mt-3 border-t border-line pt-3 text-[11px] text-ink/40">
-              Kaynak: Gölbaşı Belediyesi resmi muhtarlıklar listesi
-            </p>
-          </div>
+          <MuhtarCard mahalle={mahalle} />
+          <PopulationTrendCard population2023={mahalle.population2023} history={mahalle.populationHistory} />
+          <AdSlot placement="mahalle_detail" variant="square" />
 
           <div className="card-shadow rounded-2xl bg-white p-6">
             <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">Diğer Mahalleler</h2>
@@ -253,6 +324,60 @@ export default async function MahallePage({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MuhtarCard({ mahalle }: { mahalle: Mahalle }) {
+  const { muhtar } = mahalle;
+  return (
+    <div className="card-shadow overflow-hidden rounded-2xl bg-white">
+      <div className="p-6">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">Mahalle Muhtarı</h2>
+        <div className="flex items-center gap-3">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-navy to-navy-dark font-display text-lg font-bold text-white">
+            {muhtarInitials(muhtar.name)}
+          </span>
+          <div>
+            <p className="text-base font-bold text-navy">{muhtar.name}</p>
+            <p className="text-xs text-ink/50">{mahalle.name} Mahallesi Muhtarı</p>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-col gap-1.5 text-sm text-ink/70">
+          {muhtar.phone && (
+            <a
+              href={`tel:${muhtar.phone.replace(/[^\d+]/g, "")}`}
+              className="flex items-center gap-2 hover:text-bordo"
+            >
+              <Phone className="h-3.5 w-3.5" /> {muhtar.phone} (Muhtarlık)
+            </a>
+          )}
+          <a href={`tel:${muhtar.mobile.replace(/[^\d+]/g, "")}`} className="flex items-center gap-2 hover:text-bordo">
+            <Phone className="h-3.5 w-3.5" /> {muhtar.mobile} (Cep)
+          </a>
+        </div>
+      </div>
+      <div className="overflow-hidden border-t border-line">
+        <iframe
+          title={`${mahalle.name} Muhtarlığı konumu`}
+          width="100%"
+          height="140"
+          loading="lazy"
+          style={{ border: 0, display: "block" }}
+          src={mapEmbedSrc(muhtar.officeLat, muhtar.officeLng)}
+        />
+        <a
+          href={directionsUrl(muhtar.officeLat, muhtar.officeLng)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1.5 border-t border-line bg-offwhite py-2 text-xs font-semibold text-navy hover:text-bordo"
+        >
+          <Navigation className="h-3.5 w-3.5" /> Muhtarlığa yol tarifi al
+        </a>
+      </div>
+      <p className="border-t border-line px-6 py-2.5 text-[11px] text-ink/40">
+        Kaynak: Gölbaşı Belediyesi resmi muhtarlıklar listesi
+      </p>
     </div>
   );
 }

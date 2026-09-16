@@ -10,7 +10,8 @@ export type AdPlacementKey =
   | "gundem_detail"
   | "rehberler_list"
   | "nobetci_eczane"
-  | "otobus_saatleri";
+  | "otobus_saatleri"
+  | "mahalle_detail";
 
 export interface AdPlacementInfo {
   key: AdPlacementKey;
@@ -109,6 +110,14 @@ export const AD_PLACEMENTS: AdPlacementInfo[] = [
     label: "Otobüs Saatleri",
     pageLabel: "Otobüs Saatleri",
     description: "Sayfanın yan tarafında kare reklam.",
+    priceMonthly: 3000,
+    imageSize: "800 × 800 px (kare)",
+  },
+  {
+    key: "mahalle_detail",
+    label: "Mahalle Sayfası",
+    pageLabel: "Mahalle detay sayfaları",
+    description: "Mahalle sayfasının yan tarafında, muhtar ve nüfus kartlarının altında kare reklam.",
     priceMonthly: 3000,
     imageSize: "800 × 800 px (kare)",
   },

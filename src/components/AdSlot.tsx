@@ -11,7 +11,8 @@ export type AdPlacement =
   | "gundem_detail"
   | "nobetci_eczane"
   | "otobus_saatleri"
-  | "rehberler_list";
+  | "rehberler_list"
+  | "mahalle_detail";
 
 export type AdVariant = "horizontal" | "square" | "card";
 
