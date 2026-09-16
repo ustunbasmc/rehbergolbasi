@@ -1,25 +1,41 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bus, ChevronDown, ExternalLink, MapPin, Pill, Sparkles, Info } from "lucide-react";
+import {
+  Bus, ChevronDown, ExternalLink, MapPin, Pill, Sparkles, Info,
+  ListFilter, Search as SearchIcon, MousePointerClick, Route as RouteIcon,
+} from "lucide-react";
 import OtobusHatlariList from "./OtobusHatlariList";
 import PageViewTracker from "@/components/PageViewTracker";
 import AdSlot from "@/components/AdSlot";
-import { OTOBUS_VERI_KAYNAGI, OTOBUS_SON_KONTROL_TARIHI } from "@/data/otobus-hatlari";
+import {
+  OTOBUS_VERI_KAYNAGI,
+  OTOBUS_SON_KONTROL_TARIHI,
+  OTOBUS_HATLARI,
+} from "@/data/otobus-hatlari";
+
+const BASE_URL = "https://rehbergolbasi.com";
+const TOPLAM_DURAK_SAYISI = new Set(OTOBUS_HATLARI.flatMap((h) => h.duraklar)).size;
 
 export const metadata: Metadata = {
   title: "Gölbaşı Otobüs Saatleri — Tüm EGO Hatları ve Güzergahları",
   description:
-    "Gölbaşı'ndan Kızılay, Ulus, Akköprü, AŞTİ ve İncek'e giden tüm EGO otobüs hatları. Hafta içi, Cumartesi ve Pazar hareket saatleri, güzergahlar ve tüm duraklar — güncel ve eksiksiz.",
+    "Gölbaşı'ndan Kızılay, Ulus, Akköprü, AŞTİ ve İncek'e giden tüm EGO otobüs hatları. Hafta içi, Cumartesi ve Pazar hareket saatleri, güzergahlar, tüm duraklar ve sıradaki sefer bilgisi — güncel ve eksiksiz.",
   alternates: {
-    canonical: "https://rehbergolbasi.com/otobus-saatleri",
+    canonical: `${BASE_URL}/otobus-saatleri`,
   },
   openGraph: {
     title: "Gölbaşı Otobüs Saatleri — Tüm EGO Hatları",
     description:
       "Gölbaşı'ndan Kızılay, Ulus, Akköprü, İncek ve çevre mahallelere giden tüm otobüs hatları, saatleri ve durakları.",
-    url: "https://rehbergolbasi.com/otobus-saatleri",
+    url: `${BASE_URL}/otobus-saatleri`,
     type: "website",
     locale: "tr_TR",
+  },
+  twitter: {
+    card: "summary",
+    title: "Gölbaşı Otobüs Saatleri — Tüm EGO Hatları",
+    description:
+      "Gölbaşı'ndan Kızılay, Ulus, Akköprü, İncek ve çevre mahallelere giden tüm otobüs hatları, saatleri ve durakları.",
   },
 };
 
@@ -48,6 +64,32 @@ const SSS = [
     soru: "Dini ve resmi bayramlarda otobüs saatleri değişiyor mu?",
     cevap: "Evet, dini ve resmi bayramlarda tüm hatlarda Cumartesi tarifesi uygulanır.",
   },
+  {
+    soru: "Sıradaki otobüsün kaç dakika sonra geleceğini nasıl öğrenirim?",
+    cevap:
+      "Her hat kartında, bugünün seferleri arasından şu andan sonraki ilk sefer otomatik hesaplanıp \"Sıradaki sefer\" olarak gösterilir — geçmiş saatler soluk ve üzeri çizili görünür, gelecek saatler net şekilde listelenir.",
+  },
+  {
+    soru: "Gölbaşı'nın kırsal mahallelerine (köylerine) otobüs var mı?",
+    cevap:
+      "Evet. Karaali Mahallesi'ne 180, Örencik ve Yurtbeyi'ne 179 numaralı hatlar hizmet verir. Kırsal hatların çoğu şehir merkezi hatlarına göre daha seyrek çalışır, bu yüzden yola çıkmadan önce hat kartındaki saatleri kontrol etmeniz önerilir.",
+  },
+  {
+    soru: "Gölbaşı ilçe içinde kısa mesafe otobüs hattı var mı?",
+    cevap:
+      "Evet, \"Gölbaşı içi\" kategorisinde ilçe merkezini mahallelere bağlayan kısa hatlar bulunur. Bu sayfadaki kategori filtrelerinden \"Gölbaşı içi\"ni seçerek tümünü görebilirsiniz.",
+  },
+  {
+    soru: "Bu sayfadaki bilgiler resmi mi, EGO'nun kendi verisiyle aynı mı?",
+    cevap:
+      "Saatler EGO Genel Müdürlüğü'nün açıkladığı tarifelere dayanır ve düzenli olarak kontrol edilir. Ancak EGO saatleri önceden haber vermeden değiştirebilir; kritik bir yolculuk öncesinde EGO Otobüs Nerede uygulamasından teyit etmenizi öneririz.",
+  },
+];
+
+const NASIL_KULLANILIR = [
+  { icon: SearchIcon, baslik: "Hattını bul", aciklama: "Hat numarası veya mahalle adı yazarak ara, ya da kategori kartlarından filtrele." },
+  { icon: MousePointerClick, baslik: "Günü seç", aciklama: "Hafta içi, Cumartesi veya Pazar sekmesine geç — bugünün sekmesi otomatik işaretlenir." },
+  { icon: RouteIcon, baslik: "Saatini ve durağını gör", aciklama: "Sıradaki seferi, tüm gün saatlerini ve güzergah üzerindeki tüm durakları tek kartta incele." },
 ];
 
 const POPULER_HATLAR = [
@@ -73,9 +115,27 @@ export default function OtobusSaatleriPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Anasayfa", item: "https://rehbergolbasi.com" },
-      { "@type": "ListItem", position: 2, name: "Otobüs Saatleri", item: "https://rehbergolbasi.com/otobus-saatleri" },
+      { "@type": "ListItem", position: 1, name: "Anasayfa", item: BASE_URL },
+      { "@type": "ListItem", position: 2, name: "Otobüs Saatleri", item: `${BASE_URL}/otobus-saatleri` },
     ],
+  };
+
+  const hatlarJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: OTOBUS_HATLARI.map((h, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "BusTrip",
+        name: h.ad,
+        busName: h.ad,
+        busNumber: h.no,
+        departureBusStop: { "@type": "BusStop", name: h.kalkis },
+        arrivalBusStop: { "@type": "BusStop", name: h.varis },
+        provider: { "@type": "Organization", name: "EGO Genel Müdürlüğü" },
+      },
+    })),
   };
 
   return (
@@ -83,25 +143,54 @@ export default function OtobusSaatleriPage() {
       <PageViewTracker eventType="otobus_page_view" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(hatlarJsonLd) }} />
 
-      <Link
-        href="/"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-ink/50 hover:text-bordo"
-      >
-        ← Anasayfa
-      </Link>
+      <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-sm text-ink/50">
+        <Link href="/" className="font-semibold transition-colors hover:text-bordo">Anasayfa</Link>
+        <span>/</span>
+        <span className="font-semibold text-navy">Otobüs Saatleri</span>
+      </nav>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_300px] lg:gap-12">
         <main className="min-w-0">
           <h1 className="mb-2 flex items-center gap-2 font-display text-3xl font-bold text-navy">
             <Bus className="h-7 w-7 text-bordo" /> Gölbaşı Otobüs Saatleri
           </h1>
-          <p className="mb-4 text-sm leading-relaxed text-ink/60">
+          <p className="mb-3 text-sm leading-relaxed text-ink/60">
             Gölbaşı'ndan Kızılay, Ulus, Sıhhiye ve Opera'ya; Akköprü ve AŞTİ'ye; İncek, Taşpınar ve
             Tulumtaş'a; Karagedik, Selametli, Bezirhane gibi kırsal mahallelere giden tüm EGO
             otobüs hatlarını bu sayfada bulabilirsiniz. Her hat kartında güzergah, mesafe, hafta
-            içi/Cumartesi/Pazar hareket saatleri ve geçtiği tüm duraklar yer alır.
+            içi/Cumartesi/Pazar hareket saatleri, sıradaki sefer ve geçtiği tüm duraklar yer alır.
           </p>
+
+          <p className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-semibold text-ink/40">
+            <span className="flex items-center gap-1.5">
+              <Bus className="h-3.5 w-3.5 text-bordo" /> {OTOBUS_HATLARI.length} otobüs hattı
+            </span>
+            <span className="flex items-center gap-1.5">
+              <RouteIcon className="h-3.5 w-3.5 text-bordo" /> {TOPLAM_DURAK_SAYISI}+ durak
+            </span>
+            <span className="flex items-center gap-1.5">
+              <ListFilter className="h-3.5 w-3.5 text-bordo" /> 5 kategoride filtrelenebilir
+            </span>
+          </p>
+
+          {/* Nasıl kullanılır — 3 adım */}
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {NASIL_KULLANILIR.map((adim, i) => (
+              <div key={adim.baslik} className="card-shadow flex items-start gap-2.5 rounded-xl bg-white p-3.5">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bordo/10 text-xs font-bold text-bordo">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-[13px] font-bold text-navy">
+                    <adim.icon className="h-3.5 w-3.5 shrink-0 text-bordo" /> {adim.baslik}
+                  </p>
+                  <p className="mt-0.5 text-[12px] leading-relaxed text-ink/55">{adim.aciklama}</p>
+                </div>
+              </div>
+            ))}
+          </div>
 
           <a
             href="https://www.ego.gov.tr/otobusnerede"

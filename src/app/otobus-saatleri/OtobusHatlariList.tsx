@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
+  Bus,
   ChevronDown,
+  Circle,
+  Clock,
   GraduationCap,
   Landmark,
-  MapPin,
   MapPinned,
   Route,
   Search,
@@ -22,12 +24,12 @@ const GUN_LABEL: Record<Gun, string> = {
   pazar: "Pazar",
 };
 
-const KATEGORI_STIL: Record<HatKategori, { icon: typeof Landmark; renk: string; bg: string }> = {
-  "sehir-merkezi": { icon: Landmark, renk: "text-bordo", bg: "bg-bordo" },
-  "akkopru-asti": { icon: Building2, renk: "text-navy", bg: "bg-navy" },
-  "incek-cankaya": { icon: GraduationCap, renk: "text-navy", bg: "bg-navy" },
-  kirsal: { icon: TreePine, renk: "text-green-700", bg: "bg-green-700" },
-  "golbasi-ici": { icon: MapPinned, renk: "text-gold", bg: "bg-gold" },
+const KATEGORI_STIL: Record<HatKategori, { icon: typeof Landmark; renk: string; bg: string; bgSoft: string }> = {
+  "sehir-merkezi": { icon: Landmark, renk: "text-bordo", bg: "bg-bordo", bgSoft: "bg-bordo/10" },
+  "akkopru-asti": { icon: Building2, renk: "text-navy", bg: "bg-navy", bgSoft: "bg-navy/10" },
+  "incek-cankaya": { icon: GraduationCap, renk: "text-navy", bg: "bg-navy", bgSoft: "bg-navy/10" },
+  kirsal: { icon: TreePine, renk: "text-green-700", bg: "bg-green-700", bgSoft: "bg-green-700/10" },
+  "golbasi-ici": { icon: MapPinned, renk: "text-gold-dark", bg: "bg-gold", bgSoft: "bg-gold/10" },
 };
 
 function bugununGunu(): Gun {
@@ -37,15 +39,59 @@ function bugununGunu(): Gun {
   return "haftaici";
 }
 
+/** Türkiye saatine göre "şu andan sonraki ilk sefer" — sunucunun saat dilimi ne olursa olsun doğru sonuç verir. */
+function suankiIstanbulDakikasi(): number {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Istanbul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = formatter.formatToParts(new Date());
+  const map: Record<string, string> = {};
+  parts.forEach((p) => (map[p.type] = p.value));
+  let hour = parseInt(map.hour, 10);
+  if (hour === 24) hour = 0;
+  return hour * 60 + parseInt(map.minute, 10);
+}
+
+function saatToDakika(saat: string): number {
+  const [h, m] = saat.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** Bugünün seferleri arasından şu andan sonraki ilk seferi bulur. Bugünün son seferi geçtiyse `null` döner. */
+function siradakiSeferiBul(saatler: string[], suankiDakika: number): { saat: string; kalanDk: number } | null {
+  for (const s of saatler) {
+    const dk = saatToDakika(s);
+    if (dk >= suankiDakika) return { saat: s, kalanDk: dk - suankiDakika };
+  }
+  return null;
+}
+
 function HatKarti({ hat }: { hat: OtobusHatti }) {
   const [gun, setGun] = useState<Gun>("haftaici");
+  const [bugunGun, setBugunGun] = useState<Gun | null>(null);
+  const [suankiDakika, setSuankiDakika] = useState<number | null>(null);
   const [duraklarAcildi, setDuraklarAcildi] = useState(false);
   const stil = KATEGORI_STIL[hat.kategori];
   const Icon = stil.icon;
 
   useEffect(() => {
-    setGun(bugununGunu());
+    const bugun = bugununGunu();
+    setGun(bugun);
+    setBugunGun(bugun);
+    setSuankiDakika(suankiIstanbulDakikasi());
+    const interval = setInterval(() => setSuankiDakika(suankiIstanbulDakikasi()), 60000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Yalnızca BUGÜNÜN gününde ve gerçek saat bilgisiyle "sıradaki sefer" gösterilir —
+  // kullanıcı farklı bir gün sekmesine bakarken yanıltıcı bir countdown göstermeyelim.
+  const siradakiSefer =
+    bugunGun !== null && gun === bugunGun && suankiDakika !== null
+      ? siradakiSeferiBul(hat.saatler[bugunGun], suankiDakika)
+      : null;
 
   return (
     <article id={`hat-${hat.no}`} className="card-shadow card-shadow-hover scroll-mt-24 rounded-2xl bg-white p-4 transition sm:p-5">
@@ -56,19 +102,40 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
           </div>
           <div>
             <h3 className="text-[15px] font-semibold leading-snug text-navy">{hat.ad}</h3>
-            <p className="mt-1 flex items-center gap-1 text-[13px] text-ink/60">
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
-              {hat.kalkis} → {hat.varis}
+            <p className="mt-1 flex items-center gap-1 text-[13px] text-ink/45">
+              Güzergâh {hat.mesafeKm} km · ~{hat.sureDk} dk
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <Icon className={`h-4 w-4 ${stil.renk}`} />
-          <p className="whitespace-nowrap text-right text-[12.5px] text-ink/45">
-            Güzergâh {hat.mesafeKm} km · ~{hat.sureDk} dk
-          </p>
-        </div>
+        <Icon className={`h-4 w-4 shrink-0 ${stil.renk}`} />
       </div>
+
+      {/* Görsel güzergah çubuğu — kalkış/varış tek bakışta anlaşılsın diye. */}
+      <div className="mt-3 flex items-center gap-2">
+        <span className="min-w-0 truncate text-[12.5px] font-medium text-ink/70">{hat.kalkis}</span>
+        <div className="flex flex-1 items-center gap-1">
+          <Circle className={`h-2 w-2 shrink-0 fill-current ${stil.renk}`} />
+          <div className={`h-0.5 flex-1 rounded-full ${stil.bgSoft}`} />
+          <Bus className={`h-3.5 w-3.5 shrink-0 ${stil.renk}`} />
+          <div className={`h-0.5 flex-1 rounded-full ${stil.bgSoft}`} />
+          <Circle className={`h-2 w-2 shrink-0 fill-current ${stil.renk}`} />
+        </div>
+        <span className="min-w-0 truncate text-[12.5px] font-medium text-ink/70">{hat.varis}</span>
+      </div>
+
+      {siradakiSefer && (
+        <div className="mt-3 flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-[12.5px] font-semibold text-green-700">
+          <Clock className="h-3.5 w-3.5 shrink-0" />
+          Sıradaki sefer {siradakiSefer.saat}
+          {" "}
+          ({siradakiSefer.kalanDk === 0 ? "şimdi" : `${siradakiSefer.kalanDk} dk sonra`})
+        </div>
+      )}
+      {bugunGun !== null && gun === bugunGun && suankiDakika !== null && !siradakiSefer && (
+        <div className="mt-3 rounded-lg bg-offwhite px-3 py-1.5 text-[12.5px] font-medium text-ink/50">
+          Bugünün son seferi geçti — yarınki saatler için tabloya bakın.
+        </div>
+      )}
 
       {hat.notlar && (
         <p className="mt-3 rounded-lg bg-gold/10 px-3 py-1.5 text-[12.5px] text-navy/80">{hat.notlar}</p>
@@ -85,6 +152,7 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
             }`}
           >
             {GUN_LABEL[g]}
+            {bugunGun === g && <span className="ml-1 text-[10px] text-gold-dark">• bugün</span>}
           </button>
         ))}
       </div>
@@ -99,11 +167,20 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
               <p className="text-[13px] text-ink/45">{GUN_LABEL[g]} için sefer bulunmuyor.</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
-                {saatler.map((s, i) => (
-                  <span key={i} className="rounded-md bg-navy/5 px-2 py-1 text-[12.5px] font-medium text-navy">
-                    {s}
-                  </span>
-                ))}
+                {saatler.map((s, i) => {
+                  const gecti =
+                    bugunGun !== null && g === bugunGun && suankiDakika !== null && saatToDakika(s) < suankiDakika;
+                  return (
+                    <span
+                      key={i}
+                      className={`rounded-md px-2 py-1 text-[12.5px] font-medium ${
+                        gecti ? "bg-offwhite text-ink/35 line-through decoration-ink/20" : "bg-navy/5 text-navy"
+                      }`}
+                    >
+                      {s}
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -142,6 +219,12 @@ export default function OtobusHatlariList() {
   const [kategori, setKategori] = useState<HatKategori | "tumu">("tumu");
   const [arama, setArama] = useState("");
 
+  const kategoriSayilari = useMemo(() => {
+    const map = new Map<HatKategori, number>();
+    OTOBUS_HATLARI.forEach((h) => map.set(h.kategori, (map.get(h.kategori) ?? 0) + 1));
+    return map;
+  }, []);
+
   const filtreliHatlar = useMemo(() => {
     const q = arama.trim().toLocaleLowerCase("tr");
     return OTOBUS_HATLARI.filter((hat) => {
@@ -158,8 +241,50 @@ export default function OtobusHatlariList() {
 
   return (
     <div>
+      {/* Görsel kategori kartları — hattı hemen bulmak isteyen için tek tıkla filtre. */}
+      <div className="mb-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+        <button
+          type="button"
+          onClick={() => setKategori("tumu")}
+          className={`card-shadow flex flex-col items-start gap-2 rounded-2xl p-3.5 text-left transition ${
+            kategori === "tumu" ? "bg-navy text-white" : "bg-white hover:bg-offwhite"
+          }`}
+        >
+          <Bus className={`h-5 w-5 ${kategori === "tumu" ? "text-gold" : "text-navy"}`} />
+          <div>
+            <p className={`text-[13px] font-bold ${kategori === "tumu" ? "text-white" : "text-navy"}`}>Tüm hatlar</p>
+            <p className={`text-[11px] ${kategori === "tumu" ? "text-white/60" : "text-ink/45"}`}>
+              {OTOBUS_HATLARI.length} hat
+            </p>
+          </div>
+        </button>
+        {KATEGORILER.map((k) => {
+          const stil = KATEGORI_STIL[k.key];
+          const Icon = stil.icon;
+          const aktif = kategori === k.key;
+          return (
+            <button
+              key={k.key}
+              type="button"
+              onClick={() => setKategori(k.key)}
+              className={`card-shadow flex flex-col items-start gap-2 rounded-2xl p-3.5 text-left transition ${
+                aktif ? `${stil.bg} text-white` : "bg-white hover:bg-offwhite"
+              }`}
+            >
+              <Icon className={`h-5 w-5 ${aktif ? "text-white" : stil.renk}`} />
+              <div>
+                <p className={`text-[13px] font-bold ${aktif ? "text-white" : "text-navy"}`}>{k.label}</p>
+                <p className={`text-[11px] ${aktif ? "text-white/70" : "text-ink/45"}`}>
+                  {kategoriSayilari.get(k.key) ?? 0} hat · {k.aciklama}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="sticky top-0 z-10 bg-white/95 py-2 backdrop-blur-sm">
-        <div className="relative mb-3">
+        <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/35" />
           <input
             type="text"
@@ -168,30 +293,6 @@ export default function OtobusHatlariList() {
             placeholder="Hat no veya mahalle ara (örn: 105, İncek, Ballıkpınar)"
             className="w-full rounded-xl border border-line bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-bordo"
           />
-        </div>
-
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            type="button"
-            onClick={() => setKategori("tumu")}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-              kategori === "tumu" ? "bg-bordo text-white" : "border border-line text-ink/60"
-            }`}
-          >
-            Tümü
-          </button>
-          {KATEGORILER.map((k) => (
-            <button
-              key={k.key}
-              type="button"
-              onClick={() => setKategori(k.key)}
-              className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-                kategori === k.key ? "bg-bordo text-white" : "border border-line text-ink/60"
-              }`}
-            >
-              {k.label}
-            </button>
-          ))}
         </div>
       </div>
 

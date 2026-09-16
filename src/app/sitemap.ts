@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/taksi`, changeFrequency: "daily", priority: 0.85 },
     { url: `${BASE_URL}/rehberler`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/nobetci-eczane`, changeFrequency: "daily", priority: 0.7 },
-    { url: `${BASE_URL}/otobus-saatleri`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE_URL}/otobus-saatleri`, changeFrequency: "daily", priority: 0.75 },
     { url: `${BASE_URL}/isletme-ekle`, changeFrequency: "monthly", priority: 0.5 },
   ];
 
