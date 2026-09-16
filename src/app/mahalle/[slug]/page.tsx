@@ -126,7 +126,9 @@ export async function generateMetadata({
   if (!mahalle) return { title: "Mahalle Bulunamadı" };
 
   const title = `${mahalle.name} Mahallesi — Gölbaşı, Ankara`;
-  const description = `${mahalle.name} Mahallesi hakkında bilgiler: muhtar, işletmeler, eğitim kurumları ve son haberler. ${mahalle.population2023.toLocaleString("tr-TR")} nüfuslu Gölbaşı mahallesi.`;
+  const description = mahalle.population2023
+    ? `${mahalle.name} Mahallesi hakkında bilgiler: muhtar, işletmeler, eğitim kurumları ve son haberler. ${mahalle.population2023.toLocaleString("tr-TR")} nüfuslu Gölbaşı mahallesi.`
+    : `${mahalle.name} Mahallesi hakkında bilgiler: muhtar, işletmeler ve son haberler. Ankara'nın Gölbaşı ilçesine bağlı bir mahalle.`;
 
   return {
     title,
@@ -241,9 +243,13 @@ export default async function MahallePage({
                   {`${mahalle.name} Mahallesi`}
                 </h1>
                 <p className="flex items-center gap-1.5 text-sm text-white/60">
-                  <Users className="h-3.5 w-3.5" /> {mahalle.population2023.toLocaleString("tr-TR")} nüfus (2023
-                  ADNKS)
-                  {" · "}
+                  {mahalle.population2023 && (
+                    <>
+                      <Users className="h-3.5 w-3.5" /> {mahalle.population2023.toLocaleString("tr-TR")} nüfus (2023
+                      ADNKS)
+                      {" · "}
+                    </>
+                  )}
                   {businesses.length} işletme
                 </p>
               </div>
@@ -305,19 +311,26 @@ export default async function MahallePage({
 
         <div className="flex flex-col gap-5 lg:w-80">
           <MuhtarCard mahalle={mahalle} />
-          <PopulationTrendCard population2023={mahalle.population2023} history={mahalle.populationHistory} />
+          {mahalle.population2023 && (
+            <PopulationTrendCard population2023={mahalle.population2023} history={mahalle.populationHistory ?? []} />
+          )}
           <AdSlot placement="mahalle_detail" variant="square" />
 
           <div className="card-shadow rounded-2xl bg-white p-6">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink/40">Diğer Mahalleler</h2>
-            <div className="flex flex-col gap-2">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wide text-ink/40">Diğer Mahalleler</h2>
+              <Link href="/mahalle" className="text-xs font-semibold text-bordo hover:underline">
+                Tümü
+              </Link>
+            </div>
+            <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
               {otherMahalleler.map((m) => (
                 <Link
                   key={m.slug}
                   href={`/mahalle/${m.slug}`}
                   className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-semibold text-navy transition-colors hover:bg-offwhite hover:text-bordo"
                 >
-                  <MapPin className="h-3.5 w-3.5 text-ink/30" /> {m.name}
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-ink/30" /> {m.name}
                 </Link>
               ))}
             </div>
@@ -330,6 +343,8 @@ export default async function MahallePage({
 
 function MuhtarCard({ mahalle }: { mahalle: Mahalle }) {
   const { muhtar } = mahalle;
+  const officeLat = muhtar.officeLat ?? mahalle.lat;
+  const officeLng = muhtar.officeLng ?? mahalle.lng;
   return (
     <div className="card-shadow overflow-hidden rounded-2xl bg-white">
       <div className="p-6">
@@ -364,10 +379,10 @@ function MuhtarCard({ mahalle }: { mahalle: Mahalle }) {
           height="140"
           loading="lazy"
           style={{ border: 0, display: "block" }}
-          src={mapEmbedSrc(muhtar.officeLat, muhtar.officeLng)}
+          src={mapEmbedSrc(officeLat, officeLng)}
         />
         <a
-          href={directionsUrl(muhtar.officeLat, muhtar.officeLng)}
+          href={directionsUrl(officeLat, officeLng)}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-1.5 border-t border-line bg-offwhite py-2 text-xs font-semibold text-navy hover:text-bordo"
