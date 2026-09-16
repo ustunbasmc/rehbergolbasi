@@ -230,6 +230,25 @@ export default function OtobusSaatleriPage() {
             </p>
           </div>
 
+          {/* Popüler hatlar — mobilde yan panel görünmediği için hızlı erişim burada da tekrarlanır */}
+          <div className="mb-6 lg:hidden">
+            <p className="mb-2 text-[13px] font-semibold text-navy">Popüler hatlar</p>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {POPULER_HATLAR.map((h) => (
+                <a
+                  key={h.no}
+                  href={`#hat-${h.no}`}
+                  className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-line bg-white px-3.5 text-[13px] font-medium text-ink/70 active:bg-offwhite"
+                >
+                  <span className="rounded bg-bordo/10 px-1.5 py-0.5 text-[11px] font-bold text-bordo">
+                    {h.no}
+                  </span>
+                  {h.ad}
+                </a>
+              ))}
+            </div>
+          </div>
+
           <OtobusHatlariList />
 
           <section className="mt-10 border-t border-line pt-8">

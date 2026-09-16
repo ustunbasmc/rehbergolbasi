@@ -147,7 +147,7 @@ function HatKarti({ hat }: { hat: OtobusHatti }) {
             key={g}
             type="button"
             onClick={() => setGun(g)}
-            className={`-mb-px border-b-2 px-2 py-1.5 text-[12.5px] font-medium transition ${
+            className={`-mb-px min-h-11 flex-1 border-b-2 px-2 py-2.5 text-[12.5px] font-medium transition sm:flex-none ${
               gun === g ? "border-bordo text-bordo" : "border-transparent text-ink/45 hover:text-ink/70"
             }`}
           >
@@ -283,7 +283,7 @@ export default function OtobusHatlariList() {
         })}
       </div>
 
-      <div className="sticky top-0 z-10 bg-white/95 py-2 backdrop-blur-sm">
+      <div className="sticky top-[57px] z-10 bg-white/95 py-2 backdrop-blur-sm">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink/35" />
           <input
