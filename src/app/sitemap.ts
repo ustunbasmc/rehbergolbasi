@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
+import { MAHALLELER } from "@/data/mahalleler";
 
 const BASE_URL = "https://rehbergolbasi.com";
 
@@ -21,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: "daily", priority: 1 },
     { url: `${BASE_URL}/isletmeler`, changeFrequency: "daily", priority: 0.9 },
+    { url: `${BASE_URL}/mahalle`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE_URL}/gundem`, changeFrequency: "hourly", priority: 0.9 },
     { url: `${BASE_URL}/taksi`, changeFrequency: "daily", priority: 0.85 },
     { url: `${BASE_URL}/rehberler`, changeFrequency: "weekly", priority: 0.8 },
@@ -40,6 +42,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${BASE_URL}/isletmeler/${c.slug}`,
     changeFrequency: "daily",
     priority: 0.8,
+  }));
+
+  const mahalleRoutes: MetadataRoute.Sitemap = MAHALLELER.map((m) => ({
+    url: `${BASE_URL}/mahalle/${m.slug}`,
+    changeFrequency: "weekly",
+    priority: 0.65,
   }));
 
   const tagRoutes: MetadataRoute.Sitemap = (tags ?? []).map((t) => ({
@@ -65,6 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...staticRoutes,
     ...categoryRoutes,
+    ...mahalleRoutes,
     ...tagRoutes,
     ...businessRoutes,
     ...guideRoutes,

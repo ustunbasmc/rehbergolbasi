@@ -8,6 +8,7 @@ import AdSlot from "@/components/AdSlot";
 import SearchFilters, { type SortOption } from "@/components/SearchFilters";
 import { getOpenStatus } from "@/lib/openingHours";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
+import { normalizeNeighborhood } from "@/lib/neighborhood";
 import type { Business } from "@/lib/types";
 
 export const revalidate = 60;
@@ -71,7 +72,7 @@ function applyFilters(
   let result = businesses;
 
   if (mahalle) {
-    result = result.filter((b) => b.neighborhood === mahalle);
+    result = result.filter((b) => normalizeNeighborhood(b.neighborhood) === mahalle);
   }
   if (acikOnly) {
     result = result.filter((b) => getOpenStatus(b.opening_hours)?.isOpen);
@@ -103,7 +104,11 @@ export default async function BusinessesPage({
   const hasActiveSearch = !!query;
 
   const neighborhoods = Array.from(
-    new Set(allResults.map((b) => b.neighborhood).filter((n): n is string => !!n))
+    new Set(
+      allResults
+        .map((b) => normalizeNeighborhood(b.neighborhood))
+        .filter((n): n is string => !!n)
+    )
   ).sort((a, b) => a.localeCompare(b, "tr"));
 
   const sortOption: SortOption =
