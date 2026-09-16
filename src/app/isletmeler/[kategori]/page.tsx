@@ -88,9 +88,53 @@ export default async function CategoryPage({
   if (!data) notFound();
   const { category, parent, subcategories, businesses } = data;
   const Icon = getCategoryIcon(category.icon);
+  const pageUrl = `https://rehbergolbasi.com/isletmeler/${kategori}`;
+
+  const breadcrumbItems = [
+    { name: "Anasayfa", url: "https://rehbergolbasi.com" },
+    ...(parent
+      ? [{ name: parent.name, url: `https://rehbergolbasi.com/isletmeler/${parent.slug}` }]
+      : []),
+    { name: category.name, url: pageUrl },
+  ];
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbItems.map((item, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+
+  const itemListJsonLd =
+    businesses.length > 0
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          itemListElement: businesses.map((b, i) => ({
+            "@type": "ListItem",
+            position: i + 1,
+            url: `https://rehbergolbasi.com/isletme/${b.slug}`,
+            name: b.name,
+          })),
+        }
+      : null;
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-6 sm:py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      {itemListJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        />
+      )}
       {/* Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-navy px-6 py-10 sm:px-10 sm:py-12">
         <div

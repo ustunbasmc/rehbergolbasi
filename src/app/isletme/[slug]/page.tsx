@@ -20,6 +20,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { VERIFICATION_LABELS, type VerificationStatus } from "@/lib/types";
+import { RESMI_KURUM_SLUGS, getBusinessSchemaType } from "@/lib/schemaType";
 import PhotoGallery from "@/components/PhotoGallery";
 import QuickActions from "@/components/QuickActions";
 import BusinessCard from "@/components/BusinessCard";
@@ -151,10 +152,14 @@ export async function generateMetadata({
     return { title: "İşletme Bulunamadı" };
   }
 
-  const title = business.name;
-  const description =
-    business.description ??
-    `${business.name} — Gölbaşı'nda ${business.category?.name ?? "hizmet"}. İletişim bilgileri ve detaylar RehberGölbaşı'nda.`;
+  const isResmiKurum = !!business.category?.slug && RESMI_KURUM_SLUGS.has(business.category.slug);
+  const title = isResmiKurum ? `${business.name} (Ankara Gölbaşı)` : business.name;
+  const description = isResmiKurum
+    ? `${business.name} — Ankara Gölbaşı ilçesi. ${
+        business.description ?? `İletişim bilgileri, adres ve çalışma saatleri RehberGölbaşı'nda.`
+      }`
+    : business.description ??
+      `${business.name} — Gölbaşı'nda ${business.category?.name ?? "hizmet"}. İletişim bilgileri ve detaylar RehberGölbaşı'nda.`;
 
   return {
     title,
@@ -217,7 +222,7 @@ export default async function BusinessPage({
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    "@type": getBusinessSchemaType(business.category?.slug, business.name),
     name: business.name,
     description: business.description ?? undefined,
     image: business.cover_image_url ?? undefined,
