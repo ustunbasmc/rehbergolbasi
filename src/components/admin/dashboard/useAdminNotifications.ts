@@ -145,6 +145,10 @@ export function useAdminNotifications() {
 
   useEffect(() => {
     refresh();
+    // Sekme açık kalsa bile rozet sayısı güncel kalsın diye 2 dakikada
+    // bir otomatik yeniliyor — sekmeyi kapatıp açmaya gerek kalmıyor.
+    const interval = setInterval(refresh, 120_000);
+    return () => clearInterval(interval);
   }, [refresh]);
 
   return { items, loading, refresh };
