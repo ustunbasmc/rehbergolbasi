@@ -192,7 +192,7 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
         .limit(5),
       supabase
         .from("business_events")
-        .select("id, event_type, occurred_at, meta, business:businesses(name)")
+        .select("id, event_type, occurred_at, device, referrer, meta, business:businesses(name)")
         .in("event_type", RECENT_ACTIVITY_EVENT_TYPES)
         .order("occurred_at", { ascending: false })
         .limit(12),
@@ -313,6 +313,8 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
         occurredAt: e.occurred_at,
         businessName: (e.business as unknown as { name?: string } | null)?.name ?? null,
         query: extractQuery(e.meta as Record<string, unknown> | null),
+        device: e.device ?? null,
+        referrer: e.referrer ?? null,
       }))
     );
 
@@ -496,17 +498,27 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
     setSiteTotalEvents(rawEvents.length);
 
     setModuleCards(
-      MODULES.map((m) => ({
-        key: m.key,
-        label: m.label,
-        icon: MODULE_ICONS[m.key],
-        gradient: MODULE_GRADIENTS[m.key],
-        total: moduleTotals[m.key] ?? 0,
-        breakdown: MODULE_BREAKDOWN_EVENTS[m.key].map((b) => ({
+      MODULES.map((m) => {
+        const total = moduleTotals[m.key] ?? 0;
+        const knownBreakdown = MODULE_BREAKDOWN_EVENTS[m.key].map((b) => ({
           label: b.label,
           value: moduleTypeCounts[m.key]?.[b.type] ?? 0,
-        })),
-      }))
+        }));
+        // moduleTotals bir modüle eşlenen TÜM event tiplerini sayar, ama
+        // MODULE_BREAKDOWN_EVENTS yalnızca öne çıkan birkaçını listeler
+        // (ör. taksi_location_* huni adımları kasıtlı olarak dışarıda) —
+        // aradaki farkı "Diğer" satırıyla gösterip toplam ile kırılımın
+        // her zaman eşleşmesini sağlıyoruz.
+        const other = total - knownBreakdown.reduce((sum, b) => sum + b.value, 0);
+        return {
+          key: m.key,
+          label: m.label,
+          icon: MODULE_ICONS[m.key],
+          gradient: MODULE_GRADIENTS[m.key],
+          total,
+          breakdown: other > 0 ? [...knownBreakdown, { label: "Diğer", value: other }] : knownBreakdown,
+        };
+      })
     );
 
     setTrendData(Object.values(trendMap));
@@ -584,8 +596,36 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
       {/* Bildirimler — tüm kaynaklardan tek merkezi liste */}
       <NotificationCenter items={notifications} onNavigate={onNavigate} />
 
-      {/* Son İşlemler — ziyaret, arama, WhatsApp, telefon, yol tarifi (canlı akış) */}
-      <RecentActivity items={recentActivity} />
+      {/* KPI kartları (solda, alt alta) + Son İşlemler (sağda) */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          <KpiCard
+            icon={Building2}
+            label="Aktif İşletme"
+            value={`${kpis.activeBusinesses}`}
+            gradient="linear-gradient(135deg, #14213D 0%, #1e3a5f 100%)"
+          />
+          <KpiCard
+            icon={Wallet}
+            label="Bu Ay Gelir"
+            value={formatCurrency(kpis.monthRevenue)}
+            gradient="linear-gradient(135deg, #7A1F2E 0%, #a12d40 100%)"
+          />
+          <KpiCard
+            icon={Sparkles}
+            label="30 Günlük Site Etkileşimi"
+            value={`${siteTotalEvents}`}
+            gradient="linear-gradient(135deg, #C9A24B 0%, #dbb968 100%)"
+          />
+          <KpiCard
+            icon={MessageCircle}
+            label="WhatsApp Tıklaması (14g)"
+            value={`${kpis.totalWhatsapp}`}
+            gradient="linear-gradient(135deg, #25864a 0%, #34a85f 100%)"
+          />
+        </div>
+        <RecentActivity items={recentActivity} />
+      </div>
 
       {/* Bugün Yapılacaklar */}
       {todoItems.length > 0 && (
@@ -604,34 +644,6 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
           </div>
         </div>
       )}
-
-      {/* KPI Kartları */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <KpiCard
-          icon={Building2}
-          label="Aktif İşletme"
-          value={`${kpis.activeBusinesses}`}
-          gradient="linear-gradient(135deg, #14213D 0%, #1e3a5f 100%)"
-        />
-        <KpiCard
-          icon={Wallet}
-          label="Bu Ay Gelir"
-          value={formatCurrency(kpis.monthRevenue)}
-          gradient="linear-gradient(135deg, #7A1F2E 0%, #a12d40 100%)"
-        />
-        <KpiCard
-          icon={Sparkles}
-          label="30 Günlük Site Etkileşimi"
-          value={`${siteTotalEvents}`}
-          gradient="linear-gradient(135deg, #C9A24B 0%, #dbb968 100%)"
-        />
-        <KpiCard
-          icon={MessageCircle}
-          label="WhatsApp Tıklaması (14g)"
-          value={`${kpis.totalWhatsapp}`}
-          gradient="linear-gradient(135deg, #25864a 0%, #34a85f 100%)"
-        />
-      </div>
 
       {/* Modül kartları — site geneli, tüm event tipleri (son 30 gün) */}
       <div>

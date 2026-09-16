@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye, Search, MessageCircle, Phone, Navigation, Activity, type LucideIcon } from "lucide-react";
+import { classifyReferrer } from "./moduleStats";
 
 export type ActivityKind = "visit" | "search" | "whatsapp" | "call" | "directions";
 
@@ -10,6 +11,8 @@ export interface RecentActivityItem {
   occurredAt: string;
   businessName: string | null;
   query: string | null;
+  device: string | null;
+  referrer: string | null;
 }
 
 interface EventDef {
@@ -75,36 +78,46 @@ function timeAgo(iso: string): string {
   return `${days} gün önce`;
 }
 
+function deviceLabel(device: string | null): string | null {
+  if (device === "mobile") return "Mobil";
+  if (device === "desktop") return "Masaüstü";
+  return null;
+}
+
 export default function RecentActivity({ items }: { items: RecentActivityItem[] }) {
   return (
-    <div className="card-shadow rounded-2xl bg-white p-5">
-      <div className="mb-4 flex items-center gap-1.5">
-        <Activity className="h-4 w-4 text-bordo" />
-        <h3 className="font-display text-base font-bold text-navy">Son İşlemler</h3>
+    <div className="card-shadow flex flex-col rounded-2xl bg-white p-4">
+      <div className="mb-3 flex items-center gap-1.5">
+        <Activity className="h-3.5 w-3.5 text-bordo" />
+        <h3 className="font-display text-sm font-bold text-navy">Son İşlemler</h3>
       </div>
       {items.length === 0 ? (
         <p className="text-sm text-ink/40">Henüz kaydedilmiş bir işlem yok.</p>
       ) : (
-        <div className="flex flex-col divide-y divide-line">
+        <div className="flex max-h-[420px] flex-col divide-y divide-line overflow-y-auto">
           {items.map((item) => {
             const def = EVENT_DEFS[item.eventType];
             if (!def) return null;
             const meta = KIND_META[def.kind];
             const Icon = meta.icon;
+            const source = [classifyReferrer(item.referrer), deviceLabel(item.device)]
+              .filter(Boolean)
+              .join(" • ");
             return (
-              <div key={item.id} className="flex items-center gap-3 py-2.5">
+              <div key={item.id} className="flex items-center gap-2.5 py-2">
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-white ${meta.gradient}`}
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-white ${meta.gradient}`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
+                  <Icon className="h-3 w-3" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-navy">{def.label}</p>
+                  <p className="truncate text-[13px] font-semibold text-navy">{def.label}</p>
                   {(item.businessName || item.query) && (
                     <p className="truncate text-xs text-ink/50">
                       {item.businessName ?? `"${item.query}"`}
                     </p>
                   )}
+                  <p className="truncate text-[11px] text-ink/35">Kaynak: {source}</p>
                 </div>
                 <span className="shrink-0 text-[11px] text-ink/40">{timeAgo(item.occurredAt)}</span>
               </div>
