@@ -85,9 +85,12 @@ export default async function AdSlot({
         className={`card-shadow card-shadow-hover block overflow-hidden rounded-2xl bg-white transition ${className}`}
       >
         <div
-          className={`flex w-full items-center justify-center bg-gradient-to-br from-navy/5 to-bordo/10 ${ASPECT_BY_VARIANT[variant]}`}
+          className={`relative flex w-full items-center justify-center bg-gradient-to-br from-navy/5 to-bordo/10 ${ASPECT_BY_VARIANT[variant]}`}
         >
           <Megaphone className="h-8 w-8 text-navy/20" aria-hidden="true" />
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink/60 backdrop-blur-sm">
+            Reklam Alanı
+          </span>
         </div>
         <div className="flex items-center justify-end gap-1.5 border-t border-line px-3 py-2">
           <span className="text-xs font-semibold text-ink/60">Bu alana reklam verebilirsiniz</span>
