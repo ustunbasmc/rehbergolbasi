@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Search, Pill, Bus, Car, Newspaper, type LucideIcon } from "lucide-react";
+import { Search, Pill, Bus, Car, Newspaper, MapPin, Landmark, type LucideIcon } from "lucide-react";
 import { trackHomeEvent } from "@/lib/analytics";
 
 const ARAMA_ORNEKLERI = ["taksi", "kuaför", "restoran", "oto kurtarma"];
@@ -11,6 +11,8 @@ const HIZLI_EYLEMLER: { href: string; label: string; icon: LucideIcon; bg: strin
   { href: "/nobetci-eczane", label: "Eczane", icon: Pill, bg: "from-green-500 to-green-600" },
   { href: "/otobus-saatleri", label: "Otobüs", icon: Bus, bg: "from-navy to-navy-dark" },
   { href: "/gundem", label: "Gündem", icon: Newspaper, bg: "from-bordo to-bordo-dark" },
+  { href: "/mahalle", label: "Mahalleler", icon: MapPin, bg: "from-blue-500 to-blue-600" },
+  { href: "/isletmeler/resmi-kurumlar", label: "Resmi Kurumlar", icon: Landmark, bg: "from-slate-600 to-slate-700" },
 ];
 
 /**
@@ -64,8 +66,8 @@ export default function HeroSearchArea() {
         ))}
       </div>
 
-      {/* 4 hızlı eylem — mobilde arama ile birlikte ilk ekranda görünür */}
-      <div className="mt-4 grid grid-cols-4 gap-2 sm:mt-6 sm:max-w-lg sm:gap-3">
+      {/* 6 hızlı eylem (3x2) — mobilde arama ile birlikte ilk ekranda görünür */}
+      <div className="mt-4 grid grid-cols-3 gap-2 sm:mt-6 sm:max-w-lg sm:gap-3">
         {HIZLI_EYLEMLER.map((item) => {
           const Icon = item.icon;
           return (

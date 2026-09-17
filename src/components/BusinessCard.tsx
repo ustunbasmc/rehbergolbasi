@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Star } from "lucide-react";
+import { MapPin, Star, Sparkles } from "lucide-react";
 import CardQuickActions from "@/components/CardQuickActions";
 import { getCardDescription } from "@/lib/businessDescription";
 import { getCategoryIcon } from "@/lib/categoryIcons";
@@ -22,7 +22,15 @@ interface Business {
   category?: { name: string; icon: string | null } | null;
 }
 
-export default function BusinessCard({ business, source }: { business: Business; source?: string }) {
+export default function BusinessCard({
+  business,
+  source,
+  isNew,
+}: {
+  business: Business;
+  source?: string;
+  isNew?: boolean;
+}) {
   const isFeatured = business.is_featured ?? false;
   const cardDescription = getCardDescription(business);
   const CategoryIcon = getCategoryIcon(business.category?.icon ?? null);
@@ -57,6 +65,11 @@ export default function BusinessCard({ business, source }: { business: Business;
           {isFeatured && (
             <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-xs font-bold text-gold-dark shadow-sm">
               <Star className="h-3 w-3 fill-gold-dark" /> Öne Çıkan
+            </span>
+          )}
+          {isNew && (
+            <span className="absolute left-3 top-3 flex items-center gap-1 rounded-full bg-bordo px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+              <Sparkles className="h-3 w-3" /> Yeni
             </span>
           )}
         </div>

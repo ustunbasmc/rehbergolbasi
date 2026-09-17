@@ -26,7 +26,7 @@ import GundemCard, { type GundemCardData } from "@/components/GundemCard";
 import { getOpenStatus } from "@/lib/openingHours";
 import type { Business, OpeningHours } from "@/lib/types";
 import { computeExcludedCategoryIds } from "@/lib/businessStats";
-import { getIstanbulDateString } from "@/lib/timezone";
+import { getIstanbulDateString, getIstanbulHourPrefix } from "@/lib/timezone";
 import { normalizeNeighborhood } from "@/lib/neighborhood";
 import { getMahalleByName } from "@/data/mahalleler";
 
@@ -48,6 +48,7 @@ const HERO_GUVEN = [
 
 const HOMEPAGE_DISCOVERY_COUNT = 6;
 const HOMEPAGE_CATEGORY_COUNT = 6;
+const HOMEPAGE_NEWEST_COUNT = 3;
 
 interface OpenNowBusiness {
   id: string;
@@ -102,26 +103,39 @@ async function getLatestGundemPosts(): Promise<GundemCardData[]> {
 }
 
 async function getData() {
-  const [{ data: allCategories }, { data: allBusinesses }, { data: featured }] = await Promise.all([
-    supabase.from("categories").select("*").order("display_order", { ascending: true }),
-    supabase
-      .from("businesses")
-      .select(
-        "id, name, slug, phone, whatsapp, lat, lng, tier, category_id, neighborhood, view_count, description, short_description, cover_image_url, is_featured, category:categories(name, icon)"
-      )
-      .eq("status", "approved")
-      .eq("is_active", true)
-      .order("tier", { ascending: false })
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("businesses")
-      .select("*, category:categories(name, icon)")
-      .eq("status", "approved")
-      .eq("is_active", true)
-      .eq("is_featured", true)
-      .order("created_at", { ascending: false })
-      .limit(6),
-  ]);
+  const [{ data: allCategories }, { data: allBusinesses }, { data: featured }, { data: newest }] =
+    await Promise.all([
+      supabase.from("categories").select("*").order("display_order", { ascending: true }),
+      supabase
+        .from("businesses")
+        .select(
+          "id, name, slug, phone, whatsapp, lat, lng, tier, category_id, neighborhood, view_count, description, short_description, cover_image_url, is_featured, category:categories(name, icon)"
+        )
+        .eq("status", "approved")
+        .eq("is_active", true)
+        .order("tier", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("businesses")
+        .select("*, category:categories(name, icon)")
+        .eq("status", "approved")
+        .eq("is_active", true)
+        .eq("is_featured", true)
+        .order("created_at", { ascending: false })
+        .limit(6),
+      // Gerçek eklenme sırasına göre (tier'dan bağımsız) en yeni işletmeler —
+      // "Yeni Eklenenler" bölümü için. Resmi kurumlar JS tarafında elenecek,
+      // bu yüzden 3'ten fazla çekilip filtreden sonra kırpılıyor.
+      supabase
+        .from("businesses")
+        .select(
+          "id, name, slug, phone, whatsapp, lat, lng, tier, category_id, neighborhood, description, short_description, cover_image_url, is_featured, created_at, category:categories(name, icon)"
+        )
+        .eq("status", "approved")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]);
 
   const categories = allCategories ?? [];
   const businesses = (allBusinesses ?? []) as unknown as Business[];
@@ -139,6 +153,9 @@ async function getData() {
 
   const commercialBusinesses = businesses.filter((b) => !isResmiKurum(b.category_id));
   const commercialFeatured = (featured ?? []).filter((b) => !isResmiKurum(b.category_id));
+  const newestBusinesses = ((newest ?? []) as unknown as Business[])
+    .filter((b) => !isResmiKurum(b.category_id))
+    .slice(0, HOMEPAGE_NEWEST_COUNT);
 
   const categoriesWithBusinesses: CategoryWithBusinesses[] = topLevel
     .map((cat) => {
@@ -156,9 +173,12 @@ async function getData() {
     .slice(0, HOMEPAGE_CATEGORY_COUNT);
 
   // Ana sayfa "Gölbaşı'nda Keşfet" — her üst kategoriden (en kalabalıktan başlayarak)
-  // güne göre kararlı, deterministik olarak seçilmiş TEK işletme; zaten "Öne Çıkan"
+  // saate göre kararlı, deterministik olarak seçilmiş TEK işletme; zaten "Öne Çıkan"
   // bölümünde görünen işletmeler burada tekrar edilmez. Math.random() kullanılmaz.
-  const daySeed = getIstanbulDateString();
+  // Seçim günlük değil SAATLİK yenilenir (getIstanbulHourPrefix) — sayfa her
+  // yeniden üretildiğinde (revalidate=60) aynı saat içinde tutarlı kalır ama
+  // ziyaretçi gün içinde geri döndüğünde farklı işletmeler görebilir.
+  const discoverySeed = getIstanbulHourPrefix();
   const featuredIds = new Set(commercialFeatured.map((b) => b.id));
   const categoriesByCount = topLevel
     .map((cat) => ({
@@ -176,7 +196,7 @@ async function getData() {
     );
     if (candidates.length === 0) continue;
     const pick = [...candidates].sort(
-      (a, b) => stableHash(daySeed + a.id) - stableHash(daySeed + b.id)
+      (a, b) => stableHash(discoverySeed + a.id) - stableHash(discoverySeed + b.id)
     )[0];
     discoveryBusinesses.push(pick);
   }
@@ -225,6 +245,7 @@ async function getData() {
     categories: categoriesWithBusinesses,
     featured: commercialFeatured,
     discoveryBusinesses,
+    newestBusinesses,
     neighborhoods,
     openNowRestaurants,
     stats: {
@@ -283,7 +304,7 @@ export default async function HomePage() {
   const nobetciEczaneler = await getNobetciEczaneler();
   const announcements = await getAnnouncements();
   const latestGundemPosts = await getLatestGundemPosts();
-  const { categories, featured, discoveryBusinesses, neighborhoods, openNowRestaurants } =
+  const { categories, featured, discoveryBusinesses, newestBusinesses, neighborhoods, openNowRestaurants } =
     await getData();
 
   const hasEczaneMini = nobetciEczaneler.length > 0;
@@ -420,6 +441,30 @@ export default async function HomePage() {
             <MapPin className="mx-auto mb-3 h-8 w-8 text-bordo" />
             <p className="font-display text-lg font-bold text-navy">Henüz onaylanmış işletme yok</p>
             <p className="mt-1 text-sm text-ink/60">Yakında Gölbaşı&apos;nın işletmeleri burada listelenecek.</p>
+          </section>
+        )}
+
+        {/* Yeni Eklenenler — tier/rastgelelikten bağımsız, gerçek eklenme sırasına göre son 3 işletme */}
+        {newestBusinesses.length > 0 && (
+          <section className="mb-20">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <div className="mb-1 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-bordo" />
+                  <span className="text-xs font-bold uppercase tracking-wide text-bordo">Yeni</span>
+                </div>
+                <h2 className="font-display text-2xl font-bold text-navy">Yeni Eklenenler</h2>
+                <p className="text-sm text-ink/60">Rehbere en son katılan işletmeler.</p>
+              </div>
+              <Link href="/isletmeler" className="shrink-0 whitespace-nowrap text-sm font-semibold text-bordo hover:underline">
+                Tümünü Gör →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {newestBusinesses.map((b) => (
+                <BusinessCard key={b.id} business={b} source="home" isNew />
+              ))}
+            </div>
           </section>
         )}
 
