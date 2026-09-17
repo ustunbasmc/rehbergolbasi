@@ -60,9 +60,12 @@ const ASPECT_BY_VARIANT: Record<AdVariant, string> = {
  * Reklam yoksa (kiralanmamış/süresi geçmiş/pasif) asla sahte/placeholder
  * reklam GÖRÜNTÜSÜ göstermez — bunun yerine bu boş alanın kendisini
  * tanıtan, /reklam-ver'e yönlendiren bir "kendi reklamımız" kartı gösterir
- * (satılmamış envanteri boşa harcamamak için). Gösterim sayacı server
- * render anında artırılır (bot/crawler isteklerini de sayabilir — basit
- * ama kabul edilebilir bir sınırlama).
+ * (satılmamış envanteri boşa harcamamak için). Aynı "/reklam-ver'e git"
+ * şeridi, dolu (aktif reklamı olan) yerleşimlerin altında da gösterilir —
+ * slot tek bir reklamverene münhasır değildir, dolu görünmesi başka
+ * reklamverenlerin ilgisini kesmesin diye. Gösterim sayacı server render
+ * anında artırılır (bot/crawler isteklerini de sayabilir — basit ama kabul
+ * edilebilir bir sınırlama).
  */
 export default async function AdSlot({
   placement,
@@ -97,11 +100,10 @@ export default async function AdSlot({
   supabase.rpc("increment_ad_impression", { p_ad_id: ad.id }).then(() => {});
 
   return (
-    <a
-      href={`/api/ads/click?id=${ad.id}`}
-      className={`card-shadow card-shadow-hover block overflow-hidden rounded-2xl bg-white transition ${className}`}
+    <div
+      className={`card-shadow card-shadow-hover overflow-hidden rounded-2xl bg-white transition ${className}`}
     >
-      <div className="relative w-full bg-offwhite">
+      <a href={`/api/ads/click?id=${ad.id}`} className="relative block w-full bg-offwhite">
         {ad.image_url ? (
           <div className={`relative w-full ${ASPECT_BY_VARIANT[variant]}`}>
             <Image
@@ -121,10 +123,22 @@ export default async function AdSlot({
         <span className="absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink/60 backdrop-blur-sm">
           Sponsorlu
         </span>
-      </div>
+      </a>
       {variant === "card" && (
-        <p className="truncate p-3 text-sm font-bold text-navy">{ad.title}</p>
+        <a href={`/api/ads/click?id=${ad.id}`} className="block truncate p-3 text-sm font-bold text-navy">
+          {ad.title}
+        </a>
       )}
-    </a>
+      {/* Reklamı dolu yerleşimlerde de gösterilir — slot tek bir advertiser'a
+          münhasır değil, gösterim başka reklamverenlere de talep yaratsın diye
+          boş slotlarla aynı CTA burada da tekrarlanır (bkz. yukarıdaki !ad dalı). */}
+      <Link
+        href="/reklam-ver"
+        className="flex items-center justify-end gap-1.5 border-t border-line px-3 py-2 transition hover:bg-offwhite"
+      >
+        <span className="text-xs font-semibold text-ink/60">Bu alana reklam verebilirsiniz</span>
+        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-bordo" />
+      </Link>
+    </div>
   );
 }
