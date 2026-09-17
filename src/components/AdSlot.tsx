@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Megaphone, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export type AdPlacement =
@@ -57,15 +57,13 @@ const ASPECT_BY_VARIANT: Record<AdVariant, string> = {
  * "square" (kare — ör. işletme detayında Çalışma Saatleri altı, kenar
  * çubukları), "card" (işletme/rehber kartlarıyla aynı boy — listelerde
  * doğal akışa karışır ama her zaman "Sponsorlu" etiketiyle işaretlenir).
- * Reklam yoksa (kiralanmamış/süresi geçmiş/pasif) asla sahte/placeholder
- * reklam GÖRÜNTÜSÜ göstermez — bunun yerine bu boş alanın kendisini
- * tanıtan, /reklam-ver'e yönlendiren bir "kendi reklamımız" kartı gösterir
- * (satılmamış envanteri boşa harcamamak için). Aynı "/reklam-ver'e git"
- * şeridi, dolu (aktif reklamı olan) yerleşimlerin altında da gösterilir —
- * slot tek bir reklamverene münhasır değildir, dolu görünmesi başka
- * reklamverenlerin ilgisini kesmesin diye. Gösterim sayacı server render
- * anında artırılır (bot/crawler isteklerini de sayabilir — basit ama kabul
- * edilebilir bir sınırlama).
+ * Reklam yoksa (kiralanmamış/süresi geçmiş/pasif) HİÇBİR ŞEY render etmez —
+ * asla sahte/placeholder reklam alanı göstermez. Dolu (aktif reklamı olan)
+ * yerleşimlerin altında ise /reklam-ver'e yönlendiren bir "bu alana reklam
+ * verebilirsiniz" şeridi gösterilir — slot tek bir reklamverene münhasır
+ * değildir, dolu görünmesi başka reklamverenlerin ilgisini kesmesin diye.
+ * Gösterim sayacı server render anında artırılır (bot/crawler isteklerini
+ * de sayabilir — basit ama kabul edilebilir bir sınırlama).
  */
 export default async function AdSlot({
   placement,
@@ -74,31 +72,13 @@ export default async function AdSlot({
 }: {
   placement: AdPlacement;
   variant?: AdVariant;
+  /** Yalnızca reklam gerçekten render edildiğinde uygulanır — reklam yoksa
+   * hiçbir DOM düğümü oluşmadığı için dıştan sarmalayan bir div'e margin
+   * koymak "hayalet boşluk" yaratır; bunun yerine margin buradan verilir. */
   className?: string;
 }) {
   const ad = await getActiveAd(placement);
-
-  if (!ad) {
-    return (
-      <Link
-        href="/reklam-ver"
-        className={`card-shadow card-shadow-hover block overflow-hidden rounded-2xl bg-white transition ${className}`}
-      >
-        <div
-          className={`relative flex w-full items-center justify-center bg-gradient-to-br from-navy/5 to-bordo/10 ${ASPECT_BY_VARIANT[variant]}`}
-        >
-          <Megaphone className="h-8 w-8 text-navy/20" aria-hidden="true" />
-          <span className="absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-ink/60 backdrop-blur-sm">
-            Reklam Alanı
-          </span>
-        </div>
-        <div className="flex items-center justify-end gap-1.5 border-t border-line px-3 py-2">
-          <span className="text-xs font-semibold text-ink/60">Bu alana reklam verebilirsiniz</span>
-          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-bordo" />
-        </div>
-      </Link>
-    );
-  }
+  if (!ad) return null;
 
   supabase.rpc("increment_ad_impression", { p_ad_id: ad.id }).then(() => {});
 
@@ -132,9 +112,8 @@ export default async function AdSlot({
           {ad.title}
         </a>
       )}
-      {/* Reklamı dolu yerleşimlerde de gösterilir — slot tek bir advertiser'a
-          münhasır değil, gösterim başka reklamverenlere de talep yaratsın diye
-          boş slotlarla aynı CTA burada da tekrarlanır (bkz. yukarıdaki !ad dalı). */}
+      {/* Slot tek bir reklamverene münhasır değil — dolu görünmesi başka
+          reklamverenlerin ilgisini kesmesin diye bu CTA her zaman gösterilir. */}
       <Link
         href="/reklam-ver"
         className="flex items-center justify-end gap-1.5 border-t border-line px-3 py-2 transition hover:bg-offwhite"
