@@ -10,6 +10,7 @@ function formatDate(iso: string | null) {
 
 interface Props {
   businessName: string;
+  slug: string;
   whatsapp: string | null;
   ownerPhone: string | null;
   freeUntil: string | null;
@@ -18,6 +19,7 @@ interface Props {
 
 export default function WhatsAppNotifier({
   businessName,
+  slug,
   whatsapp,
   ownerPhone,
   freeUntil,
@@ -28,12 +30,15 @@ export default function WhatsAppNotifier({
   const targetNumber = ownerPhone || whatsapp;
   const usingOwnerPhone = !!ownerPhone;
 
+  const profileUrl = `rehbergolbasi.com/isletme/${slug}`;
+  const adUrl = "rehbergolbasi.com/reklam-ver";
+
   const templates: Record<string, string> = {
-    hosgeldin: `Merhaba ${businessName} ekibi! 🎉\n\nİşletmeniz RehberGölbaşı'nda onaylandı ve yayına alındı. Temel profiliniz ücretsiz ve süresizdir.\n\nSayfanızı kontrol etmek ister misiniz? Herhangi bir düzeltme/ekleme talebiniz olursa bize yazmanız yeterli.`,
-    "10_gun": `Merhaba ${businessName} ekibi,\n\nRehberGölbaşı Plus üyeliğiniz ${formatDate(expiryDate)} tarihinde sona eriyor (10 gün kaldı). Plus'a devam etmek isterseniz ödeme bilgilerini iletebiliriz.`,
-    "3_gun": `Merhaba ${businessName} ekibi,\n\nHatırlatmak isteriz: RehberGölbaşı Plus üyeliğiniz ${formatDate(expiryDate)} tarihinde sona eriyor (3 gün kaldı). Ödeme yapmak için bize dönüş yapabilirsiniz.`,
-    son_gun: `Merhaba ${businessName} ekibi,\n\nRehberGölbaşı Plus üyeliğiniz bugün (${formatDate(expiryDate)}) sona eriyor. Ödeme yapılmazsa 7 gün içinde profiliniz otomatik olarak ücretsiz Temel pakete döner (kaldırılmaz, yayında kalmaya devam eder). Plus'a devam etmek için hemen dönüş yapabilirsiniz.`,
-    pasif: `Merhaba ${businessName} ekibi,\n\nÖdeme alınamadığı için RehberGölbaşı Plus üyeliğiniz sona erdi, profiliniz ücretsiz Temel pakete döndü ve yayında kalmaya devam ediyor. Plus'a yeniden geçmek isterseniz bize ulaşmanız yeterli.`,
+    hosgeldin: `Merhaba ${businessName} ekibi! 🎉\n\nİşletmeniz RehberGölbaşı'nda onaylandı ve yayına alındı:\n${profileUrl}\n\nTemel profiliniz ücretsiz ve süresizdir. Profilinizde bir eksik/güncelleme olursa (yeni fotoğraf, farklı hizmet, telefon değişikliği vb.) buradan yazmanız yeterli, hemen düzenleriz.\n\nBu arada, sitemizde taksi, gündem ve işletme sayfalarında hedefli reklam alanı kiralama imkanımız da var. İlgilenirseniz: ${adUrl}`,
+    "10_gun": `Merhaba ${businessName} ekibi,\n\nProfiliniz: ${profileUrl}\n\nRehberGölbaşı Plus üyeliğiniz ${formatDate(expiryDate)} tarihinde sona eriyor (10 gün kaldı). Plus'a devam etmek isterseniz ödeme bilgilerini iletebiliriz.`,
+    "3_gun": `Merhaba ${businessName} ekibi,\n\nHatırlatmak isteriz: RehberGölbaşı Plus üyeliğiniz ${formatDate(expiryDate)} tarihinde sona eriyor (3 gün kaldı). Ödeme yapmak için bize dönüş yapabilirsiniz.\n\nProfiliniz: ${profileUrl}`,
+    son_gun: `Merhaba ${businessName} ekibi,\n\nRehberGölbaşı Plus üyeliğiniz bugün (${formatDate(expiryDate)}) sona eriyor. Ödeme yapılmazsa 7 gün içinde profiliniz otomatik olarak ücretsiz Temel pakete döner (kaldırılmaz, yayında kalmaya devam eder). Plus'a devam etmek için hemen dönüş yapabilirsiniz.\n\nProfiliniz: ${profileUrl}`,
+    pasif: `Merhaba ${businessName} ekibi,\n\nÖdeme alınamadığı için RehberGölbaşı Plus üyeliğiniz sona erdi, profiliniz (${profileUrl}) ücretsiz Temel pakete döndü ve yayında kalmaya devam ediyor. Plus'a yeniden geçmek isterseniz bize ulaşmanız yeterli.\n\nPlus dışında, hedefli reklam alanlarımızla da öne çıkabilirsiniz: ${adUrl}`,
     serbest: "",
   };
 

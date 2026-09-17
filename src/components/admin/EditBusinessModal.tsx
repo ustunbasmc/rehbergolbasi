@@ -432,6 +432,7 @@ export default function EditBusinessModal({
 
           <WhatsAppNotifier
             businessName={business.name}
+            slug={business.slug}
             whatsapp={business.whatsapp}
             ownerPhone={ownerPhone || null}
             freeUntil={freeUntil}
