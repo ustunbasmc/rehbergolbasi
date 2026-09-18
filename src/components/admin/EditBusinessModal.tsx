@@ -17,6 +17,7 @@ import OpeningHoursEditor from "@/components/OpeningHoursEditor";
 import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
 import WhatsAppNotifier from "@/components/admin/WhatsAppNotifier";
+import InstagramStoryTool from "@/components/admin/InstagramStoryTool";
 import FaqManager from "@/components/admin/FaqManager";
 import CoverImageManager from "@/components/admin/CoverImageManager";
 
@@ -438,6 +439,8 @@ export default function EditBusinessModal({
             freeUntil={freeUntil}
             paidUntil={paidUntil}
           />
+
+          <InstagramStoryTool slug={business.slug} businessName={business.name} />
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-navy">İşletme adı</label>
