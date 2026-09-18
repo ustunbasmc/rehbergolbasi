@@ -10,45 +10,37 @@ const GA_ID = "G-S9J3BYS755";
 const STORAGE_KEY = COOKIE_CONSENT_STORAGE_KEY;
 
 export default function CookieConsent() {
-  const [consent, setConsent] = useState<"accepted" | "rejected" | null>(null);
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as "accepted" | "rejected" | null;
-    setConsent(stored);
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) setShowBanner(true);
   }, []);
 
   function accept() {
     localStorage.setItem(STORAGE_KEY, "accepted");
-    setConsent("accepted");
     setShowBanner(false);
   }
 
   function reject() {
     localStorage.setItem(STORAGE_KEY, "rejected");
-    setConsent("rejected");
     setShowBanner(false);
   }
 
   return (
     <>
-      {consent === "accepted" && (
-        <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
-            strategy="afterInteractive"
-          />
-          <Script id="ga-init" strategy="afterInteractive">
-            {`
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', '${GA_ID}', { anonymize_ip: true });
-            `}
-          </Script>
-        </>
-      )}
+      <Script
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+        strategy="afterInteractive"
+      />
+      <Script id="ga-init" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${GA_ID}', { anonymize_ip: true });
+        `}
+      </Script>
 
       {showBanner && (
         <div
