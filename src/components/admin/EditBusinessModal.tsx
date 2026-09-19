@@ -432,6 +432,8 @@ export default function EditBusinessModal({
           </div>
 
           <WhatsAppNotifier
+            businessId={business.id}
+            welcomeSentAt={business.welcome_message_sent_at}
             businessName={business.name}
             slug={business.slug}
             whatsapp={business.whatsapp}

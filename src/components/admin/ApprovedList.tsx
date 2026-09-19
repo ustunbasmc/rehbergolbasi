@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Business, Category } from "@/lib/types";
-import { Star, ImageOff, Car, ShieldAlert } from "lucide-react";
+import { Star, ImageOff, Car, ShieldAlert, MessageCircle, Check } from "lucide-react";
 import EditBusinessModal from "@/components/admin/EditBusinessModal";
 import { TAXI_PHONE_STALE_DAYS } from "@/lib/taxi";
 
@@ -26,6 +26,7 @@ export default function ApprovedList({ categories }: { categories: Category[] })
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [missingCoverOnly, setMissingCoverOnly] = useState(false);
   const [taxiIssuesOnly, setTaxiIssuesOnly] = useState(false);
+  const [welcomePendingOnly, setWelcomePendingOnly] = useState(false);
   const [editing, setEditing] = useState<Business | null>(null);
 
   const loadApproved = useCallback(async () => {
@@ -64,8 +65,17 @@ export default function ApprovedList({ categories }: { categories: Category[] })
     let list = businesses;
     if (missingCoverOnly) list = list.filter((b) => !b.cover_image_url);
     if (taxiIssuesOnly) list = list.filter(hasTaxiIssue);
+    if (welcomePendingOnly) list = list.filter((b) => !b.welcome_message_sent_at);
     return list;
-  }, [businesses, missingCoverOnly, taxiIssuesOnly]);
+  }, [businesses, missingCoverOnly, taxiIssuesOnly, welcomePendingOnly]);
+
+  // Sütun henüz veritabanına eklenmediyse (SQL çalıştırılmadıysa) select("*")
+  // sonucunda alan hiç gelmez — o durumda filtre/rozet gösterilmez.
+  const hasWelcomeColumn = businesses.length > 0 && "welcome_message_sent_at" in businesses[0];
+  const welcomePendingCount = useMemo(
+    () => businesses.filter((b) => !b.welcome_message_sent_at).length,
+    [businesses]
+  );
 
   const missingCoverCount = useMemo(
     () => businesses.filter((b) => !b.cover_image_url).length,
@@ -83,6 +93,7 @@ export default function ApprovedList({ categories }: { categories: Category[] })
 
   function handleClosed() {
     setEditing(null);
+    loadApproved();
   }
 
   function handleSaved() {
@@ -127,6 +138,19 @@ export default function ApprovedList({ categories }: { categories: Category[] })
         >
           <ImageOff className="h-3.5 w-3.5" /> Kapak görseli eksik ({missingCoverCount})
         </button>
+        {hasWelcomeColumn && (
+          <button
+            type="button"
+            onClick={() => setWelcomePendingOnly((v) => !v)}
+            className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition ${
+              welcomePendingOnly
+                ? "border-green-600 bg-green-500/10 text-green-700"
+                : "border-line text-ink/60 hover:border-green-600/40"
+            }`}
+          >
+            <MessageCircle className="h-3.5 w-3.5" /> Hoş geldin mesajı atılmayanlar ({welcomePendingCount})
+          </button>
+        )}
         {taxiIssueCount > 0 && (
           <button
             type="button"
@@ -164,6 +188,16 @@ export default function ApprovedList({ categories }: { categories: Category[] })
                       <Star className="h-2.5 w-2.5 fill-gold-dark" /> Öne Çıkan
                     </span>
                   )}
+                  {hasWelcomeColumn &&
+                    (b.welcome_message_sent_at ? (
+                      <span className="flex items-center gap-1 rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                        <Check className="h-2.5 w-2.5" /> Mesaj atıldı
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 rounded-full bg-offwhite px-2 py-0.5 text-[10px] font-semibold text-ink/50">
+                        <MessageCircle className="h-2.5 w-2.5" /> Mesaj atılmadı
+                      </span>
+                    ))}
                   {!b.cover_image_url && (
                     <span className="flex items-center gap-1 rounded-full bg-offwhite px-2 py-0.5 text-[10px] font-semibold text-ink/50">
                       <ImageOff className="h-2.5 w-2.5" /> Kapak yok

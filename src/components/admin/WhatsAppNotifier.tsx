@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { MessageCircle, Send, User, Building2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 function formatDate(iso: string | null) {
   if (!iso) return "belirtilmemiş";
@@ -9,6 +10,8 @@ function formatDate(iso: string | null) {
 }
 
 interface Props {
+  businessId: string;
+  welcomeSentAt?: string | null;
   businessName: string;
   slug: string;
   whatsapp: string | null;
@@ -18,6 +21,8 @@ interface Props {
 }
 
 export default function WhatsAppNotifier({
+  businessId,
+  welcomeSentAt,
   businessName,
   slug,
   whatsapp,
@@ -44,6 +49,25 @@ export default function WhatsAppNotifier({
 
   const [templateKey, setTemplateKey] = useState("hosgeldin");
   const [message, setMessage] = useState(templates.hosgeldin);
+  const [sentAt, setSentAt] = useState<string | null>(welcomeSentAt ?? null);
+  const [savingSent, setSavingSent] = useState(false);
+  const [sentError, setSentError] = useState<string | null>(null);
+
+  async function toggleWelcomeSent() {
+    const next = sentAt ? null : new Date().toISOString();
+    setSavingSent(true);
+    setSentError(null);
+    const { error } = await supabase
+      .from("businesses")
+      .update({ welcome_message_sent_at: next })
+      .eq("id", businessId);
+    setSavingSent(false);
+    if (error) {
+      setSentError("Kaydedilemedi — veritabanına welcome_message_sent_at sütunu eklenmiş mi?");
+      return;
+    }
+    setSentAt(next);
+  }
 
   function handleTemplateChange(key: string) {
     setTemplateKey(key);
@@ -122,6 +146,21 @@ export default function WhatsAppNotifier({
           </p>
         </div>
       )}
+
+      <label className="mt-2 flex cursor-pointer items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-navy">
+        <input
+          type="checkbox"
+          checked={!!sentAt}
+          disabled={savingSent}
+          onChange={toggleWelcomeSent}
+          className="h-4 w-4 accent-bordo"
+        />
+        <span>
+          Hoş geldin mesajı gönderildi
+          {sentAt && <span className="ml-1 font-normal text-ink/50">({formatDate(sentAt)})</span>}
+        </span>
+      </label>
+      {sentError && <p className="mt-1 text-[11px] text-bordo">{sentError}</p>}
     </div>
   );
 }

@@ -105,6 +105,7 @@ export interface Business {
   taxi_service_24_7: boolean;
   taxi_temporarily_unavailable: boolean;
   taxi_phone_verified_at: string | null;
+  welcome_message_sent_at?: string | null;
 }
 
 export interface BusinessPhoto {
