@@ -141,6 +141,24 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
 
   const [loading, setLoading] = useState(true);
 
+  const fetchRecentActivity = useCallback(async (): Promise<RecentActivityItem[]> => {
+    const { data } = await supabase
+      .from("business_events")
+      .select("id, event_type, occurred_at, device, referrer, meta, business:businesses(name)")
+      .in("event_type", RECENT_ACTIVITY_EVENT_TYPES)
+      .order("occurred_at", { ascending: false })
+      .limit(12);
+    return (data ?? []).map((e) => ({
+      id: e.id,
+      eventType: e.event_type,
+      occurredAt: e.occurred_at,
+      businessName: (e.business as unknown as { name?: string } | null)?.name ?? null,
+      query: extractQuery(e.meta as Record<string, unknown> | null),
+      device: e.device ?? null,
+      referrer: e.referrer ?? null,
+    }));
+  }, []);
+
   const loadData = useCallback(async () => {
     setLoading(true);
 
@@ -159,7 +177,7 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
       { data: workOrderRevenue },
       { data: events30 },
       { data: gundemTop },
-      { data: recentEvents },
+      recentItems,
     ] = await Promise.all([
       supabase.from("businesses").select("status, is_active, category:categories(name)"),
       supabase.from("payments").select("amount, paid_at"),
@@ -194,25 +212,10 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
         .in("status", ["scheduled", "published"])
         .order("view_count", { ascending: false })
         .limit(5),
-      supabase
-        .from("business_events")
-        .select("id, event_type, occurred_at, device, referrer, meta, business:businesses(name)")
-        .in("event_type", RECENT_ACTIVITY_EVENT_TYPES)
-        .order("occurred_at", { ascending: false })
-        .limit(12),
+      fetchRecentActivity(),
     ]);
 
-    setRecentActivity(
-      (recentEvents ?? []).map((e) => ({
-        id: e.id,
-        eventType: e.event_type,
-        occurredAt: e.occurred_at,
-        businessName: (e.business as unknown as { name?: string } | null)?.name ?? null,
-        query: extractQuery(e.meta as Record<string, unknown> | null),
-        device: e.device ?? null,
-        referrer: e.referrer ?? null,
-      }))
-    );
+    setRecentActivity(recentItems);
 
     if (businesses) {
       const catMap = new Map<string, number>();
@@ -443,11 +446,20 @@ export default function Overview({ onNavigate }: { onNavigate: (tab: Tab) => voi
     );
 
     setLoading(false);
-  }, []);
+  }, [fetchRecentActivity]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Son İşlemler canlı akış gibi davranmalı; ağır dashboard sorgularını
+  // tekrarlamadan yalnızca bu hafif sorgu 60 sn'de bir yenilenir.
+  useEffect(() => {
+    const id = setInterval(() => {
+      fetchRecentActivity().then(setRecentActivity);
+    }, 60000);
+    return () => clearInterval(id);
+  }, [fetchRecentActivity]);
 
   if (loading) {
     return (

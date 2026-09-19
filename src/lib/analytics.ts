@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import { COOKIE_CONSENT_STORAGE_KEY } from "@/lib/constants";
 
 export type BusinessEventType =
   | "profile_view"
@@ -61,16 +60,12 @@ interface BusinessFormEventMeta {
  * Kişisel veri (telefon, isim, adres, not, dosya adı, tam Instagram) ASLA
  * gönderilmez — yalnızca `BusinessFormEventMeta` içindeki güvenli alanlar.
  *
- * Çerez onayı gerektirir: kullanıcı "Kabul Et" demeden bu olaylar sessizce
- * atlanır (başvurunun kendisinin veritabanına kaydı bu izne BAĞLI DEĞİLDİR —
- * o ayrı bir INSERT'tir ve her zaman çalışır).
+ * Çerez onayından bağımsız kaydedilir (GA ile aynı karar — böylece admin
+ * panelindeki sayılar GA ile tutarlı kalır).
  */
 export async function trackFormEvent(eventType: BusinessFormEventType, meta?: BusinessFormEventMeta) {
   if (typeof window === "undefined") return;
   try {
-    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
-    if (consent !== "accepted") return;
-
     const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
     await supabase.from("business_events").insert({
       business_id: null,
@@ -113,16 +108,12 @@ interface TaxiPageEventMeta {
 /**
  * /taksi sayfasının huni event'leri. Kesin konum, telefon numarası veya
  * başka kişisel veri ASLA gönderilmez — yalnızca sayaç/durum bilgisi.
- * Çerez onayı gerektirir (madde 16); telefon/WhatsApp/yol tarifi
- * butonlarının çalışması bu izne bağlı DEĞİLDİR (onlar trackBusinessEvent
- * ile ayrı kaydedilir ve business_events zaten anon INSERT'e açık).
+ * Çerez onayından bağımsız kaydedilir; telefon/WhatsApp/yol tarifi
+ * tıklamaları ise trackBusinessEvent ile ayrı kaydedilir.
  */
 export async function trackTaxiEvent(eventType: TaxiPageEventType, meta?: TaxiPageEventMeta) {
   if (typeof window === "undefined") return;
   try {
-    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
-    if (consent !== "accepted") return;
-
     const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
     await supabase.from("business_events").insert({
       business_id: null,
@@ -161,16 +152,11 @@ interface GundemEventMeta {
  * "Gölbaşı Gündem" (/gundem) huni event'leri. Kişisel veri ASLA gönderilmez.
  * Mevcut `business_events` tablosu yeniden kullanılır (business_id: null,
  * meta.source: "gundem") — taksi/form event'leriyle aynı desen, ikinci bir
- * analytics tablosu kurulmadı. Çerez onayı gerektirir; sayfa görüntüleme,
- * arama, paylaşım ve kaynak bağlantıları bu izinden BAĞIMSIZ çalışmaya
- * devam eder (yalnızca ölçüm event'i atlanır, işlevsellik etkilenmez).
+ * analytics tablosu kurulmadı. Çerez onayından bağımsız kaydedilir.
  */
 export async function trackGundemEvent(eventType: GundemEventType, meta?: GundemEventMeta) {
   if (typeof window === "undefined") return;
   try {
-    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
-    if (consent !== "accepted") return;
-
     const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
     await supabase.from("business_events").insert({
       business_id: null,
@@ -202,9 +188,6 @@ interface HomeEventMeta {
 export async function trackHomeEvent(eventType: HomeEventType, meta?: HomeEventMeta) {
   if (typeof window === "undefined") return;
   try {
-    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
-    if (consent !== "accepted") return;
-
     const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
     await supabase.from("business_events").insert({
       business_id: null,
@@ -233,9 +216,6 @@ interface PageViewEventMeta {
 export async function trackPageView(eventType: PageViewEventType, meta?: PageViewEventMeta) {
   if (typeof window === "undefined") return;
   try {
-    const consent = localStorage.getItem(COOKIE_CONSENT_STORAGE_KEY);
-    if (consent !== "accepted") return;
-
     const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
     await supabase.from("business_events").insert({
       business_id: null,
