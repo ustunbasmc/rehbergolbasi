@@ -105,14 +105,12 @@ export function isBreakingActive(post: Pick<GundemPost, "is_breaking" | "breakin
  */
 export function buildWhatsAppChannelPost(
   post: Pick<GundemPost, "title" | "summary" | "slug" | "is_breaking" | "breaking_until">,
-  baseUrl: string,
-  channelUrl: string
+  baseUrl: string
 ): string {
   const header = isBreakingActive(post) ? "🚨 *SON DAKİKA*\n\n" : "";
   return [
     `${header}📰 *${post.title}*`,
     post.summary.trim(),
     `🔗 Haberin devamı:\n${baseUrl}/gundem/${post.slug}`,
-    `📲 Gölbaşı Gündem'i takip et:\n${channelUrl}`,
   ].join("\n\n");
 }

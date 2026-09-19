@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import GundemEditor from "@/components/admin/GundemEditor";
 import { buildWhatsAppChannelPost, effectiveGundemStatusLabel, isGundemPostPublic } from "@/lib/gundem";
-import { WHATSAPP_CHANNEL_URL } from "@/lib/constants";
 import type { GundemCategory, GundemPost, GundemPostStatus } from "@/lib/types";
 
 type PostRow = GundemPost & { category: GundemCategory | null };
@@ -149,7 +148,7 @@ export default function GundemList() {
   }
 
   async function handleCopyChannelPost(post: PostRow) {
-    const text = buildWhatsAppChannelPost(post, BASE_URL, WHATSAPP_CHANNEL_URL);
+    const text = buildWhatsAppChannelPost(post, BASE_URL);
     try {
       await navigator.clipboard.writeText(text);
       setCopiedChannelId(post.id);
