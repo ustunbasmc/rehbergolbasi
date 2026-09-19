@@ -17,9 +17,7 @@ import OpeningHoursEditor from "@/components/OpeningHoursEditor";
 import FeaturesSelector from "@/components/FeaturesSelector";
 import TagsSelector from "@/components/TagsSelector";
 import WhatsAppNotifier from "@/components/admin/WhatsAppNotifier";
-import InstagramStoryTool from "@/components/admin/InstagramStoryTool";
-import BusinessChannelShare from "@/components/admin/BusinessChannelShare";
-import FaqManager from "@/components/admin/FaqManager";
+import InstagramStoryTool from "@/components/admin/InstagramStoryTool";import FaqManager from "@/components/admin/FaqManager";
 import CoverImageManager from "@/components/admin/CoverImageManager";
 
 const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
@@ -444,15 +442,6 @@ export default function EditBusinessModal({
           />
 
           <InstagramStoryTool slug={business.slug} businessName={business.name} />
-
-          <BusinessChannelShare
-            name={business.name}
-            slug={business.slug}
-            neighborhood={business.neighborhood}
-            shortDescription={business.short_description}
-            description={business.description}
-            categoryName={categories.find((c) => c.id === business.category_id)?.name ?? null}
-          />
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-navy">İşletme adı</label>

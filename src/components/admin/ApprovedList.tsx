@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import type { Business, Category } from "@/lib/types";
 import { Star, ImageOff, Car, ShieldAlert, MessageCircle, Check } from "lucide-react";
 import EditBusinessModal from "@/components/admin/EditBusinessModal";
+import BusinessChannelShare from "@/components/admin/BusinessChannelShare";
 import { TAXI_PHONE_STALE_DAYS } from "@/lib/taxi";
 
 type BusinessWithCategory = Business & { category?: { name: string; slug: string } | null };
@@ -175,11 +176,11 @@ export default function ApprovedList({ categories }: { categories: Category[] })
       ) : (
         <div className="flex flex-col gap-3">
           {visibleBusinesses.map((b) => (
-            <button
+            <div
               key={b.id}
-              onClick={() => setEditing(b)}
-              className="card-shadow card-shadow-hover flex items-center justify-between rounded-xl bg-white px-4 py-3 text-left transition"
+              className="card-shadow card-shadow-hover flex flex-col gap-2 rounded-xl bg-white px-4 py-3 transition sm:flex-row sm:items-center sm:justify-between sm:gap-3"
             >
+              <button type="button" onClick={() => setEditing(b)} className="min-w-0 flex-1 text-left">
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-display text-base font-bold text-navy">{b.name}</h3>
@@ -222,8 +223,25 @@ export default function ApprovedList({ categories }: { categories: Category[] })
                   {b.category?.name ?? "Kategori yok"} · {b.neighborhood ?? "Mahalle yok"}
                 </p>
               </div>
-              <span className="text-sm font-semibold text-bordo">Düzenle →</span>
-            </button>
+              </button>
+              <div className="flex shrink-0 items-center justify-end gap-3">
+                <BusinessChannelShare
+                  name={b.name}
+                  slug={b.slug}
+                  neighborhood={b.neighborhood}
+                  shortDescription={b.short_description}
+                  description={b.description}
+                  categoryName={b.category?.name ?? null}
+                />
+                <button
+                  type="button"
+                  onClick={() => setEditing(b)}
+                  className="text-sm font-semibold text-bordo"
+                >
+                  Düzenle →
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}

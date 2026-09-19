@@ -42,18 +42,19 @@ export default function BusinessChannelShare({
   }
 
   return (
-    <div className="card-shadow flex items-center justify-between gap-3 rounded-lg bg-offwhite p-3">
-      <div className="flex items-center gap-1.5">
-        <MessageCircle className="h-3.5 w-3.5 text-navy" />
-        <p className="text-xs font-bold uppercase tracking-wide text-navy">WhatsApp Kanalı</p>
-      </div>
-      <button
-        type="button"
-        onClick={handleCopy}
-        className="flex shrink-0 items-center gap-1 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100"
-      >
-        {copied ? "✓ Kopyalandı" : "Kanala paylaş"}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={handleCopy}
+      title="WhatsApp Kanalı için paylaşım metnini kopyala"
+      className="flex shrink-0 items-center gap-1 rounded-lg bg-green-50 px-2.5 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100"
+    >
+      {copied ? (
+        "✓ Kopyalandı"
+      ) : (
+        <>
+          <MessageCircle className="h-3.5 w-3.5" /> Kanala paylaş
+        </>
+      )}
+    </button>
   );
 }
