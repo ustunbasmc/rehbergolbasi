@@ -8,6 +8,7 @@ export type AdPlacementKey =
   | "taksi"
   | "gundem_list"
   | "gundem_detail"
+  | "gundem_detail_inline"
   | "rehberler_list"
   | "nobetci_eczane"
   | "otobus_saatleri"
@@ -88,6 +89,14 @@ export const AD_PLACEMENTS: AdPlacementInfo[] = [
     description: "Haber okunurken yan tarafta (kenar çubuğunda) kare reklam.",
     priceMonthly: 4000,
     imageSize: "800 × 800 px (kare)",
+  },
+  {
+    key: "gundem_detail_inline",
+    label: "Gündem Haber İçi — Yatay",
+    pageLabel: "Gündem haber detay sayfaları",
+    description: "Haber metninin ilk paragrafının hemen altında geniş banner.",
+    priceMonthly: 4500,
+    imageSize: "1200 × 340 px (yatay banner)",
   },
   {
     key: "rehberler_list",

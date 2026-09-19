@@ -18,6 +18,15 @@ import AdSlot from "@/components/AdSlot";
 import type { GundemCategory, GundemPost, Tag } from "@/lib/types";
 import { GUNDEM_SOURCE_TYPE_LABELS } from "@/lib/types";
 
+/** İlk `</p>`'den sonra ikiye böler; paragraf yoksa tamamı `head`'de kalır. */
+function splitAfterFirstParagraph(html: string): { head: string; tail: string } {
+  const marker = "</p>";
+  const idx = html.indexOf(marker);
+  if (idx === -1) return { head: html, tail: "" };
+  const cut = idx + marker.length;
+  return { head: html.slice(0, cut), tail: html.slice(cut) };
+}
+
 // Sorgular `published_at <= now()` koşulunu istek anında değerlendirir —
 // zamanlanmış bir haber vakti geldiğinde cron olmadan hemen görünür olsun
 // diye (bkz. teslim raporu madde 9). Next.js bu yüzden sayfayı otomatik
@@ -251,7 +260,16 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
         </figure>
       )}
 
-      <div className="gundem-article mt-6" dangerouslySetInnerHTML={{ __html: post.content_html }} />
+      {(() => {
+        const { head, tail } = splitAfterFirstParagraph(post.content_html);
+        return (
+          <>
+            <div className="gundem-article mt-6" dangerouslySetInnerHTML={{ __html: head }} />
+            <AdSlot placement="gundem_detail_inline" variant="horizontal" className="my-6" />
+            {tail && <div className="gundem-article" dangerouslySetInnerHTML={{ __html: tail }} />}
+          </>
+        );
+      })()}
 
       {tags.length > 0 && (
         <div className="mt-6 flex flex-wrap gap-1.5">

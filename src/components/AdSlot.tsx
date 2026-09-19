@@ -11,6 +11,7 @@ export type AdPlacement =
   | "taksi"
   | "gundem_list"
   | "gundem_detail"
+  | "gundem_detail_inline"
   | "nobetci_eczane"
   | "otobus_saatleri"
   | "rehberler_list"
