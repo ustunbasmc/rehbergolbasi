@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, Star, Zap, Megaphone, Copy, ExternalLink, Archive, Flag,
+  Plus, Pencil, Trash2, Eye, EyeOff, Star, Zap, Megaphone, Copy, ExternalLink, Archive, Flag, MessageCircle,
 } from "lucide-react";
 import GundemEditor from "@/components/admin/GundemEditor";
-import { effectiveGundemStatusLabel, isGundemPostPublic } from "@/lib/gundem";
+import { buildWhatsAppChannelPost, effectiveGundemStatusLabel, isGundemPostPublic } from "@/lib/gundem";
+import { WHATSAPP_CHANNEL_URL } from "@/lib/constants";
 import type { GundemCategory, GundemPost, GundemPostStatus } from "@/lib/types";
 
 type PostRow = GundemPost & { category: GundemCategory | null };
@@ -25,6 +26,7 @@ export default function GundemList() {
   const [editingBusinesses, setEditingBusinesses] = useState<{ id: string; name: string }[]>([]);
   const [showEditor, setShowEditor] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedChannelId, setCopiedChannelId] = useState<string | null>(null);
 
   const loadCategories = useCallback(async () => {
     const { data } = await supabase.from("gundem_categories").select("*").order("display_order");
@@ -146,6 +148,17 @@ export default function GundemList() {
     }
   }
 
+  async function handleCopyChannelPost(post: PostRow) {
+    const text = buildWhatsAppChannelPost(post, BASE_URL, WHATSAPP_CHANNEL_URL);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedChannelId(post.id);
+      setTimeout(() => setCopiedChannelId(null), 2000);
+    } catch {
+      // Panoya erişim izni yoksa sessizce yut.
+    }
+  }
+
   const filterCounts = useMemo(() => ({ total: posts.length }), [posts]);
 
   return (
@@ -234,6 +247,19 @@ export default function GundemList() {
                   <button onClick={() => handleDuplicate(post)} title="Çoğalt" className="rounded-lg p-2 text-ink/40 hover:bg-offwhite hover:text-navy"><Copy className="h-4 w-4" /></button>
                   <button onClick={() => handleCopySocialText(post)} title="Sosyal medya metnini kopyala" className="rounded-lg p-2 text-ink/40 hover:bg-offwhite hover:text-navy">
                     {copiedId === post.id ? <span className="text-[10px] font-bold text-green-700">✓</span> : <Flag className="h-4 w-4" />}
+                  </button>
+                  <button
+                    onClick={() => handleCopyChannelPost(post)}
+                    title="WhatsApp Kanalı için paylaşım metnini kopyala"
+                    className="flex items-center gap-1 rounded-lg bg-green-50 px-2.5 py-1.5 text-xs font-bold text-green-700 hover:bg-green-100"
+                  >
+                    {copiedChannelId === post.id ? (
+                      "✓ Kopyalandı"
+                    ) : (
+                      <>
+                        <MessageCircle className="h-3.5 w-3.5" /> Kanala paylaş
+                      </>
+                    )}
                   </button>
                   {publiclyVisible && (
                     <a href={`/gundem/${post.slug}`} target="_blank" rel="noopener noreferrer" title="Public sayfayı aç" className="rounded-lg p-2 text-ink/40 hover:bg-offwhite hover:text-navy">

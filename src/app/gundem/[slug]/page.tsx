@@ -15,6 +15,7 @@ import GundemClickTrack from "@/components/GundemClickTrack";
 import GundemSidebarBusinessCard from "@/components/GundemSidebarBusinessCard";
 import { getGundemSidebarBusinesses } from "@/lib/gundemSidebar";
 import AdSlot from "@/components/AdSlot";
+import WhatsAppChannelCta from "@/components/WhatsAppChannelCta";
 import type { GundemCategory, GundemPost, Tag } from "@/lib/types";
 import { GUNDEM_SOURCE_TYPE_LABELS } from "@/lib/types";
 
@@ -319,6 +320,8 @@ export default async function GundemDetailPage({ params }: { params: Promise<{ s
           )}
         </div>
       )}
+
+      <WhatsAppChannelCta variant="banner" />
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6">
         <GundemShareButtons url={publicUrl} title={post.title} postSlug={post.slug} />

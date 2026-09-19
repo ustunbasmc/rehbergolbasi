@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { AtSign, MapPin, ArrowRight } from "lucide-react";
+import { WHATSAPP_CHANNEL_URL } from "@/lib/constants";
 
 export default function Footer() {
   return (
@@ -65,6 +66,14 @@ export default function Footer() {
                 >
                   Gölbaşı Gündem
                 </Link>
+                <a
+                  href={WHATSAPP_CHANNEL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white/75 transition-colors hover:text-white"
+                >
+                  WhatsApp Kanalı
+                </a>
                 <Link
                   href="/mahalle"
                   className="text-white/75 transition-colors hover:text-white"

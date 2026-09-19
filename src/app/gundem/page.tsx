@@ -9,6 +9,7 @@ import GundemSearchForm from "@/components/GundemSearchForm";
 import GundemTrackedLink from "@/components/GundemTrackedLink";
 import GundemListViewTracker from "@/components/GundemListViewTracker";
 import AdSlot from "@/components/AdSlot";
+import WhatsAppChannelCta from "@/components/WhatsAppChannelCta";
 import type { GundemCategory } from "@/lib/types";
 
 const GUNDEM_CARD_COLUMNS =
@@ -278,6 +279,7 @@ export default async function GundemPage({
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-ink/60">
         Gölbaşı&apos;ndan güncel haberler, belediye duyuruları, trafik gelişmeleri, etkinlikler ve yerel yaşamdan önemli bilgiler.
       </p>
+      <WhatsAppChannelCta variant="pill" />
 
       {breakingPosts.length > 0 && (
         <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-bordo/20 bg-bordo/5 p-3.5">

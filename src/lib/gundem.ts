@@ -97,3 +97,22 @@ export function isBreakingActive(post: Pick<GundemPost, "is_breaking" | "breakin
   if (!post.breaking_until) return true;
   return new Date(post.breaking_until).getTime() > Date.now();
 }
+
+/**
+ * WhatsApp Kanalı için hazır paylaşım metni (WhatsApp biçimlendirmesi: *kalın*).
+ * Kanala otomatik gönderim mümkün olmadığı için admin bu metni kopyalayıp
+ * kanala elle yapıştırır; link önizlemesi haberin kapak görselini getirir.
+ */
+export function buildWhatsAppChannelPost(
+  post: Pick<GundemPost, "title" | "summary" | "slug" | "is_breaking" | "breaking_until">,
+  baseUrl: string,
+  channelUrl: string
+): string {
+  const header = isBreakingActive(post) ? "🚨 *SON DAKİKA*\n\n" : "";
+  return [
+    `${header}📰 *${post.title}*`,
+    post.summary.trim(),
+    `🔗 Haberin devamı:\n${baseUrl}/gundem/${post.slug}`,
+    `📲 Gölbaşı Gündem'i takip et:\n${channelUrl}`,
+  ].join("\n\n");
+}
